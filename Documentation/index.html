@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../assets/ico/favicon.ico">
+
+    <title>Timex - Documentation</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="./assets/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="./assets/doc.css" rel="stylesheet">
+	  
+	<link rel="stylesheet" href="assets/js/styles/github.css">
+	<script src="./assets/js/highlight.pack.js"></script>
+    <!-- Just for debugging purposes. Don't actually copy this line! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="blog-masthead">
+      <div class="container">
+        <nav class="blog-nav">
+          <a class="blog-nav-item active" href="#top">Home</a>
+          <a class="blog-nav-item" href="#htmlStructure">HTML structure</a>
+          <a class="blog-nav-item" href="#cssFiles">CSS files</a>
+          <a class="blog-nav-item" href="#javascript">Javascript and Countdown</a>
+          <a class="blog-nav-item" href="#php">Email server</a>
+          <a class="blog-nav-item" href="#credits">Credits</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="main container" id="top">
+
+      <div class="blog-header">
+        <h1 class="blog-title">Timex - Coming soon template</h1>
+		  <p class="lead blog-description">Thank you for purchasing my theme. If you have any questions that are beyond the scope of this help file, please feel free to email via my user page contact form <a href="http://themeforest.net/user/mivfx">here</a>. Thanks so much!</p>
+      </div>
+
+      <div class="row">
+
+        <div class="col-sm-9 blog-main">
+
+          <div class="blog-post">
+<!--            <h2 class="blog-post-title">Documentation by “MiVFX” v1.0</h2>-->
+			<div>
+				<p class="blog-post-meta">
+					<strong>
+					Created: 10/15/2015<br>
+					By: MiVFX / HighHay<br>
+					Email: <a href="mailto:miradontsoa@yahoo.fr">miradontsoa@yahoo.fr</a><br>
+					Twitter: <a href="http://twitter.com/miradontsoa">twitter.com/miradontsoa</a><br>
+					Themeforest: <a href="http://themeforest.net/user/mivfx">themeforest.net/user/mivfx</a>
+					<br>
+					Website: <a href="http://highhay.com">highhay.com</a>
+					</strong></p>
+			</div>
+
+            <p>“Timex - Coming Soon template” documentation.</p>
+            <hr>
+			 
+			<img src="assets/homepage.jpeg" alt="Homepage">  
+			 <hr>
+			 <!-- HTML Structure -->
+			 <h2 id="htmlStructure"><strong>HTML Structure</strong> - <a href="#top">top</a></h2>
+			  
+            <p>Here is the general structure of the HTML page :</p>
+		<ul>
+		<li><a href="#header">The header (at top)</a> of a page is nested within a tag with a class "header-top".
+        </li>
+			<li><a href="#quicklink">The navigation menu (at left)</a> of a page is nested within a tag with a class "quick-link".
+        </li>
+			<li><a href="#coverpage">The cover of a page</a> is nested within a tag with a class "page-cover".
+        </li>
+			<li><a href="#mainpage">The main content</a> of the page is nested within a tag with a class "page-main". Each section (slide) are within a tag with a class "section"
+        </li>
+		<li>And <a href="#footer">the footer</a> of the page containing the "Find us on" social network links, is located within a tag with a class "page-footer".
+        </li>
+        </ul>
+			  </p>
+			<pre class='html'><code>&lt;!-- BEGIN OF site header Menu --&gt;
+&lt;header class="header-top"&gt;
+	...
+&lt;/header&gt;
+&lt;!-- END OF site header Menu--&gt;
+
+&lt;!-- BEGIN OF Quick nav icons at left --&gt;
+&lt;nav class="quick-link count-4 ..."&gt;
+	...
+&lt;/nav&gt;
+&lt;!-- END OF Quick nav icons at left --&gt;
+
+&lt;!-- BEGIN OF site cover --&gt;
+&lt;div class="page-cover" id="home"&gt;
+	...
+&lt;/div&gt;
+&lt;!-- END OF site Cover --&gt;
+
+&lt;!-- Begin of timer pane --&gt;
+&lt;div class="pane-when " id="s-when"&gt;
+	...
+&lt;/div&gt;
+&lt;!-- End of timer pane --&gt;
+
+&lt;!-- BEGIN OF site main content content here --&gt;
+&lt;main class="page-main ..." id="mainpage"&gt;
+	&lt;div class="section page page-home page-cent" id="s-home"&gt;
+		... A section
+	&lt;/div&gt;
+	... Another section
+&lt;/main&gt;
+&lt;!-- END OF site main content content here --&gt;
+
+&lt;!-- Begin of site footer --&gt;
+&lt;footer class="page-footer"&gt;
+	...
+&lt;/footer&gt;
+&lt;!-- End of site footer --&gt;</code></pre>
+			<!-- Title and SEO -->
+			<h3><strong>Title and description for SEO</strong></h3>
+			<p>Change the title and the description of your page by editing the following code of the &lt;head&gt; tag :</p>
+			<pre><code>&lt;!-- Page Title Here --&gt;
+&lt;title&gt;Timex - Landing page Coming Soon responsive template&lt;/title&gt;
+
+&lt;!-- Page Description Here --&gt;
+&lt;meta name="description" content="A responsive coming soon template, un template HTML pour une page en cours de construction"&gt;</code></pre>
+			<!-- Header -->
+			<h3 id="header"><strong>Header</strong> - <a href="#top">top</a></h3>
+			<img src="assets/header_default.jpeg" alt="Homepage">  
+			<br>
+			<p>Header at top are located within the div with a "header-top" class. 
+				</p>
+			<pre><code>&lt;!-- Add material class for a material design style --&gt;
+&lt;header class="header-top"&gt;
+	
+	&lt;div class="menu clearfix"&gt;
+		&lt;a href="#about-us"&gt;about&lt;/a&gt;
+		&lt;!-- Add other menu similar to "about" here --&gt;
+		&lt;a href="#contact"&gt;contact&lt;/a&gt;
+	&lt;/div&gt;
+&lt;/header&gt;</code></pre>
+			
+			
+			<br>
+			<p>To add another menu similar to "About", add the following code within the div with class <code>menu</code> (a link to the contact section for example) :</p>
+			<pre><code>&lt;div class="menu" data-menuanchor="about"&gt;
+	...
+	&lt;a href="#contact"&gt;contact&lt;/a&gt;
+&lt;/div&gt;</code></pre>
+			<p>Result : </p>
+			<img src="assets/header_default.jpeg" alt="Homepage">
+			
+			<!-- Navigation left -->
+			<h3 id="quicklink"><strong>Navigation at left</strong> - <a href="#top">top</a></h3>
+			<img src="assets/nav-left.jpeg" style="width: 200px; " alt="Homepage" >  
+			<br>
+			<p>Navigation left code are located within the tag with a class <code>quick-link</code></p>
+			<pre><code>&lt;!-- BEGIN OF Quick nav icons at left --&gt;
+&lt;nav class="quick-link count-5"&gt;
+	...
+&lt;/nav&gt;
+&lt;!-- END OF Quick nav icons at left --&gt;</code></pre>
+			
+		  	<p>Class <code>count-X</code> adjusts the position of the menu according to the number X of icons within it.</p>
+			<p>Each  icon button is represented by a <code>li</code> element with the following structure&nbsp;:</p>
+			<pre><code>&lt;li&gt;
+	&lt;a href="#about-us"&gt;&lt;i class="icon ion ion-android-information"&gt;&lt;/i&gt;
+	&lt;/a&gt;
+	&lt;span class="title"&gt;About Us&lt;/span&gt;
+&lt;/li&gt;</code></pre>
+			<p>The tag <code>&lt;i class="icon ion ion-android-information"&gt;&lt;/i&gt;</code> represents the icon.</p>
+			<blockquote>
+				<p>This template uses <a href='http://ionicons.com/'>Ion Icons</a> Webfont for all of its icons to be Responsive. Check out their <a href='http://ionicons.com/'>Website</a> for more information.</p>
+			</blockquote>
+			<p>To change the text of the tooltip which appears when hovering an icon, edit the content of <code>&lt;span class="title"&gt;Your text&lt;/span&gt;</code></p></p>
+		  <p>
+			  <b>Edit logo<br></b>
+				Replace the logo image link in the code below by your own (or just replace the logo_only file)</p>
+			<pre><code>&lt;div class="logo"&gt;
+	&lt;a href="#home"&gt;
+		&lt;img src="img/logo_only.png" alt="Logo Brand"&gt;
+	&lt;/a&gt;
+&lt;/div&gt;</code></pre>
+		  	<!-- Cover page -->
+			<h3 id="coverpage"><strong>Cover Page</strong> - <a href="#top">top</a></h3>
+		  
+		  <p>Code of the cover page are located within the tag with a class <code>page-cover</code></p>
+		  <pre><code>&lt;!-- BEGIN OF site cover --&gt;
+&lt;div class="page-cover" id="s-home"&gt;
+	...
+&lt;/div&gt;
+&lt;!-- END OF site Cover --&gt;</code></pre>
+		  <h4>Static image background</h4>
+		  <p>Edit the <code>data-image-src</code> attribute of the <code>cover-bg</code> div to match to your background image url or source such as :</p> 
+		  <pre><code>&lt;!-- Cover Background --&gt;
+&lt;div class="cover-bg pos-abs full-size bg-img" data-image-src="img/bg_forest.jpg"&gt;&lt;/div&gt;</code></pre>
+		  
+		  <h4>Solid color as filter or background</h4>
+		  <p>To add a solid color layer as mask or background, add the following code within the <code>page-cover</code> div tag, and replace the <code>data-bgcolor</code> with a color value:</p>
+		  <pre><code>&lt;div class="cover-bg pos-abs full-size bg-color" data-bgcolor="..."&gt;&lt;/div&gt;</code></pre>
+		  <h4> Video as background </h4>
+		  <p>Add the following code within the previous <code>page-cover</code> div tag and edit the source url <code>&lt;source src="..." &gt;</code> to match to your video (relace the flower_loop.mp4 video under the vid folder by another one) :</p>
+		  <pre><code>&lt;div id="container" class="video-container show-for-medium-up"&gt;
+	&lt;video autoplay="autoplay" loop="loop" autobuffer="autobuffer" muted="muted"
+		   width="640" height="360"&gt;
+		&lt;source src="vid/flower_loop.mp4" type="video/mp4"&gt;
+	&lt;/video&gt;
+&lt;/div</code></pre>
+		  
+		  <!-- Countdown -->
+		  <!-- Countdown timer -->
+		<h3 id="when-section">Countdown/Logo</h3>
+		<img src="assets/countdown.jpeg" alt='countdown'>
+		<br>
+		<p>The countdown panel is located within a tag with classes <code>section pane-when</code>. It has the following structure :</p>
+		<pre class="html"><code>&lt;!-- Begin of timer pane --&gt;
+&lt;div class="pane-when " id="s-when"&gt;
+  &lt;section class="content"&gt;
+    &lt;!-- Clock --&gt;
+    &lt;div class="clock clock-countdown"&gt;
+      &lt;div class="site-config"
+         data-date="12/31/2015 23:00:00" 
+         data-date-timezone="+0"
+         &gt;&lt;/div&gt;          
+      &lt;div class="elem-center"&gt;
+        &lt;div class="digit"&gt;
+          &lt;span class="days"&gt;81&lt;/span&gt;
+          &lt;span class="txt"&gt;days&lt;/span&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      &lt;!-- Logo instead --&gt;
+&lt;!--
+      &lt;div class="logo"&gt;
+        &lt;a href="#"&gt;
+          &lt;img src="img/logo_only.png"&gt;
+        &lt;/a&gt;
+      &lt;/div&gt;
+--&gt;
+      
+      &lt;div class="elem-bottom"&gt;
+        &lt;div class="deco"&gt;&lt;/div&gt;
+        
+        &lt;span class="hours"&gt;18&lt;/span&gt;&lt;span class="thin"&gt;H&lt;/span&gt;
+        &lt;span class="minutes"&gt;45&lt;/span&gt;&lt;span class="thin"&gt;MN&lt;/span&gt;
+        &lt;span class="seconds"&gt;36&lt;/span&gt;&lt;span class="thin"&gt;S&lt;/span&gt;
+      &lt;/div&gt;
+    &lt;/div&gt; 
+    
+    
+  &lt;footer&gt;
+    &lt;p&gt;Before we launch our &lt;strong&gt;new website&lt;/strong&gt;&lt;/p&gt;
+  &lt;/footer&gt;                
+  &lt;/section&gt; 
+&lt;/div&gt;
+&lt;!-- End of timer pane --&gt;</code></pre>
+		<p>Alternatively, you can replace the timer by a Logo. to do so, comment (or remove) the div with class "elem-center and unciomment the div with class "logo" so your timer code wil look like this: </p>
+		<pre><code>&lt;!-- Begin of timer pane --&gt;
+&lt;div class="pane-when " id="s-when"&gt;
+  &lt;section class="content"&gt;
+    &lt;!-- Clock --&gt;
+    &lt;div class="clock clock-countdown"&gt;
+      &lt;div class="site-config"
+         data-date="12/31/2012 23:00:00" 
+         data-date-timezone="+0"
+         &gt;&lt;/div&gt;     
+&lt;!--     
+      &lt;div class="elem-center"&gt;
+        &lt;div class="digit"&gt;
+          &lt;span class="days"&gt;81&lt;/span&gt;
+          &lt;span class="txt"&gt;days&lt;/span&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+--&gt;
+      &lt;!-- Logo instead --&gt;
+      &lt;div class="logo"&gt;
+        &lt;a href="#"&gt;
+          &lt;img src="img/logo_only.png"&gt;
+        &lt;/a&gt;
+      &lt;/div&gt;
+      
+      &lt;div class="elem-bottom"&gt;
+        &lt;div class="deco"&gt;&lt;/div&gt;
+		
+        &lt;!-- add DAYS value --&gt;
+        &lt;span class="days"&gt;12&lt;/span&gt;&lt;span class="thin"&gt;D&lt;/span&gt;
+        &lt;span class="hours"&gt;18&lt;/span&gt;&lt;span class="thin"&gt;H&lt;/span&gt;
+        &lt;span class="minutes"&gt;45&lt;/span&gt;&lt;span class="thin"&gt;MN&lt;/span&gt;
+        &lt;span class="seconds"&gt;36&lt;/span&gt;&lt;span class="thin"&gt;S&lt;/span&gt;
+      &lt;/div&gt;
+    &lt;/div&gt; 
+    
+    
+  &lt;footer&gt;
+    &lt;p&gt;Before we launch our &lt;strong&gt;new website&lt;/strong&gt;&lt;/p&gt;
+  &lt;/footer&gt;                
+  &lt;/section&gt; 
+&lt;/div&gt;
+&lt;!-- End of timer pane --&gt;</code></pre>
+		<p>Replace Logo source or url with yours.</p>
+		
+		<p>To configure the timer, edit the tag with a <code>site-config</code> class, and change the attribute <code>data-date</code> by the limit date. You can adjust timezone with the <code>data-date-timezone</code> attribute :</p>
+		<pre class="html"><code>&lt;div class="site-config"
+	 data-date="12/31/2015 23:00:00" 
+	 data-date-timezone="+0"
+	 &gt;&lt;/div&gt;</code></pre>
+		  
+		  <!-- Site main content -->
+		  <h3 id="mainpage"><strong>Main content of the Page</strong> - <a href="#top">top</a></h3>
+		  <p>Main content of the page are located within the div with a class <code>page-main</code></p>
+		  <pre><code>&lt;!-- BEGIN OF site main content content here --&gt;
+&lt;main class="page-main  " id="mainpage"&gt;
+	&lt;div class="section page page-home page-cent" id="s-home"&gt;
+		... A section
+	&lt;/div&gt;
+	... Another section
+&lt;/main&gt;
+&lt;!-- END OF site main content content here --&gt;</code></pre>
+		  <p>By default, there are 4 ordered sections within it :
+			  <ol>
+		  	<li><a href="#home-section">Home page section</a></li>
+		  	<li><a href="#register-section">Registration form section</a></li>
+		  	<li><a href="#about-section">About section</a></li>
+		  	<li>And the <a href="#contact-section">Contact and Send message section</a></li>
+			</ol>
+		  </p> 
+			<p>If you change their order, you have to edit the corresponding javascript line (main.js), <code>anchors</code> value of the folllowing code :</p>
+		<pre><code>/* 3. Slide */
+var isSlide = false;
+/** Init fullpage.js */
+$(document).ready(function() {
+    $('#mainpage').fullpage({
+		anchors: ['home', 'when', 'register', 'about-us', 'contact'],</code></pre>
+		
+		  <!-- Home page -->
+		<hr>
+		<h4 id="home-section">Home page section</h4>
+		<img src="assets/homepage.jpeg" alt='home page'>
+		<br>
+		<p>The home page section is located within the div with classes <code>section page-home</code></p>
+		<pre><code>&lt;!-- Begin of home page --&gt;
+&lt;div class="section page-home page page-cent" id="s-home"&gt;
+	&lt;!-- Content --&gt;
+	&lt;section class="content"&gt;
+		...
+	&lt;/section&gt;
+
+	&lt;!-- Scroll down button --&gt;
+	&lt;footer class="p-footer p-scrolldown"&gt;
+		&lt;a href="#when"&gt;
+			&lt;div class="arrow-d"&gt;
+				&lt;span class="before"&gt;...&lt;/span&gt;
+				&lt;span class="after"&gt;...&lt;/span&gt;
+				&lt;span class="circle"&gt;&lt;/span&gt;
+			&lt;/div&gt;
+		&lt;/a&gt;                        
+	&lt;/footer&gt;
+&lt;/div&gt;
+&lt;!-- End of home page --&gt;</code></pre>
+		<p>Replace texts with yours.</p>
+		<p>You can also change the text of the scroll down indication (such as "Tell me when")</p>
+		<hr>
+		
+		
+		 <!-- registration page -->
+		<hr>
+		<h4 id="register-section">Registration form section</h4>
+		<img src="assets/register.jpeg" alt='home page'>
+		<br>
+		<p>The registration section are located within the div with classes <code>section page-register</code> with the following structure : </p>
+		<pre><code>&lt;!-- Begin of register page --&gt;
+&lt;div class="section page-register page page-cent   bg-color" data-bgcolor="rgba(95, 25, 208, 0.88)3"  id="s-register"&gt;
+&lt;section class="content"&gt;
+	&lt;header class="p-title"&gt;
+		&lt;h3&gt; Register &lt;i class="ion ion-compose"&gt;&lt;/i&gt;&lt;/h3&gt; 
+	&lt;/header&gt;
+	&lt;div&gt;
+		&lt;form id="mail-subscription" class="form magic send_email_form" method="get" action="ajaxserver/serverfile.php"&gt;
+			...
+		&lt;/form&gt;
+	&lt;/div&gt;
+&lt;/section&gt;
+&lt;footer class="p-footer p-scrolldown"&gt;
+	&lt;a href="#about-us"&gt;
+		&lt;div class="arrow-d"&gt;
+			&lt;span class="before"&gt;About&lt;/span&gt;
+			&lt;span class="after"&gt;Us&lt;/span&gt;
+			&lt;span class="circle"&gt;&lt;/span&gt;
+		&lt;/div&gt;
+	&lt;/a&gt;                        
+&lt;/footer&gt;
+&lt;/div&gt;
+&lt;!-- End of register page --&gt;</code></pre>
+		<p>Point the <code>action</code> of the form tag with class <code>send_email_form</code> to your desired server. Sample server files, which can act as server are provided under the ajaxserver folder. Go to <a href="#php">Configure PHP ajax form</a> for more details.</p>
+		
+		<pre  class="html"><code>&lt;form id="mail-subscription" class="form magic send_email_form" method="get" action="ajaxserver/serverfile.php"&gt;
+	&lt;p class="invite center"&gt;Please, write your email below to stay in touch with us :&lt;/p&gt;
+	&lt;div class="fields clearfix"&gt;
+		&lt;div class="input"&gt;
+			...
+	&lt;/div&gt;
+	
+	&lt;p class="email-ok invisible"&gt;&lt;strong&gt;Thank you&lt;/strong&gt; for your subscription. We will inform you.&lt;/p&gt;
+&lt;/form&gt;</code></pre>
+		<p>Tag with class <code>invite</code> represents the default text which asks for a subscription. And tag with class <code>email-ok</code> will be the text which will be shown when the user registration is a success.</p>
+		<!-- About us page -->
+		<hr>
+		<h4 id="about-section">About Us section</h4>
+		<img src="assets/about.jpeg" alt='About us page'>
+		<br>
+		<p>"About us" section is located within a tag with classes <code>section page-about</code></p>
+		<p>It has the following structure :</p>
+		<pre><code>&lt;div class="section page-about page page-cent" id="s-about-us"&gt;
+	&lt;section class="content"&gt;
+		&lt;header class="p-title"&gt;
+			&lt;h3&gt;About Us&lt;i class="ion ion-android-information"&gt;
+				&lt;/i&gt;
+			&lt;/h3&gt;
+			&lt;h2&gt;we &lt;span class="bold"&gt;make&lt;/span&gt; only &lt;span class="bold"&gt;beautiful&lt;/span&gt; things&lt;/h2&gt;
+		&lt;/header&gt;
+		&lt;article class="text"&gt;
+			&lt;p&gt;Lorem ipsum &lt;strong&gt;magicum &lt;/strong&gt;dolor ...
+		&lt;/article&gt;
+	&lt;/section&gt;
+	&lt;footer class="p-footer p-scrolldown"&gt;
+		&lt;a href="#contact"&gt;
+			&lt;div class="arrow-d"&gt;
+				&lt;span class="circle"&gt;&lt;/span&gt;
+				&lt;span class="before"&gt;Contact&lt;/span&gt;
+				&lt;a href="#contact/message"&gt;&lt;span class="after"&gt;Message&lt;/span&gt;&lt;/a&gt;
+			&lt;/div&gt;
+		&lt;/a&gt;                        
+	&lt;/footer&gt;
+&lt;/div&gt;</code></pre>
+		<p>Titles are located within the <code>header</code> tag, and content within the <code>article</code> tag.</p>
+		<br>
+		<!-- Contact and message page -->
+		<hr>
+		<h4 id="contact-section">Contact and Send message section</h4>
+		<img src="assets/contact.jpeg" alt='About us page'>
+		<br>
+		<p>"Contact" section is located within a tag with classes <code>section page-contact</code></p>
+		<p>It has two sub-section with class <code>slide</code>. The first, with a tag with an id <code>information</code> contains the contact information, email address, phone number, social links and address. The second, with a tag with an id <code>message</code> contain the message form, in which user can write and send message to a server.</p>
+		<p>It has the following structure :</p>
+		<pre><code>&lt;div class="section page-contact page page-cent  ..." id="s-contact"&gt;
+	&lt;!-- Begin of contact information --&gt;
+	&lt;div class="slide" id="information" data-anchor="information"&gt;
+		&lt;section class="content"&gt;
+			...
+		&lt;/section&gt;  
+	&lt;/div&gt;
+	&lt;!-- end of contact information --&gt;
+	
+	&lt;!-- begin of contact message --&gt; 
+	&lt;div class="slide" id="message" data-anchor="message"&gt;
+		&lt;section class="content"&gt;
+			...
+		&lt;/section&gt;
+			
+	&lt;/div&gt;
+	&lt;!-- End of contact message --&gt;
+&lt;/div&gt;</code></pre>
+		<h4>Contact information page</h4>
+		<img src="assets/contact.jpeg" alt="contact">
+		<p>The contact page is within a div with a class <code>slide</code> and an id <code>information</code></p>
+		<p>It has the following structure :</p>
+		<pre><code>&lt;div class="slide" id="information" data-anchor="information"&gt;
+  &lt;section class="content"&gt;
+    &lt;header class="p-title"&gt;
+      ...
+    &lt;/header&gt;
+    &lt;!-- Begin Of Page SubSction --&gt;
+    &lt;div class="contact"&gt;
+      &lt;div class="row"&gt;
+        &lt;div class="medium-6 columns left"&gt;
+          &lt;ul&gt;
+            &lt;li&gt;
+              &lt;h4&gt;Email&lt;/h4&gt;
+              &lt;p&gt;&lt;a href="mailto://contact@mail.com"&gt;contactemail@mail.com&lt;/a&gt;
+              &lt;/p&gt;
+            &lt;/li&gt;
+            ... another item
+          &lt;/ul&gt;
+        &lt;/div&gt;
+        &lt;div class="medium-6 columns social-links right"&gt;
+          &lt;ul&gt;
+            &lt;!-- legal notice --&gt;
+            &lt;li class="show-for-medium-up"&gt;
+              &lt;h4&gt;Website&lt;/h4&gt;
+              &lt;p&gt;&lt;a href="http://..."&gt;www.example.com&lt;/a&gt;
+              &lt;/p&gt;
+            &lt;/li&gt;
+            &lt;li class="show-for-medium-up"&gt;
+              &lt;h4&gt;Find us on&lt;/h4&gt;
+              &lt;!-- Begin of Social links --&gt;
+              &lt;div class="socialnet"&gt;
+                &lt;a href="#"&gt;&lt;i class="ion ion-social-facebook"&gt;&lt;/i&gt;&lt;/a&gt; 
+				... another item
+              &lt;/div&gt;
+              &lt;!-- End of Social links --&gt;
+            &lt;/li&gt;
+            &lt;li&gt;
+              &lt;p&gt;&lt;img src="img/logo_large.png" alt="Logo" class="logo"&gt;
+              &lt;/p&gt;
+              &lt;p class="small"&gt;Timex by &lt;strong&gt;&lt;a href="http://..."&gt;Brand&lt;/a&gt;&lt;/strong&gt;. All right reserved 2015&lt;/p&gt;
+            &lt;/li&gt;
+          &lt;/ul&gt;
+
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;!-- End of page SubSection --&gt;
+  &lt;/section&gt;
+&lt;/div&gt;</code></pre>
+      <p>Replace defaults value by your information (email, address, ...</p>
+      <p>Social links icons use ionicons icons. They are presented by the <code>&lt;a href="..."&gt;&lt;i class="ion ion-social-SOCIALNET"&gt;&lt;/i&gt;&lt;/a&gt; </code> line.<code>SOCIALNET</code> value can be "facebook", "twitter", ... <br>Duplicate this line and edit <code>ion-social-SOCIALNET</code> by a custom one (pinterest, tumblr, ...) if you add more than the defaults links in the template.</p>
+		<h4>Send message page</h4>
+		<img src="assets/message.jpeg" alt="contact">
+		<p>Send message page are located within the div with a class <code>slide</code> and id <code>message</code></p>
+		<p>It has the following structure :</p>
+		<pre><code>&lt;div class="slide" id="message" data-anchor="message"&gt;
+  &lt;section class="content"&gt;
+    &lt;header class="p-title"&gt;
+      ...
+    &lt;/header&gt;
+    &lt;!-- Begin Of Page SubSction --&gt;
+
+    &lt;div class="page-block c-right v-zoomIn"&gt;
+      &lt;div class="wrapper"&gt;
+        &lt;div&gt;
+          &lt;form class="message form send_message_form" method="get" action="ajaxserver/serverfile.php"&gt;
+            &lt;div class="fields clearfix"&gt;
+              &lt;div class="input"&gt;
+                &lt;label for="mes-name"&gt;Name &lt;/label&gt;
+                ...
+            &lt;/div&gt;
+            &lt;div class="fields clearfix"&gt;
+              &lt;div class="input"&gt;
+                &lt;label for="mes-email"&gt;Email &lt;/label&gt;
+                ...
+            &lt;/div&gt;
+            &lt;div class="fields clearfix no-border"&gt;
+              &lt;label for="mes-text"&gt;Message &lt;/label&gt;
+              ...
+
+              &lt;div&gt;
+                &lt;p class="message-ok invisible"&gt;Your message has been sent, thank you.&lt;/p&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/form&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;!-- End Of Page SubSction --&gt;
+  &lt;/section&gt;
+
+&lt;/div&gt;</code></pre>
+		<p>Change texts by your owns</p>
+		<p>Point the <code>action</code> of the form tag with class <code>send_message_form</code> to your desired server. Sample files, which can act as server are provided under the ajaxserver folder. Go to <a href="#php">Configure PHP ajax form</a> for more details.</p>
+		
+		<pre><code>&lt;form class="message form send_message_form" method="get" action="ajaxserver/serverfile.php"&gt;
+	&lt;div class="fields clearfix"&gt;
+	  ...
+	  &lt;div&gt;
+		&lt;p class="message-ok invisible"&gt;Your message has been sent, thank you.&lt;/p&gt;
+	  &lt;/div&gt;
+	&lt;/div&gt;
+ &lt;/form&gt;</code></pre>
+		<p>Tag  with class <code>message-ok</code> will be the text which will be shown when message was sent successfully.</p>
+		
+		  <!-- Site footer -->
+		  <h3 id="footer"><strong>Footer</strong> - <a href="#top">top</a></h3>
+		<img src="assets/footer.jpeg" alt="footer">
+		<br>
+		<p>Main page footer are located within a <code>footer</code> tag with a class <code>page-footer</code></p>
+		<pre><code>&lt;footer class="page-footer"&gt;
+	&lt;div&gt;
+		&lt;a href="http://www.facebook.com/..." target="_blank"&gt;&lt;i class="ion icon ion-social-facebook"&gt;&lt;/i&gt;&lt;/a&gt;
+		&lt;a href="http://www.instagram.com/..." target="_blank"&gt;&lt;i class="ion icon ion-social-instagram"&gt;&lt;/i&gt;&lt;/a&gt;
+		&lt;a href="http://twitter.com/..." target="_blank"&gt;&lt;i class="ion icon ion-social-twitter"&gt;&lt;/i&gt;&lt;/a&gt;
+	&lt;/div&gt;
+&lt;/footer&gt;</code></pre>
+		<p>Social links icons use ionicons icons. They are presented by the <code>&lt;a href="..."&gt;&lt;i class="ion ion-social-SOCIALNET"&gt;&lt;/i&gt;&lt;/a&gt; </code> line.<code>SOCIALNET</code> value can be "facebook", "twitter", ... <br>Duplicate this line and edit <code>ion-social-SOCIALNET</code> by a custom one (pinterest, tumblr, ...) if you add more than the defaults links in the template.</p>
+		<!-- CSS Files -->		
+		<h2 id="cssFiles">CSS files - <a href="#top">top</a></h2></h2>
+		<p> CSS files add styles to an HTML page. This template use the following CSS files :</p>
+		<h4>Editable CSS files :</h4>
+		<p> The main CSS file <code>main.css</code> is located under the <code>/css</code>folder. It handles aesthetic aspects of this page. It was made to be easy to understand.</p>
+		<p> File <code>main_responsive.css</code> handles the responsiveness of the page.</p>
+		<p> <code>style-XXXX.css</code> are custom stylesheet which hook the main.css file for an easy customization it.</p>
+		<h4> Vendor CSS files (modifications are not recommended) :</h4>
+		<p> <code>foundation.min.css</code> file is the CSS grid used by this template. <a target="_blank" href="http://foundation.zurb.com/">Read more</a></p>
+		<p>Other vendor specified CSS files (normailze, font stylesheets, fullPage) are also used.</p>
+		
+		<!-- Javascript Files-->
+		<h2 id="javascript">Javascript files - <a href="#top">top</a></h2></h2>
+		<p>Javascript makes this theme more dynamic and animated, even thought some animations use CSS3.</p>
+		<p>This theme imports these great vendor specific Javascript Plugin (Thanx to their authors) :</p>
+		
+		<ul>
+			<li>jQuery : a Javascript library that greatly reduces the amount of code that you must write.</li>
+			<li>jQuery FullPage Plugin : an awesome plugin to make page slider</li>
+			<li>jQuery UI Plugin : required by FullPage plugin</li>
+			<li>jQuery Down Count plugin : handle countdown clock</li>
+			<li>okVideo plugin : for background video</li>
+			<li>jQuery MaxImage plugin : to maximize background video</li>
+		</ul>
+        <p>Also, based on these plugins, it uses the following javascripts main files :</p>
+		
+		<ul>
+			<li>form_script.js : to handle Ajax Contact Form</li>
+			<li>main.js : contains the general script of the theme (plugin initialization, smooth scroll, page loader)</li>
+        </ul>
+        <p>Their are ready to use and i do not suggest to modify them but you can always tweak them.
+        </p> 
+		
+		<!-- AJAX PP Server --> 
+		<h2 id="php">PHP AJAX Email/Message Server - <a href="#top">top</a></h2>
+		<p>The AJAX Email/Message form is divided in two parts: the client side (handled by the browser) and the server side. </p>
+    <h3><strong>Client side</strong></h3>
+    <p>The HTML file and the JavaScript file <code>form_script.js</code> handle the client side.</p>
+    <p>
+		The email registration part in the html file is within the form tag with a class <code>send_email_form</code>. Edit its <code>action</code> attribute to point to your ajax server : <br> <code>ajaxserver/serverfile.php</code> to save to a file,<br> <code>ajaxserver/server.php</code> to send emails as message (Email message), and<br> <code>ajaxserver/servermailchimp.php</code> to send emails to a mailchimp list (see server side section below for details).
+		<pre class="html"><code>&lt;form id="mail-subscription" class="form magic send_email_form"
+	method="get"
+	action="ajaxserver/serverfile.php"&gt;
+		...</code></pre>
+        <br>
+		You can change the text which appears when the email is sent by changing the p element with a class <code>email-ok</code> within this form tag.
+    </p> 
+		<pre class="html"><code>&lt;p class='email-ok invisible'>...Thank you...&lt;/p&gt;</code></pre>
+    <p>
+		And the contact form part in the html file is within the form tag with a class <code>send_message_form</code>. You can edit its <code>action</code> attribute to point to your ajax server  : <br> <code>ajaxserver/serverfile.php</code> to save to a file,<br> <code>ajaxserver/server.php</code> to send the message form as  an email message to your email.
+		<pre class="html"><code>&lt;form class="message form send_message_form"
+	method="get"
+	action="ajaxserver/serverfile.php"&gt;
+		...</code></pre><br>
+		You can change the text which appears when the message is sent by changing the &lt;p&gt; tag with a class <code>message-ok</code> within this form tag.
+    </p>
+    <pre class="html"><code>&lt;p class='message-ok invisible'>Your message ...&lt;/p&gt;</code></pre>
+    <p>
+    The JavaScript file "form_script.js" manages the sending of the data to the server and notify the user when it is done. There is no need to change its content.
+    </p>
+    
+    <h3><strong>Server side</strong></h3>
+    <p>
+    You have to point you registration form and contact form in to an AJAX server as precised in the "Client side" section above. 
+        <br>The AJAX server used by this theme is PHP based. Three samples php-based AJAX server is provided under ajaxserver folder :
+        </p>
+        <ol>
+            <li>serverfile.php : Writes emails and messages in files called "email.txt" and "message.txt" respectively. You do not need to edit this file.</li>
+            
+            <li>server.php : Sends email and messages to your desired email addresses. Edit this file and replace all the <code>$recipient = "your@email.com";</code> by yours <b>(there are two of it since message recipient and email subscription recipient could be different)</b>. You can also change the message content and subject by changing the <code>$subject</code> and  <code>$email_content</code> variable.
+                <br>
+                <br>
+                
+            <blockquote><strong>IMPORTANT :</strong> Most of Web Hosting provider allow you to use only your domain based email (such as contact@yourdomain.com) for this feature.
+				</blockquote>
+			</li>
+            
+            <li>servermailchimp.php : Uses mailchimp API to add user email to a mailchimp registration list.
+            <br>
+            <br>
+				
+            <span><blockquote><strong>IMPORTANT :</strong> You need a mailchimp API Key and a mailchimp List to make it working. To do so :
+				</blockquote></span>
+				</strong>
+                <ul>
+                    <li>First, create a <a href='http://mailchimp.com/'>Mailchimp</a> account if you do not have one.</li>
+                    <li>Then create an API key here <a href='http://admin.mailchimp.com/account/api/' title='Mailchimp API Key'>http://admin.mailchimp.com/account/api/</a></li>
+                    <li>Create also a Mailchimp mailing list here <a href='http://admin.mailchimp.com/lists/'>http://admin.mailchimp.com/lists/</a> , select the new list and click the "settings" menu - the Unique Id is at the bottom of that page.</li>
+                    <li>
+                        Now, edit the "servermailchimp.php" file and change <code>$api = new MCAPI('YOUR_APIKEY_HERE')</code> to match to your api key. Change also <code>$list_id = "YOUR_LISTID_HERE"</code> to your mailchimp list Unique Id.
+                    </li>
+                    <li>Do not forget to change the action attribute of the email registration form within the HTML file to point to the mailchimp server :
+<pre class="html"><code>&lt;form ... action="/ajaxserver/servermailchimp.php"&gt;
+	...
+&lt;/form&gt;</code></pre>
+                    </li>
+                </ul>
+            </li>
+            
+         </ol>
+    <p>These server handles messages and email subscription requests made by users.
+    </p>
+
+<!-- Credits -->
+<hr>
+		
+		<h2 id="credits"><strong>Sources and Credits</strong> - <a href="#top">top</a></h2>
+		
+		<p>I've used the following images, icons or other files as listed.
+		
+		<ul>
+			<li>Icons webfont by <a href='http://ionicons.com/'>Ionicons</a> </li>
+            <li>Sample background pictures, available for free to use on <a href='http://unsplash.com/'>unsplash.com</a></li>
+			<li>JavaScripts and jQuery plugins</li>
+			<li>Grey Flourish background loop HD video on Youtube for demo purpose</li>
+		</ul>
+		
+		<hr>
+		
+		<p>Once again, thank you so much for purchasing this theme. As I said at the beginning, I'd be glad to help you if you have any questions relating to this theme. No guarantees, but I'll do my best to assist. If you have a more general question relating to the themes on ThemeForest, you might consider visiting the forums and asking your question in the "Item Discussion" section.</p> 
+		
+		<p class="append-bottom alt large"><strong>Miradontsoa Andria. / MiVFX / HighHay Team</strong></p>
+		<p><a href="#top">Go To Table of Contents</a></p>
+		
+		<hr class="space">
+		  <!-- END END -->
+           
+          </div><!-- /.blog-post -->
+
+
+        </div><!-- /.blog-main -->
+
+        <div class="col-sm-3  blog-sidebar">
+          <div class="sidebar-module sidebar-module-inset">
+            <h4 id="toc" class="alt">Table of Contents</h4>
+			<ol class="alpha">
+				<li><a href="#htmlStructure">HTML Structure</a></li>
+				<li><a href="#cssFiles">CSS Files and Theme Customization</a></li>
+				<li><a href="#javascript">JavaScript and  Countdown Clock</a></li>
+				<li><a href="#php">PHP AJAX Email/Message Server Code Explanation</a></li>
+				<li><a href="#credits">Sources and Credits</a></li>
+
+			</ol>
+          </div> 
+          <div class="sidebar-module">
+            <h4>Elsewhere</h4>
+            <ol class="list-unstyled">
+              <li><a href="http://themeforest.com/user/mivfx">Themeforest</a></li>
+              <li><a href="http://twitter.com/miradontsoa">Twitter</a></li>
+              <li><a href="http://facebook.com/highhay">Facebook</a></li>
+            </ol>
+          </div>
+        </div><!-- /.blog-sidebar -->
+
+      </div><!-- /.row -->
+
+    </div><!-- /.container -->
+
+    <div class="blog-footer">
+      <p>Timex HTML template - Documentation by <a href="https://themeforest.com/user/mivfx">MiVfx</a>.</p>
+      <p>
+        <a href="#">Back to top</a>
+      </p>
+    </div>
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="../../dist/js/bootstrap.min.js"></script>
+    <script src="../../assets/js/docs.min.js"></script>
+
+	<script type="text/javascript">
+		hljs.initHighlighting();
+		// hljs.initHighlightingOnLoad();
+	</script>  
+
+  </body>
+</html>
