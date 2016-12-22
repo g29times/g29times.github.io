@@ -26,16 +26,19 @@ $(window).load(function(){
 
 
 /* 1. Clock attribute */
-
 var dateReadableText = 'Upcoming date';
-    if($('.site-config').attr('data-date-readable') && ($('.site-config').attr('data-date-readable') != '')){
-        $('.timeout-day').text('');
-        dateReadableText = $('.site-config').attr('data-date-readable');        
-        $('.timeout-day').text(dateReadableText);
-    }
+if($('.site-config').attr('data-date-readable') && ($('.site-config').attr('data-date-readable') != '')){
+    $('.timeout-day').text('');
+    dateReadableText = $('.site-config').attr('data-date-readable');        
+    $('.timeout-day').text(dateReadableText);
+}
+// var countDownDate = $('.site-config').attr('data-date') + '';
+// var timeZone = $('.site-config').attr('data-date-timezone');
+// console.log(7);
+// console.log(7 + '');
 $('.clock-countdown').downCount({
-    date: $('.site-config').attr('data-date'),
-    offset: +10
+    date: $('.site-config').attr('data-date') + '',
+    offset: $('.site-config').attr('data-date-timezone')
 }, function () {
     //callback here if finished
     //alert('YES, done!');
@@ -49,7 +52,6 @@ $('.clock-countdown').downCount({
 
 
 /* 2. Background for page / section */
-
 var background = '#ccc';
 var backgroundMask = 'rgba(255,255,255,0.92)';
 var backgroundVideoUrl = 'none';
@@ -80,12 +82,22 @@ for (var i = 0; i < imageList.length; i++) {
 	imageSlides.push({src: src});
 }
 
-
 /* Slide Background variables */
 var isSlide = false;
 var slideElem = $('.slide');
 var arrowElem = $('.p-footer .arrow-d');
 var pageElem = $('.page');
+
+/* [JC] iso time format */
+function iso8601(date) {
+  return date.getUTCFullYear()
+    + "-" + (date.getUTCMonth()+1)
+    + "-" + date.getUTCDate()
+    + "T" + date.getUTCHours()
+    + ":" + date.getUTCMinutes()
+    + ":" + date.getUTCSeconds() + "Z";
+}
+
 
 /* 3. Init all plugin on load */
 $(document).ready(function() {
@@ -161,7 +173,11 @@ $(document).ready(function() {
         afterRender: function(){}
     });
 
-    $('.site-config').attr('data-date', new Date());
+    // [JC] my personal custom area
+    // set user land on time
+	document.querySelector('.load_time').setAttribute('datetime', iso8601(new Date()));
+    // render user stay period
+    new timeago().render($('.need_to_be_rendered'));
 });
 
 
