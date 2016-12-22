@@ -160,6 +160,8 @@ $(document).ready(function() {
 		
         afterRender: function(){}
     });
+
+    $('.site-config').attr('data-date', new Date());
 });
 
 
