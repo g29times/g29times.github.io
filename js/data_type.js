@@ -92,6 +92,20 @@ var typedata = {
                 }
             ],
             "tag": "ART"
+        },
+        {
+            "files": [
+                {
+                    "date": "2016/12/26",
+                    "items": [
+                        {
+                            "name": "鲁迅和胡适",
+                            "url": "https://zhidao.baidu.com/question/28782873.html"
+                        }
+                    ]
+                }
+            ],
+            "tag": "PEOPLE"
         }
     ],
     "owner": "Tone",
