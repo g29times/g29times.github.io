@@ -79,17 +79,11 @@
 			<h2>TODAY'S JOB DONE</h2>
 		</div>
 
-		<!-- <div class="control">
-			<button>ADD</button>
-			<button>UPDATE</button>
-			<button>DEL</button>
-		</div> -->
-
 		<div class="body">
 			<!-- <input type="checkbox" name=""> -->
 			<input type="text" name="name" placeholder="name/keyword 英文逗号分割"><br/>
 			<input type="text" name="url" placeholder="url/description"><br/>
-            tag/type : <select id="tag" name="tag">
+            <select id="tag" name="tag">
                 <option value="">--TAGS--</option>
             </select>
 			<!-- <input type="text" name="tag" placeholder="tag/type"> -->
@@ -98,6 +92,11 @@
 		<div class="foot">
 			<button id="submit">SUBMIT</button>
 		</div>
+		<br/>
+		<input type="file" id="file" onchange="handleFiles(this.files)"/>  
+		<div id="filecontent"></div>
+		<div id="dropbox">Or drop here </div>  
+		<div id="filecontent"></div>  
 	</div>
 
     <div id="box3" class="presentation">
@@ -115,7 +114,20 @@
     <script src="js/common.js"></script>
     <script src="js/data_time.js"></script>
     <script src="js/data_type.js"></script>
-    <script type="text/javascript">
+	<script>
+	
+		// DEBUG
+        console.log("Data:");
+		console.log(typedata);
+		// console.log(JSON.stringify(timedata));
+		// JSON.parse(jsonstr); //可以将json字符串转换成json对象 
+		// JSON.stringify(jsonobj); //可以将json对象转换成json对符串 
+		
+	    // 文件操作
+		var dropbox = document.getElementById("dropbox");    
+		dropbox.addEventListener("dragenter", dragenter, false);    
+		dropbox.addEventListener("dragover", dragover, false);    
+		dropbox.addEventListener("drop", drop, false);
         // 按类型分类的data主体
         var archives = typedata.archive;
         // 按日期分类的data主体
@@ -142,7 +154,7 @@
 				$("#pres").html("");
 		});
 
-        // 查询
+        // 查询 | 优化：查询时下拉提示
         $("#query").click(function() {
             $("#pres").html("");
             var keyword = $('#keyword').val();
@@ -166,7 +178,7 @@
             }
         });
 
-    	// 添加新节点到json
+    	// 添加新节点到data
     	$("#submit").click(function() {
             // alert($("#tag").val());
     		var name = $('input[name="name"]').val();
@@ -213,10 +225,12 @@
 	    		archives[archives.length] = newArch;
     		}
             console.log("Result:");
-    		console.log(archives);
-    		$("#presArea").html(JSON.stringify(archives));
+			typedata.archive = archives;
+    		console.log(typedata);
+    		$("#presArea").html(JSON.stringify(typedata));
     		// window.open('');
     	});
+		
 		// 生成结构化展示数据
 		function getTag (test, set) {
 			for (var i = test.length - 1; i >= 0; i--) {
@@ -237,11 +251,6 @@
 				}
 			}
 		}
-        console.log("Data:");
-		console.log(typedata);
-		// console.log(JSON.stringify(timedata));
-		// JSON.parse(jsonstr); //可以将json字符串转换成json对象 
-		// JSON.stringify(jsonobj); //可以将json对象转换成json对符串 
     </script>
 </div>
 </body>
