@@ -1,0 +1,248 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>TODAY'S JOB DONE</title>
+	<style>
+        * {
+            margin: 0;
+            padding: 0;
+            font-size: 18px;
+            font-family: 'Microsoft YaHei';
+        }
+
+        #nav, #nav2 {
+            /*盒模型*/
+            display: -webkit-box;
+            display: -moz-box;
+            display: box;
+            /**/
+            margin: auto;
+            margin-top:30px;
+            border: 10px solid #7F8C8D;
+        }
+
+        #nav {
+            width: 1000px;
+            height: 500px;
+            /*横向*/
+            -webkit-box-orient: horizontal;
+            -moz-box-orient: horizontal;
+            box-orient: horizontal;
+        }
+
+        #nav2 {
+            width: 100px;
+            height: 300px;
+            /*纵向*/
+            -webkit-box-orient: vertical;
+            -moz-box-orient: vertical;
+            box-orient: vertical;
+        }
+
+        #nav div, #nav2 div {
+            /*占有比例*/
+            -webkit-box-flex: 1;
+            -moz-box-flex: 1;
+            box-flex: 1;
+            text-align:left;
+            line-height:36px;
+            font-size:18px;
+            color:#fff;
+        }
+
+        #box1 {
+        	overflow: auto;
+            background: #1ABC9C;
+        }
+
+        #box2 {
+        	overflow: auto;
+            background: #3498DB;
+        }
+
+        #box3 {
+        	overflow: auto;
+            background: #9B59B6;
+        }
+    </style>
+</head>
+<body>
+<div id="nav">
+	<div id="box1">
+		<h2>TAGS</h2>
+		<div id="tags"></div>
+	</div>
+
+	<div id="box2" class="operation">
+		<div class="head">
+			<h2>TODAY'S JOB DONE</h2>
+		</div>
+
+		<!-- <div class="control">
+			<button>ADD</button>
+			<button>UPDATE</button>
+			<button>DEL</button>
+		</div> -->
+
+		<div class="body">
+			<!-- <input type="checkbox" name=""> -->
+			<input type="text" name="name" placeholder="name/keyword 英文逗号分割"><br/>
+			<input type="text" name="url" placeholder="url/description"><br/>
+            tag/type : <select id="tag" name="tag">
+                <option value="">--TAGS--</option>
+            </select>
+			<!-- <input type="text" name="tag" placeholder="tag/type"> -->
+		</div>
+
+		<div class="foot">
+			<button id="submit">SUBMIT</button>
+		</div>
+	</div>
+
+    <div id="box3" class="presentation">
+		<h2>PRESENTATION</h2>
+        <input name="keyword" id="keyword" placeholder="keyword/区分大小写">
+        <button id="query">QUERY</button><br/>
+		<textarea name="" id="presArea"></textarea>
+		<div id="pres"></div>
+    </div>
+
+
+
+    <script src="js/jquery-3.0.0.min.js"></script>
+    <script src="js/tags.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/data_time.js"></script>
+    <script src="js/data_type.js"></script>
+    <script type="text/javascript">
+        // 按类型分类的data主体
+        var archives = typedata.archive;
+        // 按日期分类的data主体
+        var dates = timedata.files;
+        // console.log(dates);
+
+    	// 左侧盒子以及下拉菜单展示tags
+    	for(index in tags) {
+    		$("#tags").append("<input on type='checkbox' name='" + tags[index] + "'>" + tags[index] + "<br/>");
+            $("#tag").append("<option value='" + tags[index] + "'>" + tags[index] + "</option>");
+    	}
+
+    	// 检测checkbox
+		// $("input[type='checkbox']").each(function() {
+		// 	if($(this).get(0).checked) {
+  		//  	console.log($(this).attr('name'));
+		// 	}
+		// });
+		// checkbox勾选事件-展示 取消勾选-清屏
+		$("input[type='checkbox']").change(function() {
+			if($(this).get(0).checked)
+				getTag(archives, $(this).attr('name'));
+			else
+				$("#pres").html("");
+		});
+
+        // 查询
+        $("#query").click(function() {
+            $("#pres").html("");
+            var keyword = $('#keyword').val();
+            for (var i = archives.length - 1; i >= 0; i--) {
+                var daily = archives[i].files;
+                if(daily != null)
+                for (var j = daily.length - 1; j >= 0; j--) {
+                    var item = daily[j].items;
+                    if(item != null)
+                    for (var k = item.length - 1; k >= 0; k--) {
+                            // console.log(item[k].name);
+                            // console.log(item[k].name.indexOf(keyword));
+                        if(item[k].name.indexOf(keyword) > -1) {
+                            $("#pres").append("<br/>《" + archives[i].tag + "》");
+                            $("#pres").append("<br/>" + daily[j].date);
+                            $("#pres").append("<br/>" + item[k].name);
+                            $("#pres").append("<br/><a href='" + item[k].url + "'>" + item[k].url + "</a>");
+                        }
+                    }
+                }
+            }
+        });
+
+    	// 添加新节点到json
+    	$("#submit").click(function() {
+            // alert($("#tag").val());
+    		var name = $('input[name="name"]').val();
+    		var url = $('input[name="url"]').val();
+    		var tag = $("#tag").val(); // $('input[name="tag"]').val();
+    		var newDate = new Date().format("yyyy/MM/dd");
+            if(name == "" || url == "" || tag == "")
+                return false;
+    		// 判断tag是否存在 并依据此更新或加入
+    		// BUG 1.DATE顺序; 2.同名检测
+    		var sameTag = false;
+    		for (var i = archives.length - 1; i >= 0; i--) {
+    			if(archives[i].tag == tag) {
+    				sameTag = true;
+    				var daily = archives[i].files;
+    				for (var j = daily.length - 1; j >= 0; j--) {
+    					// 同日期
+    					if(daily[j].date == newDate) {
+    						var newItem = {};
+				    		newItem.name = name;
+				    		newItem.url = url;
+		    				daily[j].items[daily[j].items.length] = newItem;
+		    				break;
+    					} else {
+    						var newFile = {};
+    						newFile.date = newDate;
+    						newFile.items = [{}];
+				    		newFile.items[0].name = name;
+				    		newFile.items[0].url = url;
+		    				archives[i].files[archives[i].files.length] = newFile;
+		    				break;
+    					}
+    				}
+    			}
+    		}
+    		if(sameTag == false) {
+    			var newArch = {};
+	    		newArch.tag = tag;
+	    		newArch.files = [{}];
+	    		newArch.files[0].date = newDate; // XXX
+	    		newArch.files[0].items = [{}];
+	    		newArch.files[0].items[0].name = name;
+	    		newArch.files[0].items[0].url = url;
+	    		archives[archives.length] = newArch;
+    		}
+            console.log("Result:");
+    		console.log(archives);
+    		$("#presArea").html(JSON.stringify(archives));
+    		// window.open('');
+    	});
+		// 生成结构化展示数据
+		function getTag (test, set) {
+			for (var i = test.length - 1; i >= 0; i--) {
+				if(test[i].tag == set) {
+					var daily = test[i].files;
+					// console.log(test[i].tag);
+					if(daily != null)
+					for (var j = daily.length - 1; j >= 0; j--) {
+						$("#pres").append("<br/>《" + set + "》" + daily[j].date);
+						var item = daily[j].items;
+						// console.log(item);
+						if(item != null)
+						for (var k = item.length - 1; k >= 0; k--) {
+							$("#pres").append("<br/>" + item[k].name);
+							$("#pres").append("<br/><a href='" + item[k].url + "'>" + item[k].url + "</a>");
+						}
+					}
+				}
+			}
+		}
+        console.log("Data:");
+		console.log(typedata);
+		// console.log(JSON.stringify(timedata));
+		// JSON.parse(jsonstr); //可以将json字符串转换成json对象 
+		// JSON.stringify(jsonobj); //可以将json对象转换成json对符串 
+    </script>
+</div>
+</body>
+</html>
