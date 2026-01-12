@@ -1,9 +1,11 @@
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Link, useLocation } from 'react-router-dom';
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Github } from "lucide-react";
 
 export function Header() {
   const { language, setLanguage, t } = useLanguage();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navItems = [
     { key: 'nav.home', path: '/#home' },
@@ -17,8 +19,15 @@ export function Header() {
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     if (path.startsWith('/#')) {
-      e.preventDefault();
       const targetId = path.slice(2);
+      // 如果当前不在首页，先导航到首页再滚动
+      if (location.pathname !== '/') {
+        e.preventDefault();
+        navigate(`/#${targetId}`);
+        return;
+      }
+      // 在首页直接平滑滚动
+      e.preventDefault();
       document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth' });
     }
   };
@@ -69,6 +78,15 @@ export function Header() {
             >
               {language === 'en' ? '中文' : 'EN'}
             </button>
+
+            <a
+              href="https://github.com/g29times"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-foreground/80 hover:text-primary-foreground transition-opacity p-1.5 rounded-md hover:bg-primary-foreground/10"
+            >
+              <Github className="w-5 h-5" />
+            </a>
           </div>
         </nav>
       </div>
