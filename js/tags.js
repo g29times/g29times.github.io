@@ -1,2 +1,0 @@
-var tags = ["TECH", "SOCIETY", "ENT", "KNOWLEDGE", "PEOPLE", "EMOTION", 
-"BIZ", "ART", "SPORT", "TRAVEL", "HISTORY"];

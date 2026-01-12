@@ -1,0 +1,180 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
+
+@layer base {
+  :root {
+    /* Core palette - warm, intellectual aesthetic */
+    --background: 40 33% 98%;
+    --foreground: 220 15% 15%;
+
+    --card: 40 25% 96%;
+    --card-foreground: 220 15% 15%;
+
+    --popover: 40 33% 98%;
+    --popover-foreground: 220 15% 15%;
+
+    /* Cyan accent - vibrant Instagram-style */
+    --primary: 180 100% 50%;
+    --primary-foreground: 220 15% 10%;
+
+    --secondary: 40 20% 94%;
+    --secondary-foreground: 220 15% 20%;
+
+    --muted: 40 15% 92%;
+    --muted-foreground: 220 10% 50%;
+
+    --accent: 48 96% 89%;
+    --accent-foreground: 220 15% 15%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 180 100% 50%;
+
+    --radius: 0.375rem;
+
+    /* Custom tokens */
+    --highlight: 180 100% 50%;
+    --text-subtle: 220 10% 45%;
+    --surface-elevated: 40 30% 99%;
+
+    /* Sidebar (keeping defaults) */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 220 20% 10%;
+    --foreground: 40 20% 95%;
+
+    --card: 220 18% 13%;
+    --card-foreground: 40 20% 95%;
+
+    --popover: 220 20% 10%;
+    --popover-foreground: 40 20% 95%;
+
+    --primary: 180 100% 50%;
+    --primary-foreground: 220 20% 10%;
+
+    --secondary: 220 15% 18%;
+    --secondary-foreground: 40 20% 90%;
+
+    --muted: 220 15% 20%;
+    --muted-foreground: 40 15% 60%;
+
+    --accent: 48 50% 25%;
+    --accent-foreground: 40 20% 95%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 180 100% 50%;
+
+    --highlight: 180 100% 40%;
+    --text-subtle: 40 10% 55%;
+    --surface-elevated: 220 18% 12%;
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  .text-highlight {
+    @apply relative inline;
+    background: linear-gradient(180deg, transparent 65%, hsl(var(--highlight)) 65%);
+  }
+
+  .underline-accent {
+    @apply relative;
+    text-decoration: none;
+  }
+
+  .underline-accent::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 3px;
+    background: hsl(var(--primary));
+  }
+
+  .prose-blog {
+    @apply text-foreground leading-relaxed;
+  }
+
+  .prose-blog p {
+    @apply text-lg leading-8 mb-6;
+  }
+
+  .prose-blog h2 {
+    @apply text-3xl font-serif font-semibold mt-12 mb-6;
+  }
+
+  .prose-blog h3 {
+    @apply text-2xl font-serif font-medium mt-10 mb-4;
+  }
+
+  .link-subtle {
+    @apply text-muted-foreground hover:text-foreground transition-colors duration-200 underline underline-offset-4 decoration-border hover:decoration-primary;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
