@@ -113,6 +113,164 @@ But it builds products that people actually use.
 但它构建了人们实际使用的产品。
     `,
   },
+  'taste-automation': {
+    title: 'Taste Cannot Be Automated (Yet)',
+    titleZh: '品味无法被自动化（目前）',
+    date: 'December 2025',
+    category: 'Taste as Leverage',
+    categoryZh: '审美杠杆',
+    readTime: '8 min read',
+    content: `
+## What Makes Something Feel "Right"?
+
+In an age where AI can generate infinite variations of almost anything—images, code, copy, interfaces—the question is no longer "Can we make it?" but "Should we make it this way?"
+
+This is where taste becomes leverage.
+
+Taste isn't about decoration. It's a decision-making ability. It's knowing what to keep and what to discard. What to emphasize and what to mute. The gap between good and great products is rarely capability—it's curation.
+
+## A Case Study in Craft: The Liquid Glass Lens
+
+Let me show you what I mean with a concrete example. Visit this interactive demo:
+
+[→ Experience the Magnifying Glass Component](https://g29times.github.io/liquid-dynamics/)
+
+This component is a masterclass in tasteful engineering. At first glance, it's "just" a magnifying glass effect. But look closer:
+
+**Dual Displacement Maps**
+The component uses two displacement maps—one for the edge refraction (the subtle bending at the sides), and another for the zooming effect (the stronger distortion in the center). Most developers would use one. The choice to use two creates optical realism that your eye recognizes even if your mind doesn't consciously process it.
+
+**Shadows and Scaling**
+Watch what happens when you drag the lens. The shadow moves. The scale shifts. These micro-interactions create a sense of physical presence. The lens feels like it has weight.
+
+**The Specular Bloom**
+There's a subtle specular highlight—a hint of light reflection on the glass surface. This is pure attention to detail. It doesn't add functionality. It adds believability.
+
+## Why This Matters
+
+This lens could have been built in a thousand simpler ways. A basic CSS zoom. A single displacement filter. A static magnification circle.
+
+But someone made a series of decisions:
+- "The edge refraction should feel different from the center zoom."
+- "The shadow should respond to movement."
+- "There should be a hint of light on the glass."
+
+These are taste decisions. They can't be algorithmically derived from requirements. They emerge from a cultivated sensibility about what makes interactions feel alive.
+
+## The Hierarchy of Craft
+
+I think about taste operating at three levels:
+
+**Level 1: Correctness**
+Does it work? Does it do what it says it does? Most products stop here.
+
+**Level 2: Polish**
+Is it smooth? Are the animations fluid? Do the interactions feel responsive? Good products reach here.
+
+**Level 3: Soul**
+Does it have a point of view? Do the details reveal intention? Does using it feel like encountering a considered opinion about how things should be?
+
+The Liquid Glass lens operates at Level 3. Someone decided that a magnifying glass on a webpage should feel like holding actual glass.
+
+## Taste as Competitive Advantage
+
+Here's the insight that matters for builders:
+
+AI can generate Level 1 outputs reliably. It's getting better at Level 2. But Level 3 remains stubbornly human.
+
+Why? Because taste requires:
+- **Cross-domain pattern recognition**: Knowing what makes physical glass feel "glassy" and translating that to pixels
+- **Intentional constraint**: Choosing to stop adding features and start refining what exists
+- **Conviction under ambiguity**: Deciding that this specific shadow opacity is correct when there's no spec to reference
+
+These are precisely the capabilities that current AI struggles with. Not because they're computationally hard, but because they're contextually subtle.
+
+## An Invitation
+
+I encourage you to spend a few minutes with the demo. Drag the lens slowly. Watch the refraction. Notice the parameters at the bottom—Specular Opacity, Saturation, Refraction Level—and play with them.
+
+Ask yourself: What makes this feel premium? What would be lost if any element were removed?
+
+This exercise—developing the ability to notice and articulate what makes something excellent—is how taste is cultivated.
+
+Taste is not an ornament. It is a decision.
+    `,
+    contentZh: `
+## 什么让事物感觉"对"？
+
+在AI可以生成几乎任何东西的无限变体的时代——图像、代码、文案、界面——问题不再是"我们能做吗？"而是"我们应该这样做吗？"
+
+这就是品味成为杠杆的地方。
+
+品味不是装饰。它是一种决策能力。它是知道什么该保留、什么该丢弃。什么该强调、什么该弱化。好产品和伟大产品之间的差距很少是能力——而是策展。
+
+## 工艺案例研究：液态玻璃透镜
+
+让我用一个具体的例子来说明我的意思。请访问这个交互演示：
+
+[→ 体验放大镜组件](https://g29times.github.io/liquid-dynamics/)
+
+这个组件是有品味的工程的典范。乍一看，它"只是"一个放大镜效果。但仔细看：
+
+**双重位移贴图**
+这个组件使用两个位移贴图——一个用于边缘折射（侧面的微妙弯曲），另一个用于缩放效果（中心更强的扭曲）。大多数开发者会使用一个。选择使用两个创造了光学真实感，即使你的头脑没有有意识地处理它，你的眼睛也能识别。
+
+**阴影和缩放**
+观察当你拖动镜头时会发生什么。阴影移动。比例变化。这些微交互创造了一种物理存在感。镜头感觉有重量。
+
+**镜面高光**
+有一个微妙的镜面高光——玻璃表面的光反射提示。这是纯粹的细节关注。它不增加功能。它增加可信度。
+
+## 为什么这很重要
+
+这个镜头可以用一千种更简单的方式构建。一个基本的CSS缩放。一个单一的位移滤镜。一个静态的放大圆。
+
+但有人做出了一系列决定：
+- "边缘折射应该与中心缩放感觉不同。"
+- "阴影应该响应移动。"
+- "玻璃上应该有一丝光芒。"
+
+这些是品味决定。它们不能从需求中算法推导。它们来自于对什么使交互感觉生动的培养敏感度。
+
+## 工艺层次
+
+我认为品味在三个层面运作：
+
+**第1层：正确性**
+它工作吗？它做到它说的了吗？大多数产品止步于此。
+
+**第2层：打磨**
+它流畅吗？动画是否流畅？交互是否响应灵敏？好的产品达到这里。
+
+**第3层：灵魂**
+它有观点吗？细节是否揭示意图？使用它是否感觉像遇到了关于事物应该如何的深思熟虑的意见？
+
+液态玻璃镜头在第3层运作。有人决定，网页上的放大镜应该感觉像拿着真正的玻璃。
+
+## 品味作为竞争优势
+
+这里是对建造者重要的洞察：
+
+AI可以可靠地生成第1层输出。它在第2层越来越好。但第3层仍然顽固地是人类的。
+
+为什么？因为品味需要：
+- **跨领域模式识别**：知道什么使物理玻璃感觉"像玻璃"并将其转化为像素
+- **有意的约束**：选择停止添加功能并开始精炼现有的东西
+- **模糊中的信念**：在没有规格可参考时决定这个特定的阴影不透明度是正确的
+
+这些正是当前AI难以做到的能力。不是因为它们计算困难，而是因为它们在情境上微妙。
+
+## 邀请
+
+我鼓励你花几分钟时间在演示上。慢慢拖动镜头。观察折射。注意底部的参数——镜面不透明度、饱和度、折射级别——并玩弄它们。
+
+问自己：是什么让这感觉高级？如果任何元素被移除会失去什么？
+
+这个练习——培养注意和阐明什么使某物卓越的能力——就是品味的培养方式。
+
+审美不是装饰，而是一种决策能力。
+    `,
+  },
 };
 
 const BlogPost = () => {
@@ -198,6 +356,45 @@ const BlogPost = () => {
                   );
                 }
                 if (paragraph.trim()) {
+                  // Handle links in the format [text](url)
+                  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+                  const parts = paragraph.split(linkRegex);
+                  
+                  if (parts.length > 1) {
+                    const elements: React.ReactNode[] = [];
+                    let i = 0;
+                    let lastIndex = 0;
+                    let match;
+                    const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
+                    
+                    while ((match = regex.exec(paragraph)) !== null) {
+                      if (match.index > lastIndex) {
+                        elements.push(paragraph.slice(lastIndex, match.index));
+                      }
+                      elements.push(
+                        <a 
+                          key={i++}
+                          href={match[2]} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline font-medium"
+                        >
+                          {match[1]}
+                        </a>
+                      );
+                      lastIndex = match.index + match[0].length;
+                    }
+                    if (lastIndex < paragraph.length) {
+                      elements.push(paragraph.slice(lastIndex));
+                    }
+                    
+                    return (
+                      <p key={index} className="text-lg leading-8 text-foreground mb-6">
+                        {elements}
+                      </p>
+                    );
+                  }
+                  
                   return (
                     <p key={index} className="text-lg leading-8 text-foreground mb-6">
                       {paragraph}
