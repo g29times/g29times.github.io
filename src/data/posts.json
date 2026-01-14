@@ -1,0 +1,67 @@
+[
+  {
+    "slug": "context-problem",
+    "title": "Why Most AI Products Fail: The Context Problem",
+    "titleZh": "为什么大多数AI产品失败：情境问题",
+    "excerpt": "The gap between AI capability demos and actual product value is not technical—it's contextual. Understanding why reveals a different approach to building.",
+    "excerptZh": "AI能力演示与实际产品价值之间的差距不是技术性的——而是情境性的。理解这一点揭示了一种不同的构建方法。",
+    "date": "January 2026",
+    "category": "Context Deconstruction",
+    "categoryZh": "情境解构",
+    "readTime": "12 min read",
+    "content": "## The Demo Delusion\n\nThere's a peculiar pattern in AI product development that I've observed repeatedly: the demo works beautifully, the pilot shows promise, and then the product fails in production. Not because the AI doesn't work—it does—but because it works in the wrong context.\n\nThis isn't a technical problem. It's a context problem.\n\n## What Context Actually Means\n\nWhen we talk about context in AI products, we're not just talking about prompt engineering or fine-tuning. We're talking about the entire ecosystem of human behaviors, organizational workflows, and existing tools that any new product must navigate.\n\nConsider a simple example: an AI writing assistant. The demo shows it generating beautiful prose. The pilot users love it. But in production, adoption stalls. Why?\n\nBecause the demo didn't account for:\n- How people actually write (in fragments, across sessions, with constant interruptions)\n- Where writing fits in their workflow (often at the end, under deadline pressure)\n- What \"good\" means in their specific domain (legal writing ≠ marketing copy)\n- Who else needs to review and approve the output\n\n## The Context Stack\n\nI think of context as a stack with four layers:\n\n**Layer 1: Task Context**\nWhat is the user actually trying to accomplish? Not what we think they should want, but what they genuinely need.\n\n**Layer 2: Workflow Context**\nHow does this task fit into their broader work pattern? What happens before and after?\n\n**Layer 3: Social Context**\nWho else is involved? Who reviews, approves, or is affected by the output?\n\n**Layer 4: Organizational Context**\nWhat are the cultural norms, risk tolerances, and power dynamics that shape how tools get adopted?\n\nMost AI products address Layer 1 reasonably well. Very few address all four.\n\n## A Different Approach\n\nThe products that succeed tend to start from context, not capability. They ask: \"Given how people actually work in this domain, where would AI create genuine value?\" rather than \"Given what AI can do, where can we apply it?\"\n\nThis is slower. It's less impressive in demos. It doesn't generate viral Twitter threads.\n\nBut it builds products that people actually use.",
+    "contentZh": "## 演示的幻觉\n\n在AI产品开发中，我反复观察到一个奇特的模式：演示效果出色，试点显示出希望，然后产品在生产中失败。不是因为AI不工作——它确实工作——而是因为它在错误的情境中工作。\n\n这不是技术问题。这是情境问题。\n\n## 情境真正意味着什么\n\n当我们谈论AI产品中的情境时，我们不仅仅是在谈论提示工程或微调。我们谈论的是人类行为、组织工作流程和现有工具的整个生态系统——任何新产品都必须在其中导航。\n\n考虑一个简单的例子：AI写作助手。演示显示它生成优美的散文。试点用户喜欢它。但在生产中，采用停滞。为什么？\n\n因为演示没有考虑到：\n- 人们实际上如何写作（片段式，跨会话，不断被打断）\n- 写作如何融入他们的工作流程（通常在最后，在截止日期压力下）\n- \"好\"在他们特定领域意味着什么（法律写作≠营销文案）\n- 还有谁需要审查和批准输出\n\n## 情境堆栈\n\n我将情境视为具有四个层次的堆栈：\n\n**第1层：任务情境**\n用户实际上试图完成什么？不是我们认为他们应该想要什么，而是他们真正需要什么。\n\n**第2层：工作流情境**\n这个任务如何融入他们更广泛的工作模式？之前和之后发生了什么？\n\n**第3层：社会情境**\n还有谁参与？谁审查、批准或受输出影响？\n\n**第4层：组织情境**\n哪些文化规范、风险容忍度和权力动态塑造了工具的采用方式？\n\n大多数AI产品相当好地解决了第1层。很少有产品解决所有四层。\n\n## 不同的方法\n\n成功的产品往往从情境开始，而不是从能力开始。他们问：\"鉴于人们在这个领域实际上如何工作，AI在哪里会创造真正的价值？\"而不是\"鉴于AI可以做什么，我们可以在哪里应用它？\"\n\n这更慢。在演示中不那么令人印象深刻。它不会产生病毒式的Twitter帖子。\n\n但它构建了人们实际使用的产品。"
+  },
+  {
+    "slug": "taste-automation",
+    "title": "Taste Cannot Be Automated (Yet)",
+    "titleZh": "品味无法被自动化（目前）",
+    "excerpt": "In a world of infinite generation, curation becomes the bottleneck. But taste is more than selection—it's pattern recognition across domains that machines don't traverse.",
+    "excerptZh": "在一个无限生成的世界中，策展成为瓶颈。但品味不仅仅是选择——它是机器无法跨越的领域间的模式识别。",
+    "date": "December 2025",
+    "category": "Taste as Leverage",
+    "categoryZh": "品味作为杠杆",
+    "readTime": "8 min read",
+    "content": "## What Makes Something Feel \"Right\"?\n\nIn an age where AI can generate infinite variations of almost anything—images, code, copy, interfaces—the question is no longer \"Can we make it?\" but \"Should we make it this way?\"\n\nThis is where taste becomes leverage.\n\nTaste isn't about decoration. It's a decision-making ability. It's knowing what to keep and what to discard. What to emphasize and what to mute. The gap between good and great products is rarely capability—it's curation.\n\n## A Case Study in Craft: The Liquid Glass Lens\n\nLet me show you what I mean with a concrete example. Visit this interactive demo:\n\n[→ Experience the Magnifying Glass Component](https://g29times.github.io/liquid-dynamics/)\n\nThis component is a masterclass in tasteful engineering. At first glance, it's \"just\" a magnifying glass effect. But look closer:\n\n**Dual Displacement Maps**\nThe component uses two displacement maps—one for the edge refraction (the subtle bending at the sides), and another for the zooming effect (the stronger distortion in the center). Most developers would use one. The choice to use two creates optical realism that your eye recognizes even if your mind doesn't consciously process it.\n\n**Shadows and Scaling**\nWatch what happens when you drag the lens. The shadow moves. The scale shifts. These micro-interactions create a sense of physical presence. The lens feels like it has weight.\n\n**The Specular Bloom**\nThere's a subtle specular highlight—a hint of light reflection on the glass surface. This is pure attention to detail. It doesn't add functionality. It adds believability.\n\n## Why This Matters\n\nThis lens could have been built in a thousand simpler ways. A basic CSS zoom. A single displacement filter. A static magnification circle.\n\nBut someone made a series of decisions:\n- \"The edge refraction should feel different from the center zoom.\"\n- \"The shadow should respond to movement.\"\n- \"There should be a hint of light on the glass.\"\n\nThese are taste decisions. They can't be algorithmically derived from requirements. They emerge from a cultivated sensibility about what makes interactions feel alive.\n\n## The Hierarchy of Craft\n\nI think about taste operating at three levels:\n\n**Level 1: Correctness**\nDoes it work? Does it do what it says it does? Most products stop here.\n\n**Level 2: Polish**\nIs it smooth? Are the animations fluid? Do the interactions feel responsive? Good products reach here.\n\n**Level 3: Soul**\nDoes it have a point of view? Do the details reveal intention? Does using it feel like encountering a considered opinion about how things should be?\n\nThe Liquid Glass lens operates at Level 3. Someone decided that a magnifying glass on a webpage should feel like holding actual glass.\n\n## Taste as Competitive Advantage\n\nHere's the insight that matters for builders:\n\nAI can generate Level 1 outputs reliably. It's getting better at Level 2. But Level 3 remains stubbornly human.\n\nWhy? Because taste requires:\n- **Cross-domain pattern recognition**: Knowing what makes physical glass feel \"glassy\" and translating that to pixels\n- **Intentional constraint**: Choosing to stop adding features and start refining what exists\n- **Conviction under ambiguity**: Deciding that this specific shadow opacity is correct when there's no spec to reference\n\nThese are precisely the capabilities that current AI struggles with. Not because they're computationally hard, but because they're contextually subtle.\n\n## An Invitation\n\nI encourage you to spend a few minutes with the demo. Drag the lens slowly. Watch the refraction. Notice the parameters at the bottom—Specular Opacity, Saturation, Refraction Level—and play with them.\n\nAsk yourself: What makes this feel premium? What would be lost if any element were removed?\n\nThis exercise—developing the ability to notice and articulate what makes something excellent—is how taste is cultivated.\n\nTaste is not an ornament. It is a decision.",
+    "contentZh": "## 什么让事物感觉\"对\"？\n\n在AI可以生成几乎任何东西的无限变体的时代——图像、代码、文案、界面——问题不再是\"我们能做吗？\"而是\"我们应该这样做吗？\"\n\n这就是品味成为杠杆的地方。\n\n品味不是装饰。它是一种决策能力。它是知道什么该保留、什么该丢弃。什么该强调、什么该弱化。好产品和伟大产品之间的差距很少是能力——而是策展。\n\n## 工艺案例研究：液态玻璃透镜\n\n让我用一个具体的例子来说明我的意思。请访问这个交互演示：\n\n[→ 体验放大镜组件](https://g29times.github.io/liquid-dynamics/)\n\n这个组件是有品味的工程的典范。乍一看，它\"只是\"一个放大镜效果。但仔细看：\n\n**双重位移贴图**\n这个组件使用两个位移贴图——一个用于边缘折射（侧面的微妙弯曲），另一个用于缩放效果（中心更强的扭曲）。大多数开发者会使用一个。选择使用两个创造了光学真实感，即使你的头脑没有有意识地处理它，你的眼睛也能识别。\n\n**阴影和缩放**\n观察当你拖动镜头时会发生什么。阴影移动。比例变化。这些微交互创造了一种物理存在感。镜头感觉有重量。\n\n**镜面高光**\n有一个微妙的镜面高光——玻璃表面的光反射提示。这是纯粹的细节关注。它不增加功能。它增加可信度。\n\n## 为什么这很重要\n\n这个镜头可以用一千种更简单的方式构建。一个基本的CSS缩放。一个单一的位移滤镜。一个静态的放大圆。\n\n但有人做出了一系列决定：\n- \"边缘折射应该与中心缩放感觉不同。\"\n- \"阴影应该响应移动。\"\n- \"玻璃上应该有一丝光芒。\"\n\n这些是品味决定。它们不能从需求中算法推导。它们来自于对什么使交互感觉生动的培养敏感度。\n\n## 工艺层次\n\n我认为品味在三个层面运作：\n\n**第1层：正确性**\n它工作吗？它做到它说的了吗？大多数产品止步于此。\n\n**第2层：打磨**\n它流畅吗？动画是否流畅？交互是否响应灵敏？好的产品达到这里。\n\n**第3层：灵魂**\n它有观点吗？细节是否揭示意图？使用它是否感觉像遇到了关于事物应该如何的深思熟虑的意见？\n\n液态玻璃镜头在第3层运作。有人决定，网页上的放大镜应该感觉像拿着真正的玻璃。\n\n## 品味作为竞争优势\n\n这里是对建造者重要的洞察：\n\nAI可以可靠地生成第1层输出。它在第2层越来越好。但第3层仍然顽固地是人类的。\n\n为什么？因为品味需要：\n- **跨领域模式识别**：知道什么使物理玻璃感觉\"像玻璃\"并将其转化为像素\n- **有意的约束**：选择停止添加功能并开始精炼现有的东西\n- **模糊中的信念**：在没有规格可参考时决定这个特定的阴影不透明度是正确的\n\n这些正是当前AI难以做到的能力。不是因为它们计算困难，而是因为它们在情境上微妙。\n\n## 邀请\n\n我鼓励你花几分钟时间在演示上。慢慢拖动镜头。观察折射。注意底部的参数——镜面不透明度、饱和度、折射级别——并玩弄它们。\n\n问自己：是什么让这感觉高级？如果任何元素被移除会失去什么？\n\n这个练习——培养注意和阐明什么使某物卓越的能力——就是品味的培养方式。\n\n审美不是装饰，而是一种决策能力。"
+  },
+  {
+    "slug": "tools-vs-principles",
+    "title": "The Tools You Forget vs. The Principles You Keep",
+    "titleZh": "你遗忘的工具与你保留的原则",
+    "excerpt": "A framework for deciding what to learn deeply and what to learn just enough. Spoiler: most tool-specific knowledge has a half-life of 18 months.",
+    "excerptZh": "一个决定什么要深入学习、什么只需浅尝辄止的框架。剧透：大多数工具特定知识的半衰期是18个月。",
+    "date": "Nov 2025",
+    "category": "Variables & Constants",
+    "categoryZh": "变量与常量",
+    "readTime": "10 min read",
+    "content": "Content coming soon...",
+    "contentZh": "内容即将上线..."
+  },
+  {
+    "slug": "quiet-failures",
+    "title": "Building in Public: Three Months of Quiet Failures",
+    "titleZh": "公开构建：三个月的沉默失败",
+    "excerpt": "A candid look at what didn't work, what I learned, and why I'm still building. The messy middle of product development rarely gets documented.",
+    "excerptZh": "坦诚地审视什么没有奏效，我学到了什么，以及为什么我仍在构建。产品开发的混乱中段很少被记录。",
+    "date": "Oct 2025",
+    "category": "Builder's Log",
+    "categoryZh": "建造者日志",
+    "readTime": "15 min read",
+    "content": "Content coming soon...",
+    "contentZh": "内容即将上线..."
+  },
+  {
+    "slug": "attention-economy",
+    "title": "The Attention Economy and AI: A Systems View",
+    "titleZh": "注意力经济与AI：系统视角",
+    "excerpt": "How AI tools are reshaping attention patterns, and what this means for products competing for cognitive real estate.",
+    "excerptZh": "AI工具如何重塑注意力模式，这对争夺认知空间的产品意味着什么。",
+    "date": "Sep 2025",
+    "category": "Context Deconstruction",
+    "categoryZh": "情境解构",
+    "readTime": "11 min read",
+    "content": "Content coming soon...",
+    "contentZh": "内容即将上线..."
+  }
+]
