@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Redirecting...</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      background-repeat: repeat;
+    }
+    noscript {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-family: system-ui, -apple-system, sans-serif;
+      color: #fff;
+      background: rgba(0,0,0,0.35);
+      text-align: center;
+    }
+  </style>
+  <script>
+    // GitHub Pages SPA fallback:
+    // 1) 进入 404.html 时，把原始路径保存到 sessionStorage
+    // 2) 立即跳回根目录 /
+    // 3) index.html 的脚本会读取 redirect 并恢复路径交给前端路由
+    (function() {
+      // 随机选择一张 404 背景图并平铺
+      var imgs = ['/404-1.jpg', '/404-2.jpg'];
+      var chosen = imgs[Math.floor(Math.random() * imgs.length)];
+      document.addEventListener('DOMContentLoaded', function() {
+        document.body.style.backgroundImage = 'url(' + chosen + ')';
+      });
+
+      var redirect = window.location.pathname + window.location.search + window.location.hash;
+      sessionStorage.setItem('redirect', redirect);
+      window.location.replace('/');
+    })();
+  </script>
+</head>
+<body>
+  <noscript>
+    <p>Redirecting...</p>
+  </noscript>
+</body>
+</html>
