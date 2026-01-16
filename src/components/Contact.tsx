@@ -39,11 +39,11 @@ export function Contact() {
           {/* Additional Info */}
           <div className="pt-8 flex flex-wrap justify-center gap-8 text-muted-foreground">
             <div className="text-center">
-              <p className="text-sm uppercase tracking-wider mb-1">{t('contact.location.label')}</p>
+              <p className="text-sm uppercase tracking-wider mb-1"><a href="/admin">{t('contact.location.label')}</a></p>
               <p className="font-medium text-foreground">{t('about.location')}</p>
             </div>
             <div className="text-center">
-              <p className="text-sm uppercase tracking-wider mb-1">{t('contact.response.label')}</p>
+              <p className="text-sm uppercase tracking-wider mb-1"><a href="/stats">{t('contact.response.label')}</a></p>
               <p className="font-medium text-foreground">{t('contact.response.value')}</p>
             </div>
           </div>

@@ -21,7 +21,7 @@ export function Footer() {
               {t('footer.rss')}
             </a>
             <a
-              href="mailto:hello@example.com"
+              href="mailto:g29tony@gmail.com"
               className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <Mail className="w-4 h-4" />

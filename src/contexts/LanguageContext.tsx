@@ -63,7 +63,7 @@ const translations: Record<Language, Record<string, string>> = {
     
     // About
     'about.label': 'About',
-    'about.location': 'Chicago',
+    'about.location': ' ',
     'about.headline': 'Extract the 1% certainty.',
     'about.subheadline': 'Taste is not an ornament; it is a decision.',
     'about.pillar.focus.label': 'Focus',
@@ -80,12 +80,12 @@ const translations: Record<Language, Record<string, string>> = {
     'contact.label': 'Get in Touch',
     'contact.headline': "Let's Connect",
     'contact.subtext': "I'm always open to conversations about AI products, systems thinking, and meaningful collaboration. Drop me a line.",
-    'contact.location.label': 'Location',
-    'contact.response.label': 'Response Time',
-    'contact.response.value': '24-48 hours',
+    'contact.location.label': 'Admin',
+    'contact.response.label': 'Status',
+    'contact.response.value': ' ',
     
     // Footer
-    'footer.copyright': '© 2024. Thoughts on AI, products, and systems.',
+    'footer.copyright': '© 2024～2026. Thoughts on AI, products, and systems.',
     'footer.rss': 'RSS',
     'footer.email': 'Email',
   },
@@ -143,7 +143,7 @@ const translations: Record<Language, Record<string, string>> = {
     
     // About
     'about.label': '关于',
-    'about.location': '芝加哥',
+    'about.location': ' ',
     'about.headline': '提取1%的确定性。',
     'about.subheadline': '审美不是装饰，而是一种决策。',
     'about.pillar.focus.label': '专注',
@@ -160,9 +160,9 @@ const translations: Record<Language, Record<string, string>> = {
     'contact.label': '联系方式',
     'contact.headline': '保持联系',
     'contact.subtext': '我始终乐于探讨AI产品、系统思维和有意义的合作。欢迎留言。',
-    'contact.location.label': '所在地',
-    'contact.response.label': '回复时间',
-    'contact.response.value': '24-48小时',
+    'contact.location.label': '管理员',
+    'contact.response.label': '统计表',
+    'contact.response.value': ' ',
     
     // Footer
     'footer.copyright': '© 2024. 关于AI、产品和系统的思考。',
