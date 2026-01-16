@@ -23,6 +23,16 @@
 
   <body>
     <div id="root"></div>
+    <script>
+      // SPA fallback: 如果 404.html 重定向到根，恢复原始路径再交给路由
+      (function() {
+        const redirect = sessionStorage.getItem('redirect');
+        if (redirect) {
+          sessionStorage.removeItem('redirect');
+          history.replaceState(null, '', redirect);
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
