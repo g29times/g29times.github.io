@@ -93,7 +93,7 @@ export default function Stats() {
 
           <div className="overflow-x-auto pb-2">
             <div className="flex gap-1">
-              {weeks.map((week, wIdx) => (
+              {weeks.slice().reverse().map((week, wIdx) => (
                 <div key={wIdx} className="grid grid-rows-7 gap-1">
                   {week.map((cell, dIdx) => {
                     if (!cell) return <div key={dIdx} className="h-4 w-4" />;
