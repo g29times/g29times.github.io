@@ -18,4 +18,5 @@ export const dailyLog: DailyEntry[] = [
   { date: '2026-01-08', done: ['跑步 4km', '做饭'], todo: ['补充拍照'], note: '轻松日' },
   { date: '2026-01-09', done: ['代码重构：提取组件', '整理 Notion 待办'], todo: ['补测试用例'] },
   { date: '2026-01-10', done: ['录制视频 demo', '健身（推拉腿）', '清理邮箱'], note: '信息减脂日' },
+  { date: '2026-01-18', done: ['添加了个人记忆'] },
 ];
