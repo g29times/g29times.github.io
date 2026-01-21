@@ -3,6 +3,7 @@ type Env = {
   ACCESS_TEAM_DOMAIN?: string;
   ACCESS_AUD?: string;
   ADMIN_EMAIL: string;
+  ADMIN_ALLOWED_SUBS?: string;
 };
 
 type BlogPost = {
@@ -23,6 +24,8 @@ type AccessPayload = {
   aud?: string | string[];
   email?: string;
   exp?: number;
+  sub?: string;
+  common_name?: string;
 };
 
 function json(data: unknown, init?: ResponseInit) {
@@ -99,16 +102,48 @@ async function verifyAccessJwt(token: string, env: Env) {
   return p;
 }
 
+async function requireAccess(request: Request, env: Env) {
+  const jwt = request.headers.get("Cf-Access-Jwt-Assertion");
+  if (!jwt) return { ok: false as const, reason: "missing access jwt" };
+
+  try {
+    const payload = await verifyAccessJwt(jwt, env);
+    return {
+      ok: true as const,
+      email: payload.email,
+      sub: payload.sub,
+      commonName: payload.common_name,
+    };
+  } catch (e) {
+    return { ok: false as const, reason: e instanceof Error ? e.message : "invalid token" };
+  }
+}
+
 async function requireAdmin(request: Request, env: Env) {
   const jwt = request.headers.get("Cf-Access-Jwt-Assertion");
   if (!jwt) return { ok: false as const, reason: "missing access jwt" };
 
   try {
     const payload = await verifyAccessJwt(jwt, env);
-    if (!payload.email || payload.email.toLowerCase() !== env.ADMIN_EMAIL.toLowerCase()) {
-      return { ok: false as const, reason: "forbidden" };
-    }
-    return { ok: true as const, email: payload.email };
+
+    const emailOk =
+      !!payload.email && payload.email.toLowerCase() === env.ADMIN_EMAIL.toLowerCase();
+
+    const allowedSubs = (env.ADMIN_ALLOWED_SUBS ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const serviceIdentity = payload.sub || payload.common_name;
+    const subOk = !!serviceIdentity && allowedSubs.includes(serviceIdentity);
+
+    if (!emailOk && !subOk) return { ok: false as const, reason: "forbidden" };
+
+    return {
+      ok: true as const,
+      email: payload.email,
+      sub: payload.sub,
+      commonName: payload.common_name,
+    };
   } catch (e) {
     return { ok: false as const, reason: e instanceof Error ? e.message : "invalid token" };
   }
@@ -164,12 +199,19 @@ async function upsertPosts(env: Env, posts: BlogPost[]) {
   await env.DB.batch(batch);
 }
 
+async function deletePost(env: Env, slug: string) {
+  await env.DB.prepare("DELETE FROM posts WHERE slug = ?").bind(slug).run();
+}
+
 function withCors(request: Request, response: Response) {
   const origin = request.headers.get("Origin") || "*";
   const headers = new Headers(response.headers);
   headers.set("Access-Control-Allow-Origin", origin);
   headers.set("Vary", "Origin");
-  headers.set("Access-Control-Allow-Headers", "content-type, cf-access-jwt-assertion");
+  headers.set(
+    "Access-Control-Allow-Headers",
+    "content-type, cf-access-jwt-assertion, cf-access-client-id, cf-access-client-secret",
+  );
   headers.set("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
   return new Response(response.body, { status: response.status, headers });
 }
@@ -224,6 +266,50 @@ export default {
           await upsertPosts(env, posts);
           return withCors(request, json({ ok: true }));
         }
+      }
+
+      if (url.pathname === "/api/admin/whoami") {
+        const access = await requireAccess(request, env);
+        if (!access.ok) {
+          return withCors(request, json({ error: "unauthorized", reason: access.reason }, { status: 401 }));
+        }
+        return withCors(
+          request,
+          json({
+            ok: true,
+            email: access.email ?? null,
+            sub: access.sub ?? null,
+            commonName: access.commonName ?? null,
+          }),
+        );
+      }
+
+      if (url.pathname === "/api/admin/post") {
+        const admin = await requireAdmin(request, env);
+        if (!admin.ok) {
+          return withCors(request, json({ error: "unauthorized", reason: admin.reason }, { status: 401 }));
+        }
+
+        if (request.method === "POST") {
+          const body = (await request.json()) as unknown;
+          const post = body as BlogPost;
+          if (!post?.slug) {
+            return withCors(request, json({ error: "slug_required" }, { status: 400 }));
+          }
+          await upsertPosts(env, [post]);
+          return withCors(request, json({ ok: true }));
+        }
+      }
+
+      if (url.pathname.startsWith("/api/admin/posts/") && request.method === "DELETE") {
+        const admin = await requireAdmin(request, env);
+        if (!admin.ok) {
+          return withCors(request, json({ error: "unauthorized", reason: admin.reason }, { status: 401 }));
+        }
+        const slug = decodeURIComponent(url.pathname.slice("/api/admin/posts/".length));
+        if (!slug) return withCors(request, json({ error: "slug_required" }, { status: 400 }));
+        await deletePost(env, slug);
+        return withCors(request, json({ ok: true }));
       }
 
       return withCors(request, json({ error: "not_found" }, { status: 404 }));
