@@ -51,7 +51,7 @@ export default function Stats() {
     const dateObj = new Date(cell.date);
     const day = dateObj.getDay(); // 0=Sun
 
-    if (weeks.length === 0 || day === 0) {
+    if (weeks.length === 0 || day === 1) {
       weeks.push(Array.from({ length: 7 }, () => undefined as unknown as Cell));
     }
     const currentWeek = weeks[weeks.length - 1];
@@ -93,7 +93,7 @@ export default function Stats() {
 
           <div className="overflow-x-auto pb-2">
             <div className="flex gap-1">
-              {weeks.map((week, wIdx) => (
+              {weeks.slice().reverse().map((week, wIdx) => (
                 <div key={wIdx} className="grid grid-rows-7 gap-1">
                   {week.map((cell, dIdx) => {
                     if (!cell) return <div key={dIdx} className="h-4 w-4" />;
