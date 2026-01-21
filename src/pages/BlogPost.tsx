@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import showdown from 'showdown';
+import parse, { DOMNode, Element, domToReact } from 'html-react-parser';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { BlogChart } from '@/components/BlogChart';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ArrowLeft } from 'lucide-react';
 
@@ -9,6 +12,78 @@ import postsData from '@/data/posts.json';
 import { BlogPost as BlogPostType } from '@/types/blog';
 
 const allPosts = postsData as BlogPostType[];
+
+// Helper to extract text from a node recursively
+const getText = (node: DOMNode): string => {
+  if (node.type === 'text') return node.data || '';
+  if (node.type === 'tag' && (node as Element).children) {
+    return (node as Element).children.map(getText).join('');
+  }
+  return '';
+};
+
+const extractTableData = (node: Element) => {
+  if (node.name !== 'table') return null;
+
+  const thead = node.children.find(c => c.type === 'tag' && c.name === 'thead') as Element;
+  const tbody = node.children.find(c => c.type === 'tag' && c.name === 'tbody') as Element;
+
+  if (!thead || !tbody) return null;
+
+  // Parse Headers
+  const headerRow = thead.children.find(c => c.type === 'tag' && c.name === 'tr') as Element;
+  if (!headerRow) return null;
+
+  const headers = headerRow.children
+    .filter(c => c.type === 'tag' && c.name === 'th')
+    .map(th => getText(th as Element).trim());
+
+  // We expect at least: MetricName, Description (optional), Value1, Value2...
+  // Heuristic: If we have "Databricks" or "Snowflake" in headers, it's likely our target table
+  const targetKeywords = ['Databricks', 'Snowflake', 'ClickHouse'];
+  const dataKeys: string[] = [];
+  const valueIndices: number[] = [];
+
+  headers.forEach((h, i) => {
+    // Clean header: remove (得分) or similar
+    const cleanHeader = h.replace(/\(.*\)/, '').trim();
+    if (targetKeywords.some(k => cleanHeader.includes(k))) {
+      dataKeys.push(cleanHeader);
+      valueIndices.push(i);
+    }
+  });
+
+  if (dataKeys.length < 2) return null; // Need at least 2 series to compare
+
+  // Parse Rows
+  const rows = tbody.children.filter(c => c.type === 'tag' && c.name === 'tr') as Element[];
+  const data = rows.map(row => {
+    const cells = row.children.filter(c => c.type === 'tag' && c.name === 'td') as Element[];
+    if (cells.length < headers.length) return null;
+
+    const name = getText(cells[0] as Element).replace(/\(.*\)/, '').trim(); // First column is usually the metric
+    
+    const rowData: any = { name };
+    let hasValidNumber = false;
+
+    valueIndices.forEach((colIndex, i) => {
+      const valText = getText(cells[colIndex] as Element).replace(/\*\*/g, '').trim();
+      const val = parseFloat(valText);
+      if (!isNaN(val)) {
+        rowData[dataKeys[i]] = val;
+        hasValidNumber = true;
+      } else {
+        rowData[dataKeys[i]] = 0;
+      }
+    });
+
+    return hasValidNumber ? rowData : null;
+  }).filter(Boolean);
+
+  if (data.length === 0) return null;
+
+  return { data, keys: dataKeys };
+};
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -43,6 +118,24 @@ const BlogPost = () => {
       cancelled = true;
     };
   }, [slug]);
+
+  const converter = useMemo(() => {
+    const cvbw = new showdown.Converter({
+      tables: true,
+      simplifiedAutoLink: true,
+      strikethrough: true,
+      tasklists: true,
+      openLinksInNewWindow: true,
+      emoji: true
+    });
+    return cvbw;
+  }, []);
+
+  const htmlContent = useMemo(() => {
+    if (!post) return '';
+    const content = language === 'zh' ? post.contentZh : post.content;
+    return converter.makeHtml(content);
+  }, [post, language, converter]);
 
   if (!post) {
     return (
@@ -96,78 +189,32 @@ const BlogPost = () => {
           </header>
 
           <div className="prose-blog">
-            {(language === 'zh' ? post.contentZh : post.content)
-              .split('\n')
-              .map((paragraph, index) => {
-                if (paragraph.startsWith('## ')) {
-                  return (
-                    <h2 key={index} className="text-2xl md:text-3xl font-serif font-semibold mt-12 mb-6 text-foreground">
-                      {paragraph.replace('## ', '')}
-                    </h2>
-                  );
-                }
-                if (paragraph.startsWith('**') && paragraph.endsWith('**')) {
-                  return (
-                    <p key={index} className="text-lg font-semibold text-foreground mb-2">
-                      {paragraph.replace(/\*\*/g, '')}
-                    </p>
-                  );
-                }
-                if (paragraph.startsWith('- ')) {
-                  return (
-                    <li key={index} className="text-lg text-muted-foreground ml-6 mb-2 list-disc">
-                      {paragraph.replace('- ', '')}
-                    </li>
-                  );
-                }
-                if (paragraph.trim()) {
-                  // Handle links in the format [text](url)
-                  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-                  const parts = paragraph.split(linkRegex);
-                  
-                  if (parts.length > 1) {
-                    const elements: React.ReactNode[] = [];
-                    let i = 0;
-                    let lastIndex = 0;
-                    let match;
-                    const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
-                    
-                    while ((match = regex.exec(paragraph)) !== null) {
-                      if (match.index > lastIndex) {
-                        elements.push(paragraph.slice(lastIndex, match.index));
-                      }
-                      elements.push(
-                        <a 
-                          key={i++}
-                          href={match[2]} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline font-medium"
-                        >
-                          {match[1]}
-                        </a>
+            <div className="prose prose-lg dark:prose-invert max-w-none prose-headings:font-serif prose-headings:font-semibold prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:mt-12 prose-h2:mb-6 prose-p:text-lg prose-p:leading-8 prose-p:mb-6 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-li:text-lg prose-li:text-muted-foreground">
+              {parse(htmlContent, {
+                replace: (domNode) => {
+                  if (domNode instanceof Element && domNode.name === 'table') {
+                    const chartInfo = extractTableData(domNode);
+                    if (chartInfo) {
+                      return (
+                        <div className="my-8">
+                          <BlogChart data={chartInfo.data} keys={chartInfo.keys} />
+                          {/* Render the original table as well, wrapped in a div to avoid hydration errors if needed, though parse handles it */}
+                          <div className="overflow-x-auto">
+                            {domToReact([domNode])}
+                          </div>
+                        </div>
                       );
-                      lastIndex = match.index + match[0].length;
                     }
-                    if (lastIndex < paragraph.length) {
-                      elements.push(paragraph.slice(lastIndex));
-                    }
-                    
+                    // Wrap other tables for overflow handling
                     return (
-                      <p key={index} className="text-lg leading-8 text-foreground mb-6">
-                        {elements}
-                      </p>
+                      <div className="overflow-x-auto my-8">
+                         {domToReact([domNode])}
+                      </div>
                     );
                   }
-                  
-                  return (
-                    <p key={index} className="text-lg leading-8 text-foreground mb-6">
-                      {paragraph}
-                    </p>
-                  );
                 }
-                return null;
               })}
+            </div>
           </div>
         </article>
       </main>

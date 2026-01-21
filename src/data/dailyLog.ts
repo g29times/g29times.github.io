@@ -19,4 +19,15 @@ export const dailyLog: DailyEntry[] = [
   { date: '2026-01-09', done: ['代码重构：提取组件', '整理 Notion 待办'], todo: ['补测试用例'] },
   { date: '2026-01-10', done: ['录制视频 demo', '健身（推拉腿）', '清理邮箱'], note: '信息减脂日' },
   { date: '2026-01-18', done: ['添加了个人记忆'] },
+  {
+    date: '2026-01-21',
+    done: [
+      '发布 4 篇中英文双语博客（ClickHouse对比、Lovart分析、AI意识错觉、Long-running Agents）',
+      '修复博客 Markdown 渲染逻辑，更换为 Showdown.js 并集成 Typography',
+      '开发 BlogChart 组件，实现文章表格数据自动化图表可视化',
+      '重构 post_blog.py 为通用发布工具，支持内存处理与 JSON 输入',
+      '部署 Cloudflare Worker Cron 任务，实现 Lightning endpoint 自动保活'
+    ],
+    note: '全自动化生产力提升日'
+  },
 ];
