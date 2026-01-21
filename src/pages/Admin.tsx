@@ -315,7 +315,9 @@ const Admin = () => {
               Admin Dashboard
             </h1>
             <p className="text-muted-foreground">
-              Manage your blog posts and content.
+              <a href="/Cloudflarer2management" target="_blank" rel="noopener noreferrer">
+                Resource management
+              </a>
             </p>
           </div>
 
