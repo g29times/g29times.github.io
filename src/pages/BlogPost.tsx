@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -96,78 +98,15 @@ const BlogPost = () => {
           </header>
 
           <div className="prose-blog">
-            {(language === 'zh' ? post.contentZh : post.content)
-              .split('\n')
-              .map((paragraph, index) => {
-                if (paragraph.startsWith('## ')) {
-                  return (
-                    <h2 key={index} className="text-2xl md:text-3xl font-serif font-semibold mt-12 mb-6 text-foreground">
-                      {paragraph.replace('## ', '')}
-                    </h2>
-                  );
-                }
-                if (paragraph.startsWith('**') && paragraph.endsWith('**')) {
-                  return (
-                    <p key={index} className="text-lg font-semibold text-foreground mb-2">
-                      {paragraph.replace(/\*\*/g, '')}
-                    </p>
-                  );
-                }
-                if (paragraph.startsWith('- ')) {
-                  return (
-                    <li key={index} className="text-lg text-muted-foreground ml-6 mb-2 list-disc">
-                      {paragraph.replace('- ', '')}
-                    </li>
-                  );
-                }
-                if (paragraph.trim()) {
-                  // Handle links in the format [text](url)
-                  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-                  const parts = paragraph.split(linkRegex);
-                  
-                  if (parts.length > 1) {
-                    const elements: React.ReactNode[] = [];
-                    let i = 0;
-                    let lastIndex = 0;
-                    let match;
-                    const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
-                    
-                    while ((match = regex.exec(paragraph)) !== null) {
-                      if (match.index > lastIndex) {
-                        elements.push(paragraph.slice(lastIndex, match.index));
-                      }
-                      elements.push(
-                        <a 
-                          key={i++}
-                          href={match[2]} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline font-medium"
-                        >
-                          {match[1]}
-                        </a>
-                      );
-                      lastIndex = match.index + match[0].length;
-                    }
-                    if (lastIndex < paragraph.length) {
-                      elements.push(paragraph.slice(lastIndex));
-                    }
-                    
-                    return (
-                      <p key={index} className="text-lg leading-8 text-foreground mb-6">
-                        {elements}
-                      </p>
-                    );
-                  }
-                  
-                  return (
-                    <p key={index} className="text-lg leading-8 text-foreground mb-6">
-                      {paragraph}
-                    </p>
-                  );
-                }
-                return null;
-              })}
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              className="prose prose-lg dark:prose-invert max-w-none prose-headings:font-serif prose-headings:font-semibold prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:mt-12 prose-h2:mb-6 prose-p:text-lg prose-p:leading-8 prose-p:mb-6 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-li:text-lg prose-li:text-muted-foreground"
+              components={{
+                a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" {...props} />
+              }}
+            >
+              {language === 'zh' ? post.contentZh : post.content}
+            </ReactMarkdown>
           </div>
         </article>
       </main>
