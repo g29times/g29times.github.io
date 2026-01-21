@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import showdown from 'showdown';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -45,6 +44,24 @@ const BlogPost = () => {
       cancelled = true;
     };
   }, [slug]);
+
+  const converter = useMemo(() => {
+    const cvbw = new showdown.Converter({
+      tables: true,
+      simplifiedAutoLink: true,
+      strikethrough: true,
+      tasklists: true,
+      openLinksInNewWindow: true,
+      emoji: true
+    });
+    return cvbw;
+  }, []);
+
+  const htmlContent = useMemo(() => {
+    if (!post) return '';
+    const content = language === 'zh' ? post.contentZh : post.content;
+    return converter.makeHtml(content);
+  }, [post, language, converter]);
 
   if (!post) {
     return (
@@ -98,15 +115,10 @@ const BlogPost = () => {
           </header>
 
           <div className="prose-blog">
-            <ReactMarkdown 
-              remarkPlugins={[remarkGfm]}
+            <div 
               className="prose prose-lg dark:prose-invert max-w-none prose-headings:font-serif prose-headings:font-semibold prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:mt-12 prose-h2:mb-6 prose-p:text-lg prose-p:leading-8 prose-p:mb-6 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-li:text-lg prose-li:text-muted-foreground"
-              components={{
-                a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" {...props} />
-              }}
-            >
-              {language === 'zh' ? post.contentZh : post.content}
-            </ReactMarkdown>
+              dangerouslySetInnerHTML={{ __html: htmlContent }}
+            />
           </div>
         </article>
       </main>
