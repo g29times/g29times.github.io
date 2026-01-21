@@ -9,26 +9,37 @@ import { BlogPost } from '@/types/blog';
 
 const Blog = () => {
   const { language } = useLanguage();
-  const [posts, setPosts] = useState<BlogPost[]>(postsData as BlogPost[]);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
 
   useEffect(() => {
     let cancelled = false;
 
+    const fallbackTimer = setTimeout(() => {
+      if (!cancelled) setPosts(postsData as BlogPost[]);
+    }, 5000);
+
     (async () => {
       try {
         const res = await fetch('/api/posts', {
-          headers: { 'accept': 'application/json' },
+          headers: { accept: 'application/json' },
         });
         if (!res.ok) return;
         const data = (await res.json()) as BlogPost[];
-        if (!cancelled && Array.isArray(data)) setPosts(data);
+        if (!cancelled && Array.isArray(data)) {
+          clearTimeout(fallbackTimer);
+          setPosts(data);
+        }
       } catch {
-        // ignore and fallback to bundled posts.json
+        if (!cancelled) {
+          clearTimeout(fallbackTimer);
+          setPosts(postsData as BlogPost[]);
+        }
       }
     })();
 
     return () => {
       cancelled = true;
+      clearTimeout(fallbackTimer);
     };
   }, []);
 
