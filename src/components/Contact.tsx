@@ -1,5 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Mail, ArrowUpRight } from 'lucide-react';
+import { Sparkles, ArrowUpRight } from 'lucide-react';
 
 export function Contact() {
   const { t } = useLanguage();
@@ -28,11 +28,13 @@ export function Contact() {
 
           {/* Email CTA */}
           <a
-            href="mailto:g29tony@gmail.com"
+            href="https://aimmar.ink"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-3 px-8 py-4 bg-foreground text-background font-medium rounded-full hover:bg-primary transition-colors group"
           >
-            <Mail className="w-5 h-5" />
-            <span>g29tony@gmail.com</span>
+            <Sparkles className="w-5 h-5" />
+            <span>aimmar.ink</span>
             <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </a>
 

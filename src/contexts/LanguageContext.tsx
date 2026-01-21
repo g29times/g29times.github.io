@@ -17,7 +17,7 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.taste': 'Taste',
     'nav.variable': 'Variable',
     'nav.builder': 'Builder',
-    'nav.contact': 'Contact',
+    'nav.contact': 'Aimmar',
     
     // Hero
     'hero.mainTitle': 'Beyond the Noise',
@@ -77,8 +77,8 @@ const translations: Record<Language, Record<string, string>> = {
     'about.connect': 'Connect',
     
     // Contact
-    'contact.label': 'Get in Touch',
-    'contact.headline': "Let's Connect",
+    'contact.label': 'Aimmar',
+    'contact.headline': "Let's Vibe",
     'contact.subtext': "I'm always open to conversations about AI products, systems thinking, and meaningful collaboration. Drop me a line.",
     'contact.location.label': 'Admin',
     'contact.response.label': 'Status',
@@ -97,7 +97,7 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.taste': '品味',
     'nav.variable': '变量',
     'nav.builder': '构建',
-    'nav.contact': '联系',
+    'nav.contact': 'Aimmar',
     
     // Hero
     'hero.mainTitle': '穿越噪音',
@@ -157,8 +157,8 @@ const translations: Record<Language, Record<string, string>> = {
     'about.connect': '联系我',
     
     // Contact
-    'contact.label': '联系方式',
-    'contact.headline': '保持联系',
+    'contact.label': 'Aimmar',
+    'contact.headline': "Let's Vibe",
     'contact.subtext': '我始终乐于探讨AI产品、系统思维和有意义的合作。欢迎留言。',
     'contact.location.label': '管理员',
     'contact.response.label': '统计表',
