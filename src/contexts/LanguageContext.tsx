@@ -13,10 +13,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Navigation
     'nav.home': 'Home',
     'nav.about': 'About',
-    'nav.context': 'Context',
-    'nav.taste': 'Taste',
-    'nav.variable': 'Variable',
-    'nav.builder': 'Builder',
+    'nav.blog': 'Blog',
     'nav.contact': 'Aimmar',
     
     // Hero
@@ -93,10 +90,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Navigation
     'nav.home': '首页',
     'nav.about': '关于',
-    'nav.context': '情境',
-    'nav.taste': '品味',
-    'nav.variable': '变量',
-    'nav.builder': '构建',
+    'nav.blog': '博客',
     'nav.contact': 'Aimmar',
     
     // Hero

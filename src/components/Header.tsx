@@ -10,10 +10,7 @@ export function Header() {
   const navItems = [
     { key: 'nav.home', path: '/#home' },
     { key: 'nav.about', path: '/#about' },
-    { key: 'nav.context', path: '/#context' },
-    { key: 'nav.taste', path: '/#taste' },
-    { key: 'nav.variable', path: '/#variable' },
-    { key: 'nav.builder', path: '/#builder' },
+    { key: 'nav.blog', path: '/#context' },
     { key: 'nav.contact', path: '/#contact' },
   ];
 
