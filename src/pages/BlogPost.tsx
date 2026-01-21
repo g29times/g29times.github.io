@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -12,8 +13,36 @@ const allPosts = postsData as BlogPostType[];
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const { language } = useLanguage();
-  
-  const post = slug ? allPosts.find(p => p.slug === slug) : null;
+
+  const [post, setPost] = useState<BlogPostType | null>(() =>
+    slug ? allPosts.find((p) => p.slug === slug) ?? null : null,
+  );
+
+  useEffect(() => {
+    if (!slug) {
+      setPost(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/posts/${encodeURIComponent(slug)}`, {
+          headers: { accept: 'application/json' },
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as BlogPostType;
+        if (!cancelled && data?.slug) setPost(data);
+      } catch {
+        // ignore and fallback to bundled posts.json
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
 
   if (!post) {
     return (

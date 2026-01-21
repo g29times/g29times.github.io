@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { EssayCard } from '@/components/EssayCard';
@@ -6,10 +7,30 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import postsData from '@/data/posts.json';
 import { BlogPost } from '@/types/blog';
 
-const allEssays = postsData as BlogPost[];
-
 const Blog = () => {
   const { language } = useLanguage();
+  const [posts, setPosts] = useState<BlogPost[]>(postsData as BlogPost[]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch('/api/posts', {
+          headers: { 'accept': 'application/json' },
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as BlogPost[];
+        if (!cancelled && Array.isArray(data)) setPosts(data);
+      } catch {
+        // ignore and fallback to bundled posts.json
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -28,7 +49,7 @@ const Blog = () => {
           </div>
 
           <div>
-            {allEssays.map((essay) => (
+            {posts.map((essay) => (
               <EssayCard
                 key={essay.slug}
                 title={language === 'zh' ? essay.titleZh : essay.title}

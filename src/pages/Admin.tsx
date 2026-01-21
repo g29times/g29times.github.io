@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,27 @@ const Admin = () => {
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch('/api/posts', {
+          headers: { accept: 'application/json' },
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as BlogPost[];
+        if (!cancelled && Array.isArray(data)) setPosts(data);
+      } catch {
+        // ignore and fallback to bundled posts.json
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleEdit = (post: BlogPost) => {
     setEditingPost({ ...post });
@@ -49,7 +70,7 @@ const Admin = () => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingPost) return;
     if (!editingPost.slug) {
       toast.error('Slug is required');
@@ -66,11 +87,24 @@ const Admin = () => {
     setPosts(updatedPosts);
     setEditingPost(null);
     setIsAdding(false);
-    
-    // In a real backend, we would send this to the server.
-    // Here, we'll log it and ask the agent to update the file.
-    console.log('Updated Posts:', JSON.stringify(updatedPosts, null, 2));
-    toast.success('Changes saved in memory. Please ask the AI to update the posts.json file with the console output.');
+
+    try {
+      const res = await fetch('/api/admin/posts', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(updatedPosts),
+      });
+
+      if (!res.ok) {
+        const msg = await res.text();
+        toast.error(`Save failed: ${msg}`);
+        return;
+      }
+
+      toast.success('Saved.');
+    } catch {
+      toast.error('Save failed.');
+    }
   };
 
   const renderEditor = () => {
