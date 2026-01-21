@@ -143,9 +143,6 @@ const BlogPost = () => {
         <Header />
         <main className="pt-32 pb-24">
           <div className="container max-w-3xl mx-auto px-6">
-            <p className="text-muted-foreground">
-              {language === 'zh' ? '文章未找到' : 'Post not found'}
-            </p>
             <Link to="/blog" className="link-subtle mt-4 inline-block">
               {language === 'zh' ? '返回所有文章' : 'Back to all posts'}
             </Link>
