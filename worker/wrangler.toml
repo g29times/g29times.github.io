@@ -4,9 +4,7 @@ compatibility_date = "2026-01-01"
 
 [vars]
 ADMIN_EMAIL = "g29tony@gmail.com"
-# ACCESS_TEAM_DOMAIN 例如："your-team.cloudflareaccess.com"
 ACCESS_TEAM_DOMAIN = "aimmar.cloudflareaccess.com"
-# ACCESS_AUD 例如："<your-access-application-aud>"
 ACCESS_AUD = "18f9ac73bd30564cf9894534be011b4dbb1e5d9e4ec5a1ede19e4fdb931aaf3a"
 
 [[d1_databases]]

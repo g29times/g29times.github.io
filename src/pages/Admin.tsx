@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Edit, Trash, Save, ArrowLeft, Eye } from 'lucide-react';
+import { Link } from "react-router-dom";
 import { toast } from 'sonner';
 import postsData from '@/data/posts.json';
 import { BlogPost } from '@/types/blog';
@@ -281,8 +282,15 @@ const Admin = () => {
               {posts.map((post) => (
                 <TableRow key={post.slug}>
                   <TableCell className="font-medium">
-                    {post.titleZh}
-                    <div className="text-xs text-muted-foreground">{post.title}</div>
+                    <Link
+                      to={`/blog/${post.slug}`}
+                      className="text-primary hover:underline flex flex-col"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span>{post.titleZh}</span>
+                      <span className="text-xs text-muted-foreground">{post.title}</span>
+                    </Link>
                   </TableCell>
                   <TableCell>{post.categoryZh}</TableCell>
                   <TableCell>{post.date}</TableCell>
@@ -317,6 +325,11 @@ const Admin = () => {
             <p className="text-muted-foreground">
               <a href="/Cloudflarer2management" target="_blank" rel="noopener noreferrer">
                 Resource management
+              </a>
+            </p>
+            <p className="text-muted-foreground">
+              <a href="/stats" target="_blank" rel="noopener noreferrer">
+                Stats
               </a>
             </p>
           </div>
