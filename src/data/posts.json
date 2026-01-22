@@ -1,5 +1,16 @@
 [
   {
+    "slug": "ruanyf-weekly-381-ai-leaders",
+    "title": "Notes on Technology Enthusiast Weekly Issue 381: Chinese AI Leaders Vision",
+    "titleZh": "科技爱好者周刊第 381 期笔记：中国 AI 领袖在想什么",
+    "excerpt": "A deep dive into Ruanyf Weekly Issue 381, summarizing insights from Chinese top AI leaders on scaling, multimodal models, and the ToC/ToB divergence.",
+    "excerptZh": "深入解读阮一峰周刊第 381 期，总结中国顶尖 AI 领袖关于 Scaling、多模态模型以及 ToC/ToB 分化的核心观点。",
+    "date": "2026-01-22",
+    "category": "Tech",
+    "categoryZh": "科技",
+    "readTime": "8 min"
+  },
+  {
     "slug": "language-adapts-to-brain",
     "title": "A 60-Year Misunderstanding: Language Adapts to the Brain, Not the Other Way Around",
     "titleZh": "一个被搞反了60年的真相：不是大脑天生会语言，而是语言在拼命适应大脑",
