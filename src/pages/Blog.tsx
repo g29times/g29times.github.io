@@ -9,14 +9,11 @@ import { BlogPost } from '@/types/blog';
 
 const Blog = () => {
   const { language } = useLanguage();
-  const [posts, setPosts] = useState<BlogPost[]>([]);
+  // 先用本地索引即时渲染，再尝试远程覆盖
+  const [posts, setPosts] = useState<BlogPost[]>(postsData as BlogPost[]);
 
   useEffect(() => {
     let cancelled = false;
-
-    const fallbackTimer = setTimeout(() => {
-      if (!cancelled) setPosts(postsData as BlogPost[]);
-    }, 5000);
 
     (async () => {
       try {
@@ -26,20 +23,14 @@ const Blog = () => {
         if (!res.ok) return;
         const data = (await res.json()) as BlogPost[];
         if (!cancelled && Array.isArray(data)) {
-          clearTimeout(fallbackTimer);
           setPosts(data);
         }
       } catch {
-        if (!cancelled) {
-          clearTimeout(fallbackTimer);
-          setPosts(postsData as BlogPost[]);
-        }
       }
     })();
 
     return () => {
       cancelled = true;
-      clearTimeout(fallbackTimer);
     };
   }, []);
 

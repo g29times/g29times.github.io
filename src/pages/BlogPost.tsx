@@ -134,7 +134,13 @@ const BlogPost = () => {
   const htmlContent = useMemo(() => {
     if (!post) return '';
     const content = language === 'zh' ? post.contentZh : post.content;
-    return converter.makeHtml(content);
+    const safeContent = typeof content === 'string'
+      ? content
+      : content == null
+        ? ''
+        : String(content);
+    const html = converter.makeHtml(safeContent);
+    return typeof html === 'string' ? html : '';
   }, [post, language, converter]);
 
   if (!post) {
@@ -187,30 +193,38 @@ const BlogPost = () => {
 
           <div className="prose-blog">
             <div className="prose prose-lg dark:prose-invert max-w-none prose-headings:font-serif prose-headings:font-semibold prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:mt-12 prose-h2:mb-6 prose-p:text-lg prose-p:leading-8 prose-p:mb-6 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-li:text-lg prose-li:text-muted-foreground">
-              {parse(htmlContent, {
-                replace: (domNode) => {
-                  if (domNode instanceof Element && domNode.name === 'table') {
-                    const chartInfo = extractTableData(domNode);
-                    if (chartInfo) {
-                      return (
-                        <div className="my-8">
-                          <BlogChart data={chartInfo.data} keys={chartInfo.keys} />
-                          {/* Render the original table as well, wrapped in a div to avoid hydration errors if needed, though parse handles it */}
-                          <div className="overflow-x-auto">
-                            {domToReact([domNode])}
+              {typeof htmlContent === 'string' && htmlContent.trim() ? (
+                parse(htmlContent, {
+                  replace: (domNode) => {
+                    if (domNode instanceof Element && domNode.name === 'table') {
+                      const chartInfo = extractTableData(domNode);
+                      if (chartInfo) {
+                        return (
+                          <div className="my-8">
+                            <BlogChart data={chartInfo.data} keys={chartInfo.keys} />
+                            {/* Render the original table as well, wrapped in a div to avoid hydration errors if needed, though parse handles it */}
+                            <div className="overflow-x-auto">
+                              {domToReact([domNode])}
+                            </div>
                           </div>
+                        );
+                      }
+                      // Wrap other tables for overflow handling
+                      return (
+                        <div className="overflow-x-auto my-8">
+                          {domToReact([domNode])}
                         </div>
                       );
                     }
-                    // Wrap other tables for overflow handling
-                    return (
-                      <div className="overflow-x-auto my-8">
-                         {domToReact([domNode])}
-                      </div>
-                    );
                   }
-                }
-              })}
+                })
+              ) : (
+                <p className="text-muted-foreground">
+                  {language === 'zh'
+                    ? '这篇文章的正文内容还未提供。'
+                    : 'The body content for this post is not available yet.'}
+                </p>
+              )}
             </div>
           </div>
         </article>
