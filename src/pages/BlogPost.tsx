@@ -92,16 +92,19 @@ const BlogPost = () => {
   const [post, setPost] = useState<BlogPostType | null>(() =>
     slug ? allPosts.find((p) => p.slug === slug) ?? null : null,
   );
+  const [isFetching, setIsFetching] = useState(true);
 
   useEffect(() => {
     if (!slug) {
       setPost(null);
+      setIsFetching(false);
       return;
     }
 
     let cancelled = false;
 
     (async () => {
+      setIsFetching(true);
       try {
         const res = await fetch(`/api/posts/${encodeURIComponent(slug)}`, {
           headers: { accept: 'application/json' },
@@ -111,11 +114,14 @@ const BlogPost = () => {
         if (!cancelled && data?.slug) setPost(data);
       } catch {
         // ignore and fallback to bundled posts.json
+      } finally {
+        if (!cancelled) setIsFetching(false);
       }
     })();
 
     return () => {
       cancelled = true;
+      setIsFetching(false);
     };
   }, [slug]);
 
@@ -218,6 +224,10 @@ const BlogPost = () => {
                     }
                   }
                 })
+              ) : isFetching ? (
+                <p className="text-muted-foreground">
+                  {language === 'zh' ? '正在加载正文…' : 'Loading post content…'}
+                </p>
               ) : (
                 <p className="text-muted-foreground">
                   {language === 'zh'
