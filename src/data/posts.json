@@ -1,5 +1,16 @@
 [
   {
+    "slug": "ai-economics-marginal-revenue-agent-service",
+    "title": "AI Economics: From Marginal Revenue to \"Agent as a Service\"",
+    "titleZh": "AI 经济学：从边际收益到‘Agent 即服务’",
+    "excerpt": "A deep dive into the economic logic of the AI era, comparing it with SaaS and Mobile Internet models. Analyzing the shift from \"Seat-based\" to \"Token-based\" pricing and the new layered architecture of AI products.",
+    "excerptZh": "深度解析 AI 时代的底层经济逻辑，对比 SaaS 和移动互联网商业模式。探讨从‘按人头付费’到‘按 Token 付费’的转变，以及 AI 产品架构的全新分层。",
+    "date": "2026-01-21",
+    "category": "AI Insights",
+    "categoryZh": "AI 观察",
+    "readTime": "12 min"
+  },
+  {
     "slug": "saas-is-dead-a16z-report",
     "title": "SaaS is Dead? a16z on the New Moats in the AI Era",
     "titleZh": "SaaS已死？a16z眼中的AI时代新护城河",
