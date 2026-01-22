@@ -243,5 +243,14 @@ export const dailyLog: DailyEntry[] = [
       "部署 Cloudflare Worker Cron 任务，实现 Lightning endpoint 自动保活"
     ],
     "note": "全自动化生产力提升日"
+  },
+  {
+    "date": "2026-01-22",
+    "done": [
+      "重构 weekly-digest-worker，将博客生成逻辑迁移至 JiJi (tmux agent) 实现本地化处理",
+      "集成 Localtunnel 指令分发系统，实现 Worker 自动触发 JiJi 执行复杂 LLM 任务",
+      "解决远程环境下 Wrangler OAuth 授权登录问题，更新至重要知识库",
+      "成功部署并测试阮一峰周刊自动化同步流程（Issue 381 测试通过）"
+    ]
   }
 ];
