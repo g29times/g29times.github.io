@@ -1,5 +1,16 @@
 [
   {
+    "slug": "personal-ai-vs-public-ai-ces-2026",
+    "title": "Personal AI vs. Public AI: The Real Paradigm Shift (Insights from CES 2026)",
+    "titleZh": "个人 AI vs 公共 AI：真正的范式转移（CES 2026 洞察）",
+    "excerpt": "Is your AI a public bus or a private car? At CES 2026, the discussion shifted from 'what models can do' to 'who the AI represents'. A deep dive into the downstreaming of AI to terminals, memory management, and the rise of Agent as a Service.",
+    "excerptZh": "你的 AI 是公交车还是私家车？在 CES 2026 上，讨论的焦点从“模型能做什么”转向了“AI 代表谁”。深入探讨 AI 向终端下沉、记忆管理以及 Agent 即服务（AaaS）的兴起。",
+    "date": "2026-01-21",
+    "category": "AI Insights",
+    "categoryZh": "AI 观察",
+    "readTime": "8 min"
+  },
+  {
     "slug": "ai-economics-marginal-revenue-agent-service",
     "title": "AI Economics: From Marginal Revenue to \"Agent as a Service\"",
     "titleZh": "AI 经济学：从边际收益到‘Agent 即服务’",
