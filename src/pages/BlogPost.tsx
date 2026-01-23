@@ -169,7 +169,8 @@ const BlogPost = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="pt-32 pb-24">
-        <article className="container max-w-3xl mx-auto px-6">
+        <div className="report-page">
+          <article className="report-container">
           <Link 
             to="/blog" 
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-12"
@@ -179,8 +180,8 @@ const BlogPost = () => {
           </Link>
 
           <header className="mb-12">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-sm font-medium text-primary">
+            <div className="report-meta mb-4">
+              <span className="report-tag">
                 {language === 'zh' ? post.categoryZh : post.category}
               </span>
               <span className="text-sm text-muted-foreground">
@@ -192,7 +193,7 @@ const BlogPost = () => {
               </span>
             </div>
             
-            <h1 className="font-serif text-4xl md:text-5xl font-semibold text-foreground leading-tight">
+            <h1 className="report-title">
               {language === 'zh' ? post.titleZh : post.title}
             </h1>
           </header>
@@ -237,7 +238,8 @@ const BlogPost = () => {
               )}
             </div>
           </div>
-        </article>
+          </article>
+        </div>
       </main>
       <Footer />
     </div>
