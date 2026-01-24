@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>悲剧的归因：跨越30年的文化心理学观察</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Chart Container Styling - Mandatory per instructions */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Constrains width on large screens */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height */
+            max-height: 400px; /* Strict max height */
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        
+        /* Custom Utilities */
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: #FAFAF9; /* warm neutral stone-50 */
+            color: #44403C; /* stone-700 */
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        .btn-toggle {
+            transition: all 0.3s ease;
+        }
+        .active-tab {
+            background-color: #57534E; /* stone-600 */
+            color: white;
+        }
+        .inactive-tab {
+            background-color: #E7E5E4; /* stone-200 */
+            color: #57534E;
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals (Stone) + Accents (Amber for Situational/Eastern, Slate/Blue for Essentialist/Western) -->
+    <!-- Application Structure Plan: 
+         1. Narrative Hook: The interactive "A & B" Story. Users toggle between perspectives to see different hypothetical outcomes.
+         2. The 90s Context: Visualizing Peng's original research showing the East/West divide (Situational vs Essentialist).
+         3. The 2026 Reversal: A trend analysis showing the shift in Chinese public opinion towards "Genetic Determinism" vs Western academic evolution.
+         4. Concept Deep Dive: Explaining the misconception of "The Selfish Gene" vs. Reality.
+         5. Reflection: Synthesis of why this shift matters.
+         Why: This structure leads the user from the specific anecdote -> the historical data -> the modern irony -> the deeper analysis.
+    -->
+    <!-- Visualization & Content Choices:
+         1. Story Mode (Text/Toggle): To personalize the abstract concept.
+         2. Bar Chart (Chart.js): To clearly contrast the binary 90s mindset.
+         3. Line/Trend Chart (Chart.js): To visualize the "Reversal" over time (1990-2026).
+         4. Interactive Cards: To explain complex terms like "Essentialism" without overwhelming text.
+         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+</head>
+<body class="bg-stone-50 text-stone-800 antialiased selection:bg-amber-200 selection:text-stone-900">
+
+    <!-- Navigation / Header -->
+    <header class="w-full bg-white border-b border-stone-200 sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-tight text-stone-900">🔍 文化与归因</h1>
+            <nav class="hidden md:flex space-x-6 text-sm font-medium text-stone-600">
+                <a href="#story" class="hover:text-amber-600 transition">案例重演</a>
+                <a href="#research" class="hover:text-amber-600 transition">90年代研究</a>
+                <a href="#reversal" class="hover:text-amber-600 transition">2026年的反转</a>
+                <a href="#analysis" class="hover:text-amber-600 transition">深度解析</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-8 space-y-12">
+
+        <!-- Intro Section -->
+        <section class="text-center space-y-4">
+            <h2 class="text-3xl md:text-4xl font-extrabold text-stone-900">悲剧的归因：本质还是境遇？</h2>
+            <p class="text-lg text-stone-600 max-w-2xl mx-auto leading-relaxed">
+                基于彭凯平教授的“十三邀”访谈。探讨一个高学历杀人犯的悲剧，以及三十年来中美两地对于“人性”看法的剧烈变迁。
+            </p>
+        </section>
+
+        <!-- Section 1: The Interactive Narrative -->
+        <!-- Goal: Allow user to experience the core conflict: "Could the tragedy have been avoided?" -->
+        <section id="story" class="scroll-mt-24">
+            <div class="card bg-white border-l-4 border-amber-500">
+                <h3 class="text-2xl font-bold mb-4">案例：未发生的结合</h3>
+                <p class="mb-4 text-stone-600">
+                    <strong>背景：</strong> 彭教授的校友A（高学历男性）与彭教授妻子的室友B（女性）。两人曾短暂交往但分手。后来A杀人入狱，B嫁作他人妇。
+                </p>
+                <p class="mb-6 font-medium">如果当时 A 和 B 结婚了，结局会怎样？</p>
+
+                <!-- Interactive Toggle -->
+                <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                    <button id="btn-eastern" class="btn-toggle active-tab px-6 py-3 rounded-lg font-semibold shadow-sm text-center flex-1" onclick="updateStory('eastern')">
+                        🇨🇳 90年代东方视角<br><span class="text-xs font-normal opacity-80">彭凯平的观点</span>
+                    </button>
+                    <button id="btn-western" class="btn-toggle inactive-tab px-6 py-3 rounded-lg font-semibold shadow-sm text-center flex-1" onclick="updateStory('western')">
+                        🇺🇸 90年代西方视角<br><span class="text-xs font-normal opacity-80">美国教授的观点</span>
+                    </button>
+                </div>
+
+                <!-- Dynamic Content Area -->
+                <div id="story-content" class="bg-stone-100 p-6 rounded-lg min-h-[160px] flex items-center">
+                    <!-- Content injected by JS -->
+                </div>
+                
+                <div class="mt-4 text-sm text-stone-500 italic text-center">
+                    点击上方按钮切换视角，体验不同的归因逻辑。
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: The 90s Research (Data Viz) -->
+        <!-- Goal: Visualize the clear dichotomy that existed in the 90s -->
+        <section id="research" class="scroll-mt-24">
+            <div class="mb-6">
+                <h3 class="text-2xl font-bold text-stone-900">1990-2000：原本的文化鸿沟</h3>
+                <p class="text-stone-600 mt-2">
+                    彭教授在90年代针对中美受访者进行了大量调研。当时的数据显示，对于人的行为，东西方有着截然不同的解释框架。
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="space-y-4">
+                    <div class="p-4 border border-stone-200 rounded-lg">
+                        <h4 class="font-bold text-amber-700 mb-2">情境归因 (Situational)</h4>
+                        <p class="text-sm text-stone-600">相信环境、关系和际遇决定人的命运。"人之初，性本善"（或性相近），变坏是因为环境所迫或际遇不佳。</p>
+                    </div>
+                    <div class="p-4 border border-stone-200 rounded-lg">
+                        <h4 class="font-bold text-slate-700 mb-2">本质归因 (Essentialist)</h4>
+                        <p class="text-sm text-stone-600">相信人的本质是固定的。"坏胚子"、"Bad Seed"。行为由内在特质决定，环境很难改变结果。</p>
+                    </div>
+                </div>
+                
+                <!-- Chart Container -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-stone-100">
+                    <h4 class="text-center font-semibold mb-4 text-sm text-stone-500">90年代研究数据复原 (示意)</h4>
+                    <div class="chart-container">
+                        <canvas id="chart90s"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: The 2026 Shift (Interactive Trend) -->
+        <!-- Goal: Highlight the user's insight about the "Reversal" or cultural shift -->
+        <section id="reversal" class="scroll-mt-24 bg-white p-6 rounded-2xl shadow-sm border border-stone-200">
+            <div class="mb-8">
+                <h3 class="text-2xl font-bold text-stone-900">2026年的反转：谁更相信“基因决定论”？</h3>
+                <p class="text-stone-600 mt-2 leading-relaxed">
+                    视频下方的中国网友评论一边倒地支持“基因决定论”和“坏种说”。与此同时，西方心理学界早已通过表观遗传学等研究，驳斥了粗糙的“基因决定论”。
+                    <br><span class="text-amber-700 font-medium">这是一个令人深思的交叉现象。</span>
+                </p>
+            </div>
+
+            <!-- Visualization of the Shift -->
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="w-full md:w-2/3">
+                    <div class="chart-container">
+                        <canvas id="chartTrend"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-stone-400 mt-2">数据基于社会观察与评论趋势估算</p>
+                </div>
+                
+                <!-- Interactive Insight List -->
+                <div class="w-full md:w-1/3 flex flex-col gap-3 justify-center">
+                    <h4 class="font-bold text-stone-700 border-b pb-2">观察到的现象</h4>
+                    <button class="text-left p-3 rounded bg-stone-50 hover:bg-stone-100 transition border-l-4 border-transparent hover:border-red-500 focus:outline-none focus:bg-stone-100 focus:border-red-500" onclick="highlightTrend('china')">
+                        🇨🇳 <strong>中国舆论：</strong><br>
+                        从“性本善”转向极端的“基因/本质决定论”。认为“龙生龙，凤生凤”，坏人是天生的。
+                    </button>
+                    <button class="text-left p-3 rounded bg-stone-50 hover:bg-stone-100 transition border-l-4 border-transparent hover:border-blue-500 focus:outline-none focus:bg-stone-100 focus:border-blue-500" onclick="highlightTrend('west')">
+                        🇺🇸 <strong>西方学界：</strong><br>
+                        从“本质论”转向“交互论”。承认基因影响，但强调《自私的基因》并非宿命论，环境开关至关重要。
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Deep Dive - Misunderstanding Science -->
+        <!-- Goal: Clarify the concept of "The Selfish Gene" vs Public Perception -->
+        <section id="analysis" class="scroll-mt-24 mb-16">
+            <h3 class="text-2xl font-bold text-stone-900 mb-6">认知的误区：我们误读了什么？</h3>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Card 1 -->
+                <div class="card border-t-4 border-stone-400">
+                    <div class="text-3xl mb-3">🧬</div>
+                    <h4 class="text-xl font-bold mb-2">大众眼中的《自私的基因》</h4>
+                    <p class="text-sm text-stone-600 mb-4">
+                        "既然基因是自私的，那人的坏也是注定的。杀人犯的基因就是坏的，没救。"
+                    </p>
+                    <div class="bg-red-50 text-red-800 text-xs p-2 rounded">
+                        <strong>误区：</strong> 将生物学机制混淆为道德宿命。
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="card border-t-4 border-green-500">
+                    <div class="text-3xl mb-3">📚</div>
+                    <h4 class="text-xl font-bold mb-2">道金斯的本意</h4>
+                    <p class="text-sm text-stone-600 mb-4">
+                        基因致力于自我复制，但人类拥有“弥因”（Meme）和文化，我们是唯一能反抗基因暴政的物种。
+                    </p>
+                    <div class="bg-green-50 text-green-800 text-xs p-2 rounded">
+                        <strong>真相：</strong> 基因提供蓝图，环境决定建造。
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="card border-t-4 border-blue-500">
+                    <div class="text-3xl mb-3">🤝</div>
+                    <h4 class="text-xl font-bold mb-2">互动论 (Interactionism)</h4>
+                    <p class="text-sm text-stone-600 mb-4">
+                        没有绝对的“本质”。A如果在B的陪伴下，可能基因中的暴力因子由于缺乏压力环境而永远保持“关闭”状态。
+                    </p>
+                    <div class="bg-blue-50 text-blue-800 text-xs p-2 rounded">
+                        <strong>结论：</strong> 关系可以重塑大脑与行为。
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Engagement Footer -->
+        <footer class="bg-stone-900 text-stone-300 py-12 rounded-t-3xl">
+            <div class="max-w-2xl mx-auto px-6 text-center">
+                <h4 class="text-xl font-bold text-white mb-4">在这个时代，我们该如何看待他人？</h4>
+                <p class="mb-8 opacity-80">
+                    当中国网友开始笃信“坏种”时，我们是否丢掉了传统文化中“教化”与“关系”的温情？
+                    <br>当西方开始反思本质论时，我们是否正在拾起他们丢弃的糟粕？
+                </p>
+                <div class="p-4 bg-stone-800 rounded-lg inline-block text-left max-w-lg">
+                    <span class="block text-amber-500 text-sm font-bold mb-2">💡 思考</span>
+                    <p class="text-sm italic">
+                        “如果A和B在一起，也许悲剧不会发生。” —— 彭凯平
+                    </p>
+                    <p class="text-sm mt-2">
+                        这句话不是为了给A开脱，而是提醒我们：<strong>我们每个人，都可能是他人环境的一部分。</strong>
+                    </p>
+                </div>
+            </div>
+        </footer>
+
+    </main>
+
+    <script>
+        // --- 1. Story Interaction Logic ---
+        const storyData = {
+            eastern: {
+                title: "🔴 东方关系主义视角 (彭凯平)",
+                text: "“如果他们在一起，也许悲剧就不会发生。”",
+                desc: "彭教授认为，人是**关系**的产物。一个良好的亲密关系（B作为妻子）可以提供情绪支持、社会约束和心理缓冲。这种**情境的力量**足以抑制A潜在的冲动。这也是中国传统“性善论”或“可教化”的体现。",
+                bg: "bg-amber-50",
+                border: "border-amber-500"
+            },
+            western: {
+                title: "🔵 西方本质主义视角 (90s美国教授)",
+                text: "“幸亏没在一起，否则B也会死在A手上。”",
+                desc: "美国教授认为，人的**本质（Essence）**是固定的。A杀人是因为他是‘坏人’（Bad Apple）。这种特质是内在的、稳定的。结婚不仅不能改变他，反而会让无辜的B成为受害者。",
+                bg: "bg-slate-50",
+                border: "border-slate-500"
+            }
+        };
+
+        function updateStory(view) {
+            const content = storyData[view];
+            const container = document.getElementById('story-content');
+            const btnEastern = document.getElementById('btn-eastern');
+            const btnWestern = document.getElementById('btn-western');
+
+            // Render Content with Fade effect
+            container.style.opacity = '0';
+            setTimeout(() => {
+                container.innerHTML = `
+                    <div class="w-full">
+                        <h4 class="font-bold text-lg mb-2 ${view === 'eastern' ? 'text-amber-700' : 'text-slate-700'}">${content.title}</h4>
+                        <p class="text-2xl font-serif italic text-stone-800 mb-4">${content.text}</p>
+                        <hr class="border-stone-300 mb-3">
+                        <p class="text-stone-600 leading-relaxed">${content.desc}</p>
+                    </div>
+                `;
+                container.className = `p-6 rounded-lg min-h-[160px] flex items-center border-l-8 transition-colors duration-500 ${content.bg} ${content.border}`;
+                container.style.opacity = '1';
+            }, 200);
+
+            // Update Buttons
+            if (view === 'eastern') {
+                btnEastern.className = "btn-toggle active-tab px-6 py-3 rounded-lg font-semibold shadow-sm text-center flex-1";
+                btnWestern.className = "btn-toggle inactive-tab px-6 py-3 rounded-lg font-semibold shadow-sm text-center flex-1";
+            } else {
+                btnEastern.className = "btn-toggle inactive-tab px-6 py-3 rounded-lg font-semibold shadow-sm text-center flex-1";
+                btnWestern.className = "btn-toggle active-tab px-6 py-3 rounded-lg font-semibold shadow-sm text-center flex-1";
+            }
+        }
+
+        // Initialize Story
+        updateStory('eastern');
+
+
+        // --- 2. Chart 1: 90s Research (Bar Chart) ---
+        // Data derived from the report's description of the 90s survey
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx90s = document.getElementById('chart90s').getContext('2d');
+            
+            new Chart(ctx90s, {
+                type: 'bar',
+                data: {
+                    labels: ['中国受访者 (90s)', '美国受访者 (90s)'],
+                    datasets: [
+                        {
+                            label: '支持情境归因 (悲剧可避免)',
+                            data: [85, 20], // High in China, Low in US
+                            backgroundColor: 'rgba(217, 119, 6, 0.7)', // Amber
+                            borderColor: 'rgba(217, 119, 6, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '支持本质归因 (悲剧注定)',
+                            data: [15, 80], // Low in China, High in US
+                            backgroundColor: 'rgba(71, 85, 105, 0.7)', // Slate
+                            borderColor: 'rgba(71, 85, 105, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        title: {
+                            display: true,
+                            text: '90年代针对该案例的归因倾向对比'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.raw + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: '认同比例 (%)' }
+                        }
+                    }
+                }
+            });
+
+            // --- 3. Chart 2: The Trend Shift (Line Chart) ---
+            // Visualizing the "Crossover" effect mentioned by the user
+            const ctxTrend = document.getElementById('chartTrend').getContext('2d');
+            
+            const trendChart = new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: ['1990', '2000', '2010', '2020', '2026'],
+                    datasets: [
+                        {
+                            label: '中国舆论：支持本质/基因决定论',
+                            data: [15, 30, 50, 75, 85], // Rising sharply
+                            borderColor: 'rgba(220, 38, 38, 1)', // Red
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                            tension: 0.3,
+                            borderWidth: 3,
+                            pointRadius: 4
+                        },
+                        {
+                            label: '西方学界：支持本质/基因决定论',
+                            data: [80, 70, 50, 35, 25], // Falling due to epigenetics/interactionism
+                            borderColor: 'rgba(59, 130, 246, 1)', // Blue
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.3,
+                            borderWidth: 3,
+                            pointRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '30年间“本质决定论”支持率的变化趋势 (估测)'
+                        },
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: {
+                            title: { display: true, text: '支持强度 / 普遍度' },
+                            display: true,
+                            grid: { color: '#E5E7EB' }
+                        }
+                    }
+                }
+            });
+
+            // Expose chart to global scope for the highlight function
+            window.trendChart = trendChart;
+        });
+
+        // Function to highlight lines on button click
+        function highlightTrend(region) {
+            const chart = window.trendChart;
+            if (!chart) return;
+
+            if (region === 'china') {
+                chart.data.datasets[0].borderWidth = 5;
+                chart.data.datasets[0].borderColor = 'rgba(220, 38, 38, 1)';
+                chart.data.datasets[1].borderWidth = 1;
+                chart.data.datasets[1].borderColor = 'rgba(59, 130, 246, 0.2)';
+            } else {
+                chart.data.datasets[0].borderWidth = 1;
+                chart.data.datasets[0].borderColor = 'rgba(220, 38, 38, 0.2)';
+                chart.data.datasets[1].borderWidth = 5;
+                chart.data.datasets[1].borderColor = 'rgba(59, 130, 246, 1)';
+            }
+            chart.update();
+        }
+
+    </script>
+</body>
+</html>

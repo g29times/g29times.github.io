@@ -22,6 +22,12 @@ const getText = (node: DOMNode): string => {
   return '';
 };
 
+const stripScriptsAndHead = (html: string) => {
+  const withoutScripts = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  const bodyMatch = withoutScripts.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  return bodyMatch ? bodyMatch[1] : withoutScripts;
+};
+
 const extractTableData = (node: Element) => {
   if (node.name !== 'table') return null;
 
@@ -93,6 +99,8 @@ const BlogPost = () => {
     slug ? allPosts.find((p) => p.slug === slug) ?? null : null,
   );
   const [isFetching, setIsFetching] = useState(true);
+  const [htmlSource, setHtmlSource] = useState('');
+  const [contentLoading, setContentLoading] = useState(false);
 
   useEffect(() => {
     if (!slug) {
@@ -137,8 +145,52 @@ const BlogPost = () => {
     return cvbw;
   }, []);
 
+  useEffect(() => {
+    if (!post) {
+      setHtmlSource('');
+      setContentLoading(false);
+      return;
+    }
+
+    if (post.contentType === 'html') {
+      const inline = language === 'zh' ? (post.contentHtml ?? post.contentZh) : (post.contentHtml ?? post.content);
+      if (inline && inline.trim()) {
+        setHtmlSource(inline);
+        setContentLoading(false);
+        return;
+      }
+      if (post.htmlPath) {
+        setContentLoading(true);
+        (async () => {
+          try {
+            const res = await fetch(post.htmlPath);
+            if (!res.ok) throw new Error('fetch html failed');
+            const text = await res.text();
+            setHtmlSource(text);
+          } catch {
+            setHtmlSource('');
+          } finally {
+            setContentLoading(false);
+          }
+        })();
+        return;
+      }
+      setHtmlSource('');
+      setContentLoading(false);
+    } else {
+      setHtmlSource('');
+      setContentLoading(false);
+    }
+  }, [post, language]);
+
   const htmlContent = useMemo(() => {
     if (!post) return '';
+
+    // Raw HTML path / inline HTML takes precedence when contentType === 'html'
+    if (post.contentType === 'html') {
+      return stripScriptsAndHead(htmlSource || '');
+    }
+
     const content = language === 'zh' ? post.contentZh : post.content;
     const safeContent = typeof content === 'string'
       ? content
@@ -147,7 +199,7 @@ const BlogPost = () => {
         : String(content);
     const html = converter.makeHtml(safeContent);
     return typeof html === 'string' ? html : '';
-  }, [post, language, converter]);
+  }, [post, language, converter, htmlSource]);
 
   if (!post) {
     return (
@@ -203,29 +255,30 @@ const BlogPost = () => {
               {typeof htmlContent === 'string' && htmlContent.trim() ? (
                 parse(htmlContent, {
                   replace: (domNode) => {
-                    if (domNode instanceof Element && domNode.name === 'table') {
-                      const chartInfo = extractTableData(domNode);
-                      if (chartInfo) {
-                        return (
-                          <div className="my-8">
-                            <BlogChart data={chartInfo.data} keys={chartInfo.keys} />
-                            {/* Render the original table as well, wrapped in a div to avoid hydration errors if needed, though parse handles it */}
-                            <div className="overflow-x-auto">
-                              {domToReact([domNode])}
+                    if (domNode instanceof Element) {
+                      if (domNode.name === 'script') return null;
+                      if (domNode.name === 'table') {
+                        const chartInfo = extractTableData(domNode);
+                        if (chartInfo) {
+                          return (
+                            <div className="my-8">
+                              <BlogChart data={chartInfo.data} keys={chartInfo.keys} />
+                              <div className="overflow-x-auto">
+                                {domToReact([domNode])}
+                              </div>
                             </div>
+                          );
+                        }
+                        return (
+                          <div className="overflow-x-auto my-8">
+                            {domToReact([domNode])}
                           </div>
                         );
                       }
-                      // Wrap other tables for overflow handling
-                      return (
-                        <div className="overflow-x-auto my-8">
-                          {domToReact([domNode])}
-                        </div>
-                      );
                     }
                   }
                 })
-              ) : isFetching ? (
+              ) : (isFetching || contentLoading) ? (
                 <p className="text-muted-foreground">
                   {language === 'zh' ? '正在加载正文…' : 'Loading post content…'}
                 </p>

@@ -10,4 +10,8 @@ export interface BlogPost {
   readTime: string;
   content: string;
   contentZh: string;
+  contentType?: 'markdown' | 'html';
+  // When contentType === 'html', prefer htmlPath (public URL) or inline contentHtml
+  htmlPath?: string;
+  contentHtml?: string;
 }
