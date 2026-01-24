@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import showdown from 'showdown';
 import parse, { DOMNode, Element, domToReact } from 'html-react-parser';
@@ -101,6 +101,8 @@ const BlogPost = () => {
   const [isFetching, setIsFetching] = useState(true);
   const [htmlSource, setHtmlSource] = useState('');
   const [contentLoading, setContentLoading] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [iframeHeight, setIframeHeight] = useState('60vh');
 
   useEffect(() => {
     if (!slug) {
@@ -183,6 +185,25 @@ const BlogPost = () => {
     }
   }, [post, language]);
 
+  // Auto-adjust iframe height when we load external HTML
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    const handleLoad = () => {
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (doc?.body) {
+          const height = doc.body.scrollHeight;
+          if (height) setIframeHeight(`${height + 32}px`); // add small padding
+        }
+      } catch {
+        // cross-origin not expected here; ignore
+      }
+    };
+    iframe.addEventListener('load', handleLoad);
+    return () => iframe.removeEventListener('load', handleLoad);
+  }, [htmlSource]);
+
   const htmlContent = useMemo(() => {
     if (!post) return '';
 
@@ -251,45 +272,57 @@ const BlogPost = () => {
           </header>
 
           <div className="prose-blog">
-            <div className="prose prose-lg dark:prose-invert max-w-none prose-headings:font-serif prose-headings:font-semibold prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:mt-12 prose-h2:mb-6 prose-p:text-lg prose-p:leading-8 prose-p:mb-6 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-li:text-lg prose-li:text-muted-foreground">
-              {typeof htmlContent === 'string' && htmlContent.trim() ? (
-                parse(htmlContent, {
-                  replace: (domNode) => {
-                    if (domNode instanceof Element) {
-                      if (domNode.name === 'script') return null;
-                      if (domNode.name === 'table') {
-                        const chartInfo = extractTableData(domNode);
-                        if (chartInfo) {
-                          return (
-                            <div className="my-8">
-                              <BlogChart data={chartInfo.data} keys={chartInfo.keys} />
-                              <div className="overflow-x-auto">
-                                {domToReact([domNode])}
+            {post.contentType === 'html' && post.htmlPath ? (
+              <div className="rounded-lg overflow-hidden border border-border shadow-sm">
+                <iframe
+                  ref={iframeRef}
+                  src={post.htmlPath}
+                  title={post.slug}
+                  style={{ width: '100%', height: iframeHeight, border: '0' }}
+                  loading="lazy"
+                />
+              </div>
+            ) : (
+              <div className="prose prose-lg dark:prose-invert max-w-none prose-headings:font-serif prose-headings:font-semibold prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:mt-12 prose-h2:mb-6 prose-p:text-lg prose-p:leading-8 prose-p:mb-6 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-li:text-lg prose-li:text-muted-foreground">
+                {typeof htmlContent === 'string' && htmlContent.trim() ? (
+                  parse(htmlContent, {
+                    replace: (domNode) => {
+                      if (domNode instanceof Element) {
+                        if (domNode.name === 'script') return null;
+                        if (domNode.name === 'table') {
+                          const chartInfo = extractTableData(domNode);
+                          if (chartInfo) {
+                            return (
+                              <div className="my-8">
+                                <BlogChart data={chartInfo.data} keys={chartInfo.keys} />
+                                <div className="overflow-x-auto">
+                                  {domToReact([domNode])}
+                                </div>
                               </div>
+                            );
+                          }
+                          return (
+                            <div className="overflow-x-auto my-8">
+                              {domToReact([domNode])}
                             </div>
                           );
                         }
-                        return (
-                          <div className="overflow-x-auto my-8">
-                            {domToReact([domNode])}
-                          </div>
-                        );
                       }
                     }
-                  }
-                })
-              ) : (isFetching || contentLoading) ? (
-                <p className="text-muted-foreground">
-                  {language === 'zh' ? '正在加载正文…' : 'Loading post content…'}
-                </p>
-              ) : (
-                <p className="text-muted-foreground">
-                  {language === 'zh'
-                    ? '这篇文章的正文内容还未提供。'
-                    : 'The body content for this post is not available yet.'}
-                </p>
-              )}
-            </div>
+                  })
+                ) : (isFetching || contentLoading) ? (
+                  <p className="text-muted-foreground">
+                    {language === 'zh' ? '正在加载正文…' : 'Loading post content…'}
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground">
+                    {language === 'zh'
+                      ? '这篇文章的正文内容还未提供。'
+                      : 'The body content for this post is not available yet.'}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
           </article>
         </div>
