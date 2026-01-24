@@ -250,7 +250,8 @@ export const dailyLog: DailyEntry[] = [
       "重构 weekly-digest-worker，将博客生成逻辑迁移至 JiJi (tmux agent) 实现本地化处理",
       "集成 Localtunnel 指令分发系统，实现 Worker 自动触发 JiJi 执行复杂 LLM 任务",
       "解决远程环境下 Wrangler OAuth 授权登录问题，更新至重要知识库",
-      "成功部署并测试阮一峰周刊自动化同步流程（Issue 381 测试通过）"
+      "成功部署并测试阮一峰周刊自动化同步流程（Issue 381 测试通过）",
+      "使用 coze 扣子 2.0 制作定期任务"
     ]
   }
 ];
