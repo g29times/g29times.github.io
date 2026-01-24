@@ -18,6 +18,9 @@ type BlogPost = {
   readTime: string;
   content: string;
   contentZh: string;
+  contentType?: 'markdown' | 'html';
+  htmlPath?: string | null;
+  contentHtml?: string | null;
 };
 
 type AccessPayload = {
@@ -151,14 +154,14 @@ async function requireAdmin(request: Request, env: Env) {
 
 async function listPosts(env: Env) {
   const { results } = await env.DB.prepare(
-    "SELECT title,titleZh,excerpt,excerptZh,date,category,categoryZh,slug,readTime,content,contentZh FROM posts ORDER BY rowid DESC",
+    "SELECT title,titleZh,excerpt,excerptZh,date,category,categoryZh,slug,readTime,content,contentZh,contentType,htmlPath,contentHtml FROM posts ORDER BY rowid DESC",
   ).all<BlogPost>();
   return results;
 }
 
 async function getPostBySlug(env: Env, slug: string) {
   const row = await env.DB.prepare(
-    "SELECT title,titleZh,excerpt,excerptZh,date,category,categoryZh,slug,readTime,content,contentZh FROM posts WHERE slug = ? LIMIT 1",
+    "SELECT title,titleZh,excerpt,excerptZh,date,category,categoryZh,slug,readTime,content,contentZh,contentType,htmlPath,contentHtml FROM posts WHERE slug = ? LIMIT 1",
   )
     .bind(slug)
     .first<BlogPost>();
@@ -168,7 +171,7 @@ async function getPostBySlug(env: Env, slug: string) {
 async function searchPosts(env: Env, q: string) {
   const like = `%${q}%`;
   const { results } = await env.DB.prepare(
-    "SELECT title,titleZh,excerpt,excerptZh,date,category,categoryZh,slug,readTime,content,contentZh FROM posts WHERE title LIKE ? OR titleZh LIKE ? OR excerpt LIKE ? OR excerptZh LIKE ? OR content LIKE ? OR contentZh LIKE ? ORDER BY rowid DESC LIMIT 50",
+    "SELECT title,titleZh,excerpt,excerptZh,date,category,categoryZh,slug,readTime,content,contentZh,contentType,htmlPath,contentHtml FROM posts WHERE title LIKE ? OR titleZh LIKE ? OR excerpt LIKE ? OR excerptZh LIKE ? OR content LIKE ? OR contentZh LIKE ? ORDER BY rowid DESC LIMIT 50",
   )
     .bind(like, like, like, like, like, like)
     .all<BlogPost>();
@@ -179,7 +182,7 @@ async function upsertPosts(env: Env, posts: BlogPost[]) {
   const now = new Date().toISOString();
   const batch = posts.map((p) =>
     env.DB.prepare(
-      "INSERT INTO posts (slug,title,titleZh,excerpt,excerptZh,date,category,categoryZh,readTime,content,contentZh,updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(slug) DO UPDATE SET title=excluded.title,titleZh=excluded.titleZh,excerpt=excluded.excerpt,excerptZh=excluded.excerptZh,date=excluded.date,category=excluded.category,categoryZh=excluded.categoryZh,readTime=excluded.readTime,content=excluded.content,contentZh=excluded.contentZh,updatedAt=excluded.updatedAt",
+      "INSERT INTO posts (slug,title,titleZh,excerpt,excerptZh,date,category,categoryZh,readTime,content,contentZh,updatedAt,contentType,htmlPath,contentHtml) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(slug) DO UPDATE SET title=excluded.title,titleZh=excluded.titleZh,excerpt=excluded.excerpt,excerptZh=excluded.excerptZh,date=excluded.date,category=excluded.category,categoryZh=excluded.categoryZh,readTime=excluded.readTime,content=excluded.content,contentZh=excluded.contentZh,contentType=excluded.contentType,htmlPath=excluded.htmlPath,contentHtml=excluded.contentHtml,updatedAt=excluded.updatedAt",
     ).bind(
       p.slug,
       p.title,
@@ -193,6 +196,9 @@ async function upsertPosts(env: Env, posts: BlogPost[]) {
       p.content,
       p.contentZh,
       now,
+      p.contentType ?? 'markdown',
+      p.htmlPath ?? null,
+      p.contentHtml ?? null,
     ),
   );
 
