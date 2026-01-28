@@ -29,6 +29,11 @@ type AgentReview = {
   todo: string[];
 };
 
+type ReviewResponse = {
+  reviews: AgentReview[];
+  finalTodo: string[];
+};
+
 // 颜色分桶阈值（含）
 const BUCKETS = [0, 1, 2, 4, 6];
 
@@ -161,6 +166,7 @@ export default function Stats() {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [reviews, setReviews] = useState<AgentReview[]>([]);
+  const [finalTodo, setFinalTodo] = useState<string[]>([]);
 
   const rangeCells = useMemo(() => {
     const start = selectedDate ?? rangeStart;
@@ -230,9 +236,10 @@ export default function Stats() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_REVIEW);
       if (!raw) return;
-      const parsed = JSON.parse(raw) as { key: string; reviews: AgentReview[] };
+      const parsed = JSON.parse(raw) as { key: string; reviews: AgentReview[]; finalTodo?: string[] };
       if (parsed?.key && Array.isArray(parsed.reviews) && parsed.key === reviewCacheKey) {
         setReviews(parsed.reviews);
+        setFinalTodo(Array.isArray(parsed.finalTodo) ? parsed.finalTodo : []);
       }
     } catch {
       // ignore
@@ -241,6 +248,7 @@ export default function Stats() {
 
   useEffect(() => {
     setReviews([]);
+    setFinalTodo([]);
   }, [selectedDate, rangeStart, rangeEnd, personas]);
 
   // 转成周列（列=周，行=周内星期，周一在上）
@@ -321,11 +329,13 @@ export default function Stats() {
       });
 
       if (!res.ok) return;
-      const data = (await res.json()) as { reviews?: AgentReview[] };
+      const data = (await res.json()) as ReviewResponse;
       const next = Array.isArray(data?.reviews) ? data.reviews : [];
+      const nextFinalTodo = Array.isArray(data?.finalTodo) ? data.finalTodo : [];
       setReviews(next);
+      setFinalTodo(nextFinalTodo);
       try {
-        localStorage.setItem(STORAGE_KEY_REVIEW, JSON.stringify({ key: reviewCacheKey, reviews: next }));
+        localStorage.setItem(STORAGE_KEY_REVIEW, JSON.stringify({ key: reviewCacheKey, reviews: next, finalTodo: nextFinalTodo }));
       } catch {
         // ignore
       }
@@ -607,21 +617,15 @@ export default function Stats() {
             <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
               <div className="text-sm font-semibold mb-2">Todo</div>
               <div className="space-y-3 text-sm">
-                {reviews.length > 0 ? (
-                  reviews.map((r) => (
-                    <div key={r.agentId} className="border border-slate-100 dark:border-slate-800 rounded-lg p-3">
-                      <div className="text-xs font-semibold mb-2">{r.agentName}</div>
-                      {r.todo?.length ? (
-                        <ul className="list-disc list-inside space-y-1">
-                          {r.todo.map((t, idx) => (
-                            <li key={idx}>{t}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <div className="text-slate-400">无</div>
-                      )}
-                    </div>
-                  ))
+                {finalTodo.length > 0 ? (
+                  <div className="border border-slate-100 dark:border-slate-800 rounded-lg p-3">
+                    <div className="text-xs text-slate-500 mb-2">融合后的可执行 TODO（最多 3 条）</div>
+                    <ul className="list-disc list-inside space-y-1">
+                      {finalTodo.map((t, idx) => (
+                        <li key={idx}>{t}</li>
+                      ))}
+                    </ul>
+                  </div>
                 ) : (
                   <div className="text-slate-400 text-sm">点击“生成点评”后展示</div>
                 )}

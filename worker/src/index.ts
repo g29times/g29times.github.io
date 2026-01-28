@@ -38,6 +38,11 @@ type AgentReview = {
   todo: string[];
 };
 
+type ReviewResponse = {
+  reviews: AgentReview[];
+  finalTodo: string[];
+};
+
 type BlogPost = {
   title: string;
   titleZh: string;
@@ -154,6 +159,79 @@ async function requireAccess(request: Request, env: Env) {
   }
 }
 
+async function mergeTodoWithGemini(opts: {
+  geminiKey: string;
+  startDate: string;
+  endDate: string;
+  reviews: AgentReview[];
+}): Promise<string[]> {
+  const { geminiKey, startDate, endDate, reviews } = opts;
+  const model = "gemini-3-flash-preview";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
+    geminiKey,
+  )}`;
+
+  const payload = {
+    systemInstruction: {
+      parts: [
+        {
+          text: [
+            "你是 Neo 的执行秘书（Chief of Staff）。",
+            "你会把多位顾问的观点融合为 Neo 当下最该做的 1-3 条可执行 TODO。",
+            "规则：去重、合并同类项、按收益/紧迫/杠杆排序；每条尽量短并可执行；最多 3 条。",
+            "输出必须是严格 JSON，只包含 { todo: string[] }。",
+          ].join("\n"),
+        },
+      ],
+    },
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: JSON.stringify(
+              {
+                startDate,
+                endDate,
+                reviews: reviews.map((r) => ({
+                  agentId: r.agentId,
+                  agentName: r.agentName,
+                  chat: r.chat,
+                  todo: r.todo,
+                })),
+              },
+              null,
+              2,
+            ),
+          },
+        ],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.3,
+      responseMimeType: "application/json",
+    },
+  };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) return [];
+  const data = (await res.json()) as any;
+  const text: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  const raw = typeof text === "string" ? text : "";
+  try {
+    const parsed = JSON.parse(raw) as { todo?: unknown };
+    if (!Array.isArray(parsed.todo)) return [];
+    return parsed.todo.filter((t) => typeof t === "string").slice(0, 3);
+  } catch {
+    return [];
+  }
+}
+
 async function requireAdmin(request: Request, env: Env) {
   const jwt = request.headers.get("Cf-Access-Jwt-Assertion");
   if (!jwt) return { ok: false as const, reason: "missing access jwt" };
@@ -267,14 +345,113 @@ function dailyItemToText(item: DailyItem) {
   return links ? `${n.text} (${links})` : n.text;
 }
 
+function extractLinksFromEntries(entries: DailyEntry[]) {
+  const urls: { title?: string; url: string }[] = [];
+  const pushLinks = (item: DailyItem) => {
+    const n = normalizeDailyItem(item);
+    for (const l of n.links) {
+      if (!l?.url) continue;
+      urls.push({ title: l.title, url: l.url });
+    }
+  };
+
+  for (const e of entries) {
+    for (const d of e.done) pushLinks(d);
+    for (const t of e.todo ?? []) pushLinks(t);
+  }
+  return urls;
+}
+
+async function fetchWithTimeout(url: string, ms: number) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function stripHtml(input: string) {
+  return input.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<[^>]+>/g, " ");
+}
+
+async function fetchLinkSnippets(entries: DailyEntry[]) {
+  const MAX_LINKS = 3;
+  const MAX_CHARS_PER_LINK = 4000;
+  const TIMEOUT_MS = 3500;
+
+  const links = extractLinksFromEntries(entries);
+  const unique: { title?: string; url: string }[] = [];
+  const seen = new Set<string>();
+  for (const l of links) {
+    if (seen.has(l.url)) continue;
+    seen.add(l.url);
+    unique.push(l);
+    if (unique.length >= MAX_LINKS) break;
+  }
+
+  const snippets: { url: string; title?: string; content: string; contentType?: string }[] = [];
+  for (const l of unique) {
+    try {
+      const res = await fetchWithTimeout(l.url, TIMEOUT_MS);
+      if (!res.ok) continue;
+      const contentType = res.headers.get("content-type") ?? undefined;
+      const text = await res.text();
+      const cleaned = contentType?.includes("text/html") ? stripHtml(text) : text;
+      snippets.push({
+        url: l.url,
+        title: l.title,
+        contentType,
+        content: cleaned.slice(0, MAX_CHARS_PER_LINK),
+      });
+    } catch {
+      // ignore
+    }
+  }
+  return snippets;
+}
+
+function buildSharedBackground() {
+  return [
+    "你正在阅读 Neo 的个人工作记录：年度每日流水（包含 Done / Todo / Note，可能含链接资源）。",
+    "你的目标：在给定时间范围内，对 Neo 的行动做评价与讨论，并给出可执行建议。",
+    "重要：如果你认为记录与自己擅长/偏好的话题关联很弱，你可以选择跳过（chat 输出为空字符串，todo 输出空数组）。",
+    "输出必须是严格 JSON，并且只包含 chat 与 todo 两个字段。",
+  ].join("\n");
+}
+
+function personaTopicPrefs(agentId: string) {
+  if (agentId === "munger") {
+    return [
+      "偏好话题：投资/商业与竞争优势、激励机制与人性偏差、风险与机会成本。",
+      "对纯技术细节可选择不评价，除非能映射到商业护城河、杠杆或风险控制。",
+    ].join("\n");
+  }
+  if (agentId === "jobs") {
+    return [
+      "偏好话题：产品与用户体验、审美与品味、聚焦与取舍、端到端系统构建。",
+      "对技术内容可从“是否服务于产品/体验/效率”角度评价。",
+    ].join("\n");
+  }
+  if (agentId === "hawking") {
+    return [
+      "偏好话题：科学与理性推理、系统与模型、可证伪的假设、长期积累。",
+      "对工程/技术可从“模型是否稳定、约束是否清晰、验证路径是否可靠”角度评价。",
+    ].join("\n");
+  }
+  return "";
+}
+
 async function generateReviewWithGemini(opts: {
   geminiKey: string;
   agent: AgentInput;
   startDate: string;
   endDate: string;
   entries: DailyEntry[];
+  linkSnippets: { url: string; title?: string; content: string; contentType?: string }[];
 }): Promise<AgentReview> {
-  const { geminiKey, agent, startDate, endDate, entries } = opts;
+  const { geminiKey, agent, startDate, endDate, entries, linkSnippets } = opts;
 
   const model = "gemini-3-flash-preview";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
@@ -283,7 +460,11 @@ async function generateReviewWithGemini(opts: {
 
   const payload = {
     systemInstruction: {
-      parts: [{ text: agent.systemPrompt }],
+      parts: [
+        { text: buildSharedBackground() },
+        { text: personaTopicPrefs(agent.id) },
+        { text: agent.systemPrompt },
+      ],
     },
     contents: [
       {
@@ -300,6 +481,12 @@ async function generateReviewWithGemini(opts: {
                   todo: (e.todo ?? []).map(dailyItemToText),
                   note: e.note ?? "",
                 })),
+                linkSnippets: linkSnippets.map((s) => ({
+                  url: s.url,
+                  title: s.title,
+                  contentType: s.contentType ?? "",
+                  content: s.content,
+                })),
                 output: {
                   format: "json",
                   schema: {
@@ -308,7 +495,7 @@ async function generateReviewWithGemini(opts: {
                   },
                 },
                 instruction:
-                  "请基于给定时间范围内的日常记录，输出对我的点评(chat)和你提炼出的可执行todo列表(todo)。todo每条尽量短、可执行、明确下一步。输出必须是严格JSON，且只包含chat与todo两个字段。",
+                  "请基于给定时间范围内的日常记录与可用的链接内容片段，输出对 Neo 的点评(chat)和你提炼出的可执行 todo 列表(todo)。todo 每条尽量短、可执行、明确下一步。若你选择跳过，请输出 {chat: \"\", todo: []}。输出必须是严格 JSON，且只包含 chat 与 todo 两个字段。",
               },
               null,
               2,
@@ -368,6 +555,11 @@ export default {
       }
 
       if (request.method === "POST" && url.pathname === "/api/agents/review") {
+        const access = await requireAccess(request, env);
+        if (!access.ok) {
+          return withCors(request, json({ error: "unauthorized", reason: access.reason }, { status: 401 }));
+        }
+
         const body = (await request.json()) as unknown;
         const {
           geminiKey,
@@ -396,6 +588,8 @@ export default {
           return withCors(request, json({ error: "agents_required" }, { status: 400 }));
         }
 
+        const linkSnippets = await fetchLinkSnippets(entries);
+
         const reviews: AgentReview[] = [];
         for (const agent of agents) {
           if (!agent?.id || !agent?.name || !agent?.systemPrompt) continue;
@@ -405,11 +599,16 @@ export default {
             startDate,
             endDate,
             entries,
+            linkSnippets,
           });
-          reviews.push(review);
+          if (review.chat?.trim() || (review.todo?.length ?? 0) > 0) {
+            reviews.push(review);
+          }
         }
 
-        return withCors(request, json({ reviews }));
+        const finalTodo = await mergeTodoWithGemini({ geminiKey, startDate, endDate, reviews });
+        const response: ReviewResponse = { reviews, finalTodo };
+        return withCors(request, json(response));
       }
 
       if (request.method === "GET" && url.pathname.startsWith("/api/posts/")) {
