@@ -6,6 +6,38 @@ type Env = {
   ADMIN_ALLOWED_SUBS?: string;
 };
 
+type DailyLink = {
+  title?: string;
+  url: string;
+};
+
+type DailyItem =
+  | string
+  | {
+      text: string;
+      links?: DailyLink[];
+    };
+
+type DailyEntry = {
+  date: string;
+  done: DailyItem[];
+  todo?: DailyItem[];
+  note?: string;
+};
+
+type AgentInput = {
+  id: string;
+  name: string;
+  systemPrompt: string;
+};
+
+type AgentReview = {
+  agentId: string;
+  agentName: string;
+  chat: string;
+  todo: string[];
+};
+
 type BlogPost = {
   title: string;
   titleZh: string;
@@ -222,6 +254,102 @@ function withCors(request: Request, response: Response) {
   return new Response(response.body, { status: response.status, headers });
 }
 
+function normalizeDailyItem(item: DailyItem) {
+  if (typeof item === "string") return { text: item, links: [] as DailyLink[] };
+  return { text: item.text, links: item.links ?? [] };
+}
+
+function dailyItemToText(item: DailyItem) {
+  const n = normalizeDailyItem(item);
+  const links = n.links
+    .map((l) => `${l.title ? `${l.title}: ` : ""}${l.url}`)
+    .join(" | ");
+  return links ? `${n.text} (${links})` : n.text;
+}
+
+async function generateReviewWithGemini(opts: {
+  geminiKey: string;
+  agent: AgentInput;
+  startDate: string;
+  endDate: string;
+  entries: DailyEntry[];
+}): Promise<AgentReview> {
+  const { geminiKey, agent, startDate, endDate, entries } = opts;
+
+  const model = "gemini-1.5-flash";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
+    geminiKey,
+  )}`;
+
+  const payload = {
+    systemInstruction: {
+      parts: [{ text: agent.systemPrompt }],
+    },
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: JSON.stringify(
+              {
+                startDate,
+                endDate,
+                entries: entries.map((e) => ({
+                  date: e.date,
+                  done: e.done.map(dailyItemToText),
+                  todo: (e.todo ?? []).map(dailyItemToText),
+                  note: e.note ?? "",
+                })),
+                output: {
+                  format: "json",
+                  schema: {
+                    chat: "string",
+                    todo: "string[]",
+                  },
+                },
+                instruction:
+                  "请基于给定时间范围内的日常记录，输出对我的点评(chat)和你提炼出的可执行todo列表(todo)。todo每条尽量短、可执行、明确下一步。输出必须是严格JSON，且只包含chat与todo两个字段。",
+              },
+              null,
+              2,
+            ),
+          },
+        ],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.7,
+      responseMimeType: "application/json",
+    },
+  };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`gemini_error: ${res.status} ${text.slice(0, 200)}`);
+  }
+
+  const data = (await res.json()) as any;
+  const text: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  const raw = typeof text === "string" ? text : JSON.stringify(data);
+
+  try {
+    const parsed = JSON.parse(raw) as { chat?: unknown; todo?: unknown };
+    const chat = typeof parsed.chat === "string" ? parsed.chat : raw;
+    const todo = Array.isArray(parsed.todo) ? parsed.todo.filter((t) => typeof t === "string") : [];
+    return { agentId: agent.id, agentName: agent.name, chat, todo };
+  } catch {
+    return { agentId: agent.id, agentName: agent.name, chat: raw, todo: [] };
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method === "OPTIONS") {
@@ -237,6 +365,56 @@ export default {
       if (request.method === "GET" && url.pathname === "/api/posts") {
         const posts = await listPosts(env);
         return withCors(request, json(posts));
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/agents/review") {
+        const access = await requireAccess(request, env);
+        if (!access.ok) {
+          return withCors(request, json({ error: "unauthorized", reason: access.reason }, { status: 401 }));
+        }
+
+        const body = (await request.json()) as unknown;
+        const {
+          geminiKey,
+          startDate,
+          endDate,
+          entries,
+          agents,
+        } = (body ?? {}) as {
+          geminiKey?: string;
+          startDate?: string;
+          endDate?: string;
+          entries?: DailyEntry[];
+          agents?: AgentInput[];
+        };
+
+        if (!geminiKey || typeof geminiKey !== "string") {
+          return withCors(request, json({ error: "gemini_key_required" }, { status: 400 }));
+        }
+        if (!startDate || !endDate) {
+          return withCors(request, json({ error: "date_range_required" }, { status: 400 }));
+        }
+        if (!Array.isArray(entries)) {
+          return withCors(request, json({ error: "entries_required" }, { status: 400 }));
+        }
+        if (!Array.isArray(agents) || agents.length === 0) {
+          return withCors(request, json({ error: "agents_required" }, { status: 400 }));
+        }
+
+        const reviews: AgentReview[] = [];
+        for (const agent of agents) {
+          if (!agent?.id || !agent?.name || !agent?.systemPrompt) continue;
+          const review = await generateReviewWithGemini({
+            geminiKey,
+            agent,
+            startDate,
+            endDate,
+            entries,
+          });
+          reviews.push(review);
+        }
+
+        return withCors(request, json({ reviews }));
       }
 
       if (request.method === "GET" && url.pathname.startsWith("/api/posts/")) {

@@ -1,13 +1,32 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { eachDayOfInterval, format, startOfToday, subDays } from 'date-fns';
-import { dailyLog, DailyEntry } from '@/data/dailyLog';
-import { X } from 'lucide-react';
+import { DailyEntry, DailyItem, dailyLog } from '@/data/dailyLog';
+import { Plus, Settings, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 // 单元格类型
  type Cell = {
   date: string;
   count: number;
   entries?: DailyEntry[];
+};
+
+type Persona = {
+  id: string;
+  name: string;
+  systemPrompt: string;
+  enabled: boolean;
+  deletable?: boolean;
+};
+
+type AgentReview = {
+  agentId: string;
+  agentName: string;
+  chat: string;
+  todo: string[];
 };
 
 // 颜色分桶阈值（含）
@@ -38,14 +57,191 @@ function buildCells(): Cell[] {
   return days.map((day) => {
     const key = format(day, 'yyyy-MM-dd');
     const entries = map.get(key);
-    const count = entries?.reduce((sum, e) => sum + e.done.length + (e.todo?.length ?? 0), 0) ?? 0;
+    const count =
+      entries?.reduce((sum, e) => sum + e.done.length + (e.todo?.length ?? 0), 0) ?? 0;
     return { date: key, count, entries };
   });
+}
+
+const STORAGE_KEY_PERSONAS = 'stats_personas_v1';
+const STORAGE_KEY_GEMINI = 'stats_gemini_key_v1';
+const STORAGE_KEY_REVIEW = 'stats_agent_review_v1';
+
+const DEFAULT_PERSONAS: Persona[] = [
+  {
+    id: 'hawking',
+    name: '霍金',
+    enabled: true,
+    systemPrompt:
+      '你是史蒂芬·霍金。你用清晰、冷静、严谨、带一点幽默的方式评价人的行动与计划。你会把问题抽象成模型、约束、变量与可证伪的假设。不要说教。输出必须有具体建议。',
+  },
+  {
+    id: 'munger',
+    name: '芒格',
+    enabled: true,
+    systemPrompt:
+      '你是查理·芒格。你用多学科思维模型、逆向思维、简单原则来评价人的行动。你会指出愚蠢的风险、激励错配、机会成本，并给出可执行建议。语气直接但不刻薄。',
+  },
+  {
+    id: 'jobs',
+    name: '乔布斯',
+    enabled: true,
+    systemPrompt:
+      '你是史蒂夫·乔布斯。你强调聚焦、品味、用户体验与端到端系统。你会指出哪些事情不该做，哪些事情必须做到极致，并用简短有力的语言给出下一步建议。',
+  },
+];
+
+function normalizeItem(item: DailyItem) {
+  if (typeof item === 'string') return { text: item, links: [] as { title?: string; url: string }[] };
+  return { text: item.text, links: item.links ?? [] };
+}
+
+function stableStringify(input: unknown) {
+  try {
+    return JSON.stringify(input);
+  } catch {
+    return String(input);
+  }
+}
+
+function itemToPlainText(item: DailyItem) {
+  const n = normalizeItem(item);
+  const links = n.links.map((l) => `${l.title ? `${l.title}: ` : ''}${l.url}`).join(' | ');
+  return links ? `${n.text} (${links})` : n.text;
+}
+
+function ItemList({ items }: { items: DailyItem[] }) {
+  return (
+    <ul className="list-disc list-inside space-y-1">
+      {items.map((it, idx) => {
+        const n = normalizeItem(it);
+        return (
+          <li key={idx} className="leading-relaxed">
+            <span>{n.text}</span>
+            {n.links.length > 0 && (
+              <span className="ml-2 inline-flex flex-wrap gap-1">
+                {n.links.map((l, j) => (
+                  <a
+                    key={j}
+                    href={l.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline text-xs"
+                  >
+                    {l.title ?? (() => {
+                      try {
+                        return new URL(l.url).hostname;
+                      } catch {
+                        return l.url;
+                      }
+                    })()}
+                  </a>
+                ))}
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 export default function Stats() {
   const cells = useMemo(buildCells, []);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  const [rangeStart, setRangeStart] = useState<string>(() => format(subDays(startOfToday(), 6), 'yyyy-MM-dd'));
+  const [rangeEnd, setRangeEnd] = useState<string>(() => format(startOfToday(), 'yyyy-MM-dd'));
+
+  const [personas, setPersonas] = useState<Persona[]>(DEFAULT_PERSONAS);
+  const [geminiKey, setGeminiKey] = useState<string>('');
+
+  const [newPersonaName, setNewPersonaName] = useState('');
+  const [newPersonaPrompt, setNewPersonaPrompt] = useState('');
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [reviews, setReviews] = useState<AgentReview[]>([]);
+
+  const rangeCells = useMemo(() => {
+    const start = selectedDate ?? rangeStart;
+    const end = selectedDate ?? rangeEnd;
+
+    const startIdx = cells.findIndex((c) => c.date === start);
+    const endIdx = cells.findIndex((c) => c.date === end);
+    if (startIdx < 0 || endIdx < 0) return [] as Cell[];
+
+    const from = Math.min(startIdx, endIdx);
+    const to = Math.max(startIdx, endIdx);
+    return cells.slice(from, to + 1);
+  }, [cells, rangeEnd, rangeStart, selectedDate]);
+
+  const rangeEntries = useMemo(() => {
+    return rangeCells.flatMap((c) => c.entries ?? []);
+  }, [rangeCells]);
+
+  const reviewCacheKey = useMemo(() => {
+    const active = personas
+      .filter((p) => p.enabled)
+      .map((p) => ({ id: p.id, name: p.name, systemPrompt: p.systemPrompt }));
+    const payload = {
+      start: selectedDate ?? rangeStart,
+      end: selectedDate ?? rangeEnd,
+      active,
+      entries: rangeEntries.map((e) => ({
+        date: e.date,
+        done: e.done.map(itemToPlainText),
+        todo: (e.todo ?? []).map(itemToPlainText),
+        note: e.note ?? '',
+      })),
+    };
+    return stableStringify(payload);
+  }, [personas, rangeEnd, rangeEntries, rangeStart, selectedDate]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_PERSONAS);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Persona[];
+        if (Array.isArray(parsed) && parsed.length > 0) setPersonas(parsed);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_PERSONAS, JSON.stringify(personas));
+    } catch {
+      // ignore
+    }
+  }, [personas]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_GEMINI);
+      if (raw) setGeminiKey(raw);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_REVIEW);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { key: string; reviews: AgentReview[] };
+      if (parsed?.key && Array.isArray(parsed.reviews) && parsed.key === reviewCacheKey) {
+        setReviews(parsed.reviews);
+      }
+    } catch {
+      // ignore
+    }
+  }, [reviewCacheKey]);
+
+  useEffect(() => {
+    setReviews([]);
+  }, [selectedDate, rangeStart, rangeEnd, personas]);
 
   // 转成周列（列=周，行=周内星期，周一在上）
   const weeks: Cell[][] = [];
@@ -69,6 +265,75 @@ export default function Stats() {
     return cells.slice(-10).reverse();
   }, [cells, selectedDate]);
 
+  const handleTogglePersona = (id: string) => {
+    setPersonas((prev) => prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p)));
+  };
+
+  const handleDeletePersona = (id: string) => {
+    setPersonas((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const handleAddPersona = () => {
+    const name = newPersonaName.trim();
+    const prompt = newPersonaPrompt.trim();
+    if (!name || !prompt) return;
+    const id = `custom_${Date.now()}`;
+    setPersonas((prev) => [
+      ...prev,
+      { id, name, systemPrompt: prompt, enabled: true, deletable: true },
+    ]);
+    setNewPersonaName('');
+    setNewPersonaPrompt('');
+  };
+
+  const handleSaveGeminiKey = (key: string) => {
+    setGeminiKey(key);
+    try {
+      localStorage.setItem(STORAGE_KEY_GEMINI, key);
+    } catch {
+      // ignore
+    }
+  };
+
+  const generateReviews = async () => {
+    const active = personas.filter((p) => p.enabled);
+    if (active.length === 0) return;
+
+    if (!geminiKey.trim()) {
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const start = selectedDate ?? rangeStart;
+      const end = selectedDate ?? rangeEnd;
+
+      const res = await fetch('/api/agents/review', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          geminiKey: geminiKey.trim(),
+          startDate: start,
+          endDate: end,
+          entries: rangeEntries,
+          agents: active.map((a) => ({ id: a.id, name: a.name, systemPrompt: a.systemPrompt })),
+        }),
+      });
+
+      if (!res.ok) return;
+      const data = (await res.json()) as { reviews?: AgentReview[] };
+      const next = Array.isArray(data?.reviews) ? data.reviews : [];
+      setReviews(next);
+      try {
+        localStorage.setItem(STORAGE_KEY_REVIEW, JSON.stringify({ key: reviewCacheKey, reviews: next }));
+      } catch {
+        // ignore
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pt-24 pb-16">
       <div className="max-w-6xl mx-auto px-6 space-y-8">
@@ -78,6 +343,100 @@ export default function Stats() {
           <p className="text-sm text-slate-600 dark:text-slate-300 max-w-2xl">
             记录过去一年的每日行为密度。
           </p>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {personas.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handleTogglePersona(p.id)}
+                  className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs border transition-colors ${
+                    p.enabled
+                      ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100'
+                      : 'bg-transparent text-slate-600 border-slate-200 dark:text-slate-300 dark:border-slate-700'
+                  }`}
+                  title={p.enabled ? '点击停用' : '点击启用'}
+                >
+                  <span>{p.name}</span>
+                  {p.deletable && (
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeletePersona(p.id);
+                      }}
+                      className="ml-1 inline-flex items-center justify-center rounded-full hover:opacity-80"
+                      title="删除"
+                    >
+                      <X className="w-3 h-3" />
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  添加人设
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>添加 Persona</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <div className="text-sm text-slate-600 dark:text-slate-300">名称</div>
+                    <Input value={newPersonaName} onChange={(e) => setNewPersonaName(e.target.value)} placeholder="例如：纳瓦尔" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm text-slate-600 dark:text-slate-300">System Prompt</div>
+                    <Textarea
+                      value={newPersonaPrompt}
+                      onChange={(e) => setNewPersonaPrompt(e.target.value)}
+                      className="min-h-[180px]"
+                      placeholder="粘贴 system prompt..."
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={handleAddPersona} disabled={!newPersonaName.trim() || !newPersonaPrompt.trim()}>
+                    添加
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Settings className="w-4 h-4" />
+                  配置 Key
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Gemini Key</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-2">
+                  <div className="text-sm text-slate-600 dark:text-slate-300">该 Key 会保存到浏览器 localStorage，并随请求发送到 Worker。</div>
+                  <Input
+                    type="password"
+                    value={geminiKey}
+                    onChange={(e) => setGeminiKey(e.target.value)}
+                    placeholder="粘贴 Gemini API Key"
+                  />
+                </div>
+                <DialogFooter>
+                  <Button onClick={() => handleSaveGeminiKey(geminiKey.trim())} disabled={!geminiKey.trim()}>
+                    保存
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </header>
 
         <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
@@ -138,6 +497,21 @@ export default function Stats() {
               </button>
             )}
           </div>
+
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2 text-sm">
+              <div className="text-slate-500">范围</div>
+              <Input type="date" value={rangeStart} onChange={(e) => setRangeStart(e.target.value)} className="w-[160px]" />
+              <span className="text-slate-400">→</span>
+              <Input type="date" value={rangeEnd} onChange={(e) => setRangeEnd(e.target.value)} className="w-[160px]" />
+              {selectedDate && <span className="text-xs text-slate-500">（当前以选中日期为准）</span>}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="default" onClick={generateReviews} disabled={isGenerating || personas.every((p) => !p.enabled)}>
+                {isGenerating ? '生成中…' : '生成点评'}
+              </Button>
+            </div>
+          </div>
           
           <div className="space-y-3">
             {displayedCells.length > 0 ? (
@@ -152,19 +526,19 @@ export default function Stats() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     <div>
                       <div className="text-slate-500 mb-1">Done</div>
-                      <ul className="list-disc list-inside space-y-1">
-                        {cell.entries?.flatMap((e) => e.done).map((item, idx) => (
-                          <li key={idx}>{item}</li>
-                        )) || <li className="text-slate-400">无</li>}
-                      </ul>
+                      {cell.entries && cell.entries.length > 0 ? (
+                        <ItemList items={cell.entries.flatMap((e) => e.done)} />
+                      ) : (
+                        <div className="text-slate-400">无</div>
+                      )}
                     </div>
                     <div>
                       <div className="text-slate-500 mb-1">Todo</div>
-                      <ul className="list-disc list-inside space-y-1">
-                        {cell.entries?.flatMap((e) => e.todo ?? []).map((item, idx) => (
-                          <li key={idx}>{item}</li>
-                        )) || <li className="text-slate-400">无</li>}
-                      </ul>
+                      {cell.entries && cell.entries.length > 0 ? (
+                        <ItemList items={cell.entries.flatMap((e) => e.todo ?? [])} />
+                      ) : (
+                        <div className="text-slate-400">无</div>
+                      )}
                     </div>
                   </div>
                   {cell.entries?.some((e) => e.note) && (
@@ -179,6 +553,80 @@ export default function Stats() {
                 该日期无记录
               </div>
             )}
+          </div>
+        </section>
+
+        <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">AI 讨论与评价</h2>
+            <div className="text-xs text-slate-500">
+              {selectedDate ? `日期：${selectedDate}` : `范围：${rangeStart} → ${rangeEnd}`}
+            </div>
+          </div>
+
+          {(!geminiKey || !geminiKey.trim()) && (
+            <div className="text-sm text-slate-500 mb-4">
+              还未配置 Gemini Key。请在顶部点击“配置 Key”。
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+              <div className="text-sm font-semibold mb-2">Done</div>
+              <div className="text-xs text-slate-500 mb-2">（用于给智能体提供事实输入）</div>
+              <div className="space-y-3">
+                {rangeEntries.length > 0 ? (
+                  rangeEntries.map((e) => (
+                    <div key={e.date} className="border border-slate-100 dark:border-slate-800 rounded-lg p-3">
+                      <div className="text-xs font-semibold mb-2">{e.date}</div>
+                      <ItemList items={e.done} />
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-slate-400 text-sm">无数据</div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+              <div className="text-sm font-semibold mb-2">Chat</div>
+              <div className="space-y-3 text-sm">
+                {reviews.length > 0 ? (
+                  reviews.map((r) => (
+                    <div key={r.agentId} className="border border-slate-100 dark:border-slate-800 rounded-lg p-3">
+                      <div className="text-xs font-semibold mb-2">{r.agentName}</div>
+                      <div className="whitespace-pre-wrap leading-relaxed">{r.chat}</div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-slate-400 text-sm">点击“生成点评”后展示</div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+              <div className="text-sm font-semibold mb-2">Todo</div>
+              <div className="space-y-3 text-sm">
+                {reviews.length > 0 ? (
+                  reviews.map((r) => (
+                    <div key={r.agentId} className="border border-slate-100 dark:border-slate-800 rounded-lg p-3">
+                      <div className="text-xs font-semibold mb-2">{r.agentName}</div>
+                      {r.todo?.length ? (
+                        <ul className="list-disc list-inside space-y-1">
+                          {r.todo.map((t, idx) => (
+                            <li key={idx}>{t}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="text-slate-400">无</div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-slate-400 text-sm">点击“生成点评”后展示</div>
+                )}
+              </div>
+            </div>
           </div>
         </section>
       </div>

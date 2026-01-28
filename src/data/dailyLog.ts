@@ -1,7 +1,19 @@
+export type DailyLink = {
+  title?: string;
+  url: string;
+};
+
+export type DailyItem =
+  | string
+  | {
+      text: string;
+      links?: DailyLink[];
+    };
+
 export type DailyEntry = {
   date: string; // YYYY-MM-DD
-  done: string[];
-  todo?: string[];
+  done: DailyItem[];
+  todo?: DailyItem[];
   note?: string;
 };
 
@@ -247,6 +259,7 @@ export const dailyLog: DailyEntry[] = [
   {
     "date": "2026-01-22",
     "done": [
+      { text: "对比clawdbot和coze", links: [{ title: "compare", url: "https://r2-manager-api.g29tony.workers.dev/api/object?download=1&key=coze%2FClawdbot_vs_coze-gcli.md" }] },
       "重构 weekly-digest-worker，将博客生成逻辑迁移至 JiJi (tmux agent) 实现本地化处理",
       "集成 Localtunnel 指令分发系统，实现 Worker 自动触发 JiJi 执行复杂 LLM 任务",
       "解决远程环境下 Wrangler OAuth 授权登录问题，更新至重要知识库",
