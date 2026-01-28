@@ -88,6 +88,25 @@ function base64UrlToUint8Array(input: string) {
   return bytes;
 }
 
+async function runWithConcurrency<T>(tasks: Array<() => Promise<T>>, concurrency: number): Promise<T[]> {
+  const limit = Math.max(1, Math.floor(concurrency || 1));
+  const results: T[] = new Array(tasks.length);
+  let nextIndex = 0;
+
+  const worker = async () => {
+    while (true) {
+      const idx = nextIndex;
+      nextIndex += 1;
+      if (idx >= tasks.length) return;
+      results[idx] = await tasks[idx]();
+    }
+  };
+
+  const runners = Array.from({ length: Math.min(limit, tasks.length) }, () => worker());
+  await Promise.all(runners);
+  return results;
+}
+
 function parseJwt(token: string) {
   const [h, p, s] = token.split(".");
   if (!h || !p || !s) throw new Error("invalid jwt");
@@ -321,10 +340,14 @@ async function deletePost(env: Env, slug: string) {
 }
 
 function withCors(request: Request, response: Response) {
-  const origin = request.headers.get("Origin") || "*";
+  const originHeader = request.headers.get("Origin");
+  const origin = originHeader || "*";
   const headers = new Headers(response.headers);
   headers.set("Access-Control-Allow-Origin", origin);
   headers.set("Vary", "Origin");
+  if (originHeader) {
+    headers.set("Access-Control-Allow-Credentials", "true");
+  }
   headers.set(
     "Access-Control-Allow-Headers",
     "content-type, cf-access-jwt-assertion, cf-access-client-id, cf-access-client-secret",
@@ -537,12 +560,14 @@ export default {
         const body = (await request.json()) as unknown;
         const {
           geminiKey,
+          concurrency,
           startDate,
           endDate,
           entries,
           agents,
         } = (body ?? {}) as {
           geminiKey?: string;
+          concurrency?: number;
           startDate?: string;
           endDate?: string;
           entries?: DailyEntry[];
@@ -564,21 +589,24 @@ export default {
 
         const linkSnippets = await fetchLinkSnippets(entries);
 
-        const reviews: AgentReview[] = [];
-        for (const agent of agents) {
-          if (!agent?.id || !agent?.name || !agent?.systemPrompt) continue;
-          const review = await generateReviewWithGemini({
+        const validAgents = agents.filter((a) => a?.id && a?.name && a?.systemPrompt);
+        const desiredConcurrency =
+          typeof concurrency === "number" && Number.isFinite(concurrency) ? Math.floor(concurrency) : 3;
+        const safeConcurrency = Math.max(1, Math.min(desiredConcurrency, 6));
+
+        const tasks = validAgents.map((agent) => () =>
+          generateReviewWithGemini({
             geminiKey,
             agent,
             startDate,
             endDate,
             entries,
             linkSnippets,
-          });
-          if (review.chat?.trim() || (review.todo?.length ?? 0) > 0) {
-            reviews.push(review);
-          }
-        }
+          }),
+        );
+
+        const all = await runWithConcurrency(tasks, safeConcurrency);
+        const reviews = all.filter((r) => r.chat?.trim() || (r.todo?.length ?? 0) > 0);
 
         const finalTodo = await mergeTodoWithGemini({ geminiKey, startDate, endDate, reviews });
         const response: ReviewResponse = { reviews, finalTodo };

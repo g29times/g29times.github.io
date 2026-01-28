@@ -72,6 +72,7 @@ function buildCells(): Cell[] {
 const STORAGE_KEY_PERSONAS = 'stats_personas_v1';
 const STORAGE_KEY_GEMINI = 'stats_gemini_key_v1';
 const STORAGE_KEY_REVIEW = 'stats_agent_review_v1';
+const STORAGE_KEY_CONCURRENCY = 'stats_llm_concurrency_v1';
 
 const DEFAULT_PERSONAS: Persona[] = [
   {
@@ -168,6 +169,8 @@ export default function Stats() {
   const [personas, setPersonas] = useState<Persona[]>(DEFAULT_PERSONAS);
   const [geminiKey, setGeminiKey] = useState<string>('');
 
+  const [llmConcurrency, setLlmConcurrency] = useState<number>(3);
+
   const [selectedPersonaId, setSelectedPersonaId] = useState<string>(DEFAULT_PERSONAS[0]?.id ?? '');
 
   const [newPersonaName, setNewPersonaName] = useState('');
@@ -218,7 +221,14 @@ export default function Stats() {
       const raw = localStorage.getItem(STORAGE_KEY_PERSONAS);
       if (raw) {
         const parsed = JSON.parse(raw) as Persona[];
-        if (Array.isArray(parsed) && parsed.length > 0) setPersonas(parsed);
+        if (Array.isArray(parsed) && parsed.length > 0)
+          setPersonas(
+            parsed.map((p) => ({
+              ...p,
+              systemPrompt: typeof p.systemPrompt === 'string' ? p.systemPrompt : '',
+              topicPrefs: typeof (p as Persona).topicPrefs === 'string' ? (p as Persona).topicPrefs : '',
+            })),
+          );
       }
     } catch {
       // ignore
@@ -237,6 +247,17 @@ export default function Stats() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_GEMINI);
       if (raw) setGeminiKey(raw);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_CONCURRENCY);
+      if (!raw) return;
+      const n = Number(raw);
+      if (Number.isFinite(n) && n > 0) setLlmConcurrency(n);
     } catch {
       // ignore
     }
@@ -326,6 +347,16 @@ export default function Stats() {
     }
   };
 
+  const handleSaveConcurrency = (n: number) => {
+    const next = Number.isFinite(n) && n > 0 ? Math.floor(n) : 1;
+    setLlmConcurrency(next);
+    try {
+      localStorage.setItem(STORAGE_KEY_CONCURRENCY, String(next));
+    } catch {
+      // ignore
+    }
+  };
+
   const generateReviews = async () => {
     const active = personas.filter((p) => p.enabled);
     if (active.length === 0) return;
@@ -341,9 +372,11 @@ export default function Stats() {
 
       const res = await fetch('/api/agents/review', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           geminiKey: geminiKey.trim(),
+          concurrency: llmConcurrency,
           startDate: start,
           endDate: end,
           entries: rangeEntries,
@@ -465,7 +498,7 @@ export default function Stats() {
                 <DialogHeader>
                   <DialogTitle>Gemini Key</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="text-sm text-slate-600 dark:text-slate-300">该 Key 会保存到浏览器 localStorage，并随请求发送到 Worker。</div>
                   <Input
                     type="password"
@@ -473,9 +506,26 @@ export default function Stats() {
                     onChange={(e) => setGeminiKey(e.target.value)}
                     placeholder="粘贴 Gemini API Key"
                   />
+                  <div className="space-y-1">
+                    <div className="text-sm text-slate-600 dark:text-slate-300">LLM 并行度（建议 2~3）</div>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={llmConcurrency}
+                      onChange={(e) => setLlmConcurrency(Number(e.target.value))}
+                      placeholder="例如：3"
+                    />
+                  </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={() => handleSaveGeminiKey(geminiKey.trim())} disabled={!geminiKey.trim()}>
+                  <Button
+                    onClick={() => {
+                      handleSaveGeminiKey(geminiKey.trim());
+                      handleSaveConcurrency(llmConcurrency);
+                    }}
+                    disabled={!geminiKey.trim()}
+                  >
                     保存
                   </Button>
                 </DialogFooter>
@@ -493,7 +543,7 @@ export default function Stats() {
                 <div className="space-y-1">
                   <div className="text-xs text-slate-500">偏好话题</div>
                   <Textarea
-                    value={selectedPersona.topicPrefs}
+                    value={selectedPersona.topicPrefs ?? ''}
                     onChange={(e) => updatePersona(selectedPersona.id, { topicPrefs: e.target.value })}
                     className="min-h-[120px]"
                   />
@@ -501,7 +551,7 @@ export default function Stats() {
                 <div className="space-y-1">
                   <div className="text-xs text-slate-500">System Prompt</div>
                   <Textarea
-                    value={selectedPersona.systemPrompt}
+                    value={selectedPersona.systemPrompt ?? ''}
                     onChange={(e) => updatePersona(selectedPersona.id, { systemPrompt: e.target.value })}
                     className="min-h-[120px]"
                   />
