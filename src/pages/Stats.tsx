@@ -39,6 +39,7 @@ type TodoItem = {
   id: string;
   text: string;
   done: boolean;
+  doneNote: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -194,6 +195,10 @@ export default function Stats() {
   const [finalTodo, setFinalTodo] = useState<string[]>([]);
 
   const [persistedTodos, setPersistedTodos] = useState<TodoItem[]>([]);
+  const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
+  const [editingTodoText, setEditingTodoText] = useState<string>('');
+  const [editingTodoNote, setEditingTodoNote] = useState<string>('');
+  const [newManualTodo, setNewManualTodo] = useState<string>('');
 
   const rangeCells = useMemo(() => {
     const start = selectedDate ?? rangeStart;
@@ -422,6 +427,9 @@ export default function Stats() {
         if (data?.error === 'todo_limit_reached') {
           window.alert(`未完成 TODO 已达到上限 ${data?.limit ?? todoLimit}。请先完成/删除库内 TODO 或清理建议 TODO。`);
         }
+        if (data?.error === 'text_duplicated') {
+          window.alert('TODO 内容重复：系统要求全局唯一，请换一个表达。');
+        }
         return;
       }
       await loadTodos();
@@ -452,6 +460,41 @@ export default function Stats() {
         credentials: 'include',
       });
       if (!res.ok) return;
+      await loadTodos();
+    } catch {
+      // ignore
+    }
+  };
+
+  const startEditTodo = (t: TodoItem) => {
+    setEditingTodoId(t.id);
+    setEditingTodoText(t.text);
+    setEditingTodoNote(t.doneNote ?? '');
+  };
+
+  const cancelEditTodo = () => {
+    setEditingTodoId(null);
+    setEditingTodoText('');
+    setEditingTodoNote('');
+  };
+
+  const saveEditTodo = async () => {
+    if (!editingTodoId) return;
+    try {
+      const res = await fetch(`/api/todos/${encodeURIComponent(editingTodoId)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: editingTodoText, doneNote: editingTodoNote }),
+      });
+      const data = (await res.json()) as any;
+      if (!res.ok) {
+        if (data?.error === 'text_duplicated') {
+          window.alert('TODO 内容重复：系统要求全局唯一，请换一个表达。');
+        }
+        return;
+      }
+      cancelEditTodo();
       await loadTodos();
     } catch {
       // ignore
@@ -524,7 +567,7 @@ export default function Stats() {
           <p className="text-sm uppercase tracking-[0.3em] text-slate-500">Daily Rhythm</p>
           <h1 className="text-3xl font-bold">年度日常热力图</h1>
           <p className="text-sm text-slate-600 dark:text-slate-300 max-w-2xl">
-            记录过去一年的每日行为密度。
+            以智慧驱动每日行为密度。
           </p>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -785,6 +828,50 @@ export default function Stats() {
                     </div>
                     <div>
                       <div className="text-slate-500 mb-1">Todo</div>
+                      <div className="mb-2 border border-slate-100 dark:border-slate-800 rounded-lg p-3">
+                        <div className="text-xs text-slate-500 mb-2">我的 TODO（已确认入库）</div>
+                        {persistedTodos.length > 0 ? (
+                          <div className="space-y-2">
+                            {persistedTodos.map((t) => (
+                              <div key={t.id} className="flex items-start justify-between gap-2">
+                                <label className="flex items-start gap-2 flex-1">
+                                  <input
+                                    type="checkbox"
+                                    checked={t.done}
+                                    onChange={(e) => toggleTodoDone(t.id, e.target.checked)}
+                                    className="mt-1"
+                                  />
+                                  <div className="flex-1">
+                                    <div className={t.done ? 'line-through text-slate-400' : ''}>{t.text}</div>
+                                    {t.done && (t.doneNote ?? '').trim() && (
+                                      <div className="mt-1 text-xs text-slate-500 whitespace-pre-wrap">完成说明：{t.doneNote}</div>
+                                    )}
+                                  </div>
+                                </label>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => startEditTodo(t)}
+                                    className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+                                  >
+                                    编辑
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => deleteTodo(t.id)}
+                                    className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+                                  >
+                                    删除
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-slate-400 text-sm">暂无</div>
+                        )}
+                      </div>
+
                       {cell.entries && cell.entries.length > 0 ? (
                         <ItemList items={cell.entries.flatMap((e) => e.todo ?? [])} />
                       ) : (
@@ -860,6 +947,26 @@ export default function Stats() {
               <div className="space-y-3 text-sm">
                 <div className="border border-slate-100 dark:border-slate-800 rounded-lg p-3">
                   <div className="text-xs text-slate-500 mb-2">我的 TODO（已确认入库）</div>
+                  <div className="mb-3 flex items-center gap-2">
+                    <Input
+                      value={newManualTodo}
+                      onChange={(e) => setNewManualTodo(e.target.value)}
+                      placeholder="手写新增 TODO（全局唯一）"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        const t = newManualTodo.trim();
+                        if (!t) return;
+                        await confirmTodo(t);
+                        setNewManualTodo('');
+                      }}
+                      disabled={!newManualTodo.trim()}
+                    >
+                      添加
+                    </Button>
+                  </div>
                   {persistedTodos.length > 0 ? (
                     <div className="space-y-2">
                       {persistedTodos.map((t) => (
@@ -872,15 +979,29 @@ export default function Stats() {
                             />
                             <span className={t.done ? 'line-through text-slate-400' : ''}>{t.text}</span>
                           </label>
-                          <button
-                            type="button"
-                            onClick={() => deleteTodo(t.id)}
-                            className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
-                          >
-                            删除
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => startEditTodo(t)}
+                              className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+                            >
+                              编辑
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => deleteTodo(t.id)}
+                              className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+                            >
+                              删除
+                            </button>
+                          </div>
                         </div>
                       ))}
+                      {persistedTodos.some((t) => t.done && (t.doneNote ?? '').trim()) && (
+                        <div className="pt-2 text-xs text-slate-500">
+                          已完成项可在“编辑”里补充完成说明；说明会参与后续 AI 上下文，避免重复建议。
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="text-slate-400 text-sm">暂无</div>
@@ -914,6 +1035,37 @@ export default function Stats() {
           </div>
         </section>
       </div>
+
+      <Dialog open={!!editingTodoId} onOpenChange={(open) => { if (!open) cancelEditTodo(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>编辑 TODO</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <div className="text-sm text-slate-600 dark:text-slate-300">内容（全局唯一）</div>
+              <Textarea
+                value={editingTodoText}
+                onChange={(e) => setEditingTodoText(e.target.value)}
+                className="min-h-[90px]"
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="text-sm text-slate-600 dark:text-slate-300">完成说明（可选）</div>
+              <Textarea
+                value={editingTodoNote}
+                onChange={(e) => setEditingTodoNote(e.target.value)}
+                className="min-h-[90px]"
+                placeholder="例如：通过什么方式完成、关键链接、复盘结论..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelEditTodo}>取消</Button>
+            <Button onClick={saveEditTodo} disabled={!editingTodoText.trim()}>保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

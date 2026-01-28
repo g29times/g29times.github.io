@@ -48,6 +48,7 @@ type TodoItem = {
   id: string;
   text: string;
   done: boolean;
+  doneNote: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -201,10 +202,12 @@ async function mergeTodoWithGemini(opts: {
   endDate: string;
   reviews: AgentReview[];
   backlog?: string[];
+  doneItems?: Array<{ text: string; doneNote?: string }>;
   todoLimit?: number;
 }): Promise<string[]> {
   const { geminiKey, startDate, endDate, reviews } = opts;
   const backlog = Array.isArray(opts.backlog) ? opts.backlog : [];
+  const doneItems = Array.isArray(opts.doneItems) ? opts.doneItems : [];
   const desiredLimit =
     typeof opts.todoLimit === "number" && Number.isFinite(opts.todoLimit) ? Math.floor(opts.todoLimit) : 3;
   const todoLimit = Math.max(1, Math.min(desiredLimit, 10));
@@ -235,6 +238,7 @@ async function mergeTodoWithGemini(opts: {
       endDate,
       todoLimit,
       backlog,
+      doneItems,
       advisorTodos: merged,
       reviews: reviews.map((r) => ({
         agentId: r.agentId,
@@ -292,12 +296,13 @@ async function mergeTodoWithGemini(opts: {
 
 async function listTodos(env: Env) {
   const res = await env.DB.prepare(
-    "SELECT id, text, done, createdAt, updatedAt FROM todos ORDER BY done ASC, updatedAt DESC",
+    "SELECT id, text, done, doneNote, createdAt, updatedAt FROM todos ORDER BY done ASC, updatedAt DESC",
   ).all();
   const rows = (res.results ?? []) as Array<{
     id: string;
     text: string;
     done: number;
+    doneNote: string;
     createdAt: string;
     updatedAt: string;
   }>;
@@ -305,6 +310,7 @@ async function listTodos(env: Env) {
     id: String(r.id),
     text: String(r.text),
     done: Number(r.done) === 1,
+    doneNote: typeof r.doneNote === "string" ? r.doneNote : "",
     createdAt: String(r.createdAt),
     updatedAt: String(r.updatedAt),
   }));
@@ -322,7 +328,7 @@ async function confirmTodo(env: Env, text: string, todoLimit: number) {
   if (!trimmed) return { ok: false as const, error: "text_required" };
 
   const existing = await env.DB.prepare(
-    "SELECT id, text, done, createdAt, updatedAt FROM todos WHERE text = ?",
+    "SELECT id, text, done, doneNote, createdAt, updatedAt FROM todos WHERE text = ?",
   )
     .bind(trimmed)
     .first();
@@ -331,6 +337,7 @@ async function confirmTodo(env: Env, text: string, todoLimit: number) {
       id: string;
       text: string;
       done: number;
+      doneNote?: string;
       createdAt: string;
       updatedAt: string;
     };
@@ -340,6 +347,7 @@ async function confirmTodo(env: Env, text: string, todoLimit: number) {
         id: String(row.id),
         text: String(row.text),
         done: Number(row.done) === 1,
+        doneNote: typeof row.doneNote === "string" ? row.doneNote : "",
         createdAt: String(row.createdAt),
         updatedAt: String(row.updatedAt),
       } satisfies TodoItem,
@@ -355,34 +363,59 @@ async function confirmTodo(env: Env, text: string, todoLimit: number) {
   const id = uuid();
   const ts = nowIso();
   await env.DB.prepare(
-    "INSERT INTO todos (id, text, done, createdAt, updatedAt) VALUES (?, ?, 0, ?, ?)",
+    "INSERT INTO todos (id, text, done, doneNote, createdAt, updatedAt) VALUES (?, ?, 0, '', ?, ?)",
   )
     .bind(id, trimmed, ts, ts)
     .run();
 
   return {
     ok: true as const,
-    item: { id, text: trimmed, done: false, createdAt: ts, updatedAt: ts } satisfies TodoItem,
+    item: { id, text: trimmed, done: false, doneNote: "", createdAt: ts, updatedAt: ts } satisfies TodoItem,
     existed: false,
   };
 }
 
-async function setTodoDone(env: Env, id: string, done: boolean) {
+async function updateTodo(env: Env, opts: { id: string; done?: boolean; text?: string; doneNote?: string }) {
+  const id = String(opts.id ?? "");
+  if (!id) return { ok: false as const, error: "id_required" };
   const ts = nowIso();
-  await env.DB.prepare("UPDATE todos SET done = ?, updatedAt = ? WHERE id = ?")
-    .bind(done ? 1 : 0, ts, id)
+
+  const current = await env.DB.prepare(
+    "SELECT id, text, done, doneNote, createdAt, updatedAt FROM todos WHERE id = ?",
+  )
+    .bind(id)
+    .first();
+  if (!current) return { ok: false as const, error: "not_found" };
+  const cur = current as { id: string; text: string; done: number; doneNote?: string; createdAt: string; updatedAt: string };
+
+  const nextText = typeof opts.text === "string" ? opts.text.trim() : String(cur.text);
+  if (!nextText) return { ok: false as const, error: "text_required" };
+  const nextDone = typeof opts.done === "boolean" ? (opts.done ? 1 : 0) : Number(cur.done);
+  const nextDoneNote = typeof opts.doneNote === "string" ? opts.doneNote : (typeof cur.doneNote === "string" ? cur.doneNote : "");
+
+  if (nextText !== String(cur.text)) {
+    const exist = await env.DB.prepare("SELECT id FROM todos WHERE text = ?").bind(nextText).first();
+    if (exist) return { ok: false as const, error: "text_duplicated" };
+  }
+
+  await env.DB.prepare(
+    "UPDATE todos SET text = ?, done = ?, doneNote = ?, updatedAt = ? WHERE id = ?",
+  )
+    .bind(nextText, nextDone, nextDoneNote, ts, id)
     .run();
+
   const row = await env.DB.prepare(
-    "SELECT id, text, done, createdAt, updatedAt FROM todos WHERE id = ?",
+    "SELECT id, text, done, doneNote, createdAt, updatedAt FROM todos WHERE id = ?",
   )
     .bind(id)
     .first();
   if (!row) return null;
-  const r = row as { id: string; text: string; done: number; createdAt: string; updatedAt: string };
+  const r = row as { id: string; text: string; done: number; doneNote?: string; createdAt: string; updatedAt: string };
   return {
     id: String(r.id),
     text: String(r.text),
     done: Number(r.done) === 1,
+    doneNote: typeof r.doneNote === "string" ? r.doneNote : "",
     createdAt: String(r.createdAt),
     updatedAt: String(r.updatedAt),
   } satisfies TodoItem;
@@ -756,8 +789,9 @@ export default {
         const safeTodoLimit = Math.max(1, Math.min(desiredTodoLimit, 10));
         const todos = await listTodos(env);
         const backlog = todos.filter((t) => !t.done).map((t) => t.text);
+        const doneItems = todos.filter((t) => t.done).map((t) => ({ text: t.text, doneNote: t.doneNote }));
 
-        const finalTodo = await mergeTodoWithGemini({ geminiKey, startDate, endDate, reviews, backlog, todoLimit: safeTodoLimit });
+        const finalTodo = await mergeTodoWithGemini({ geminiKey, startDate, endDate, reviews, backlog, doneItems, todoLimit: safeTodoLimit });
         const response: ReviewResponse = { reviews, finalTodo };
         return withCors(request, json(response));
       }
@@ -784,11 +818,16 @@ export default {
         const id = decodeURIComponent(url.pathname.slice("/api/todos/".length));
         if (!id) return withCors(request, json({ error: "id_required" }, { status: 400 }));
         const body = (await request.json()) as unknown;
-        const { done } = (body ?? {}) as { done?: boolean };
-        if (typeof done !== "boolean") {
-          return withCors(request, json({ error: "done_required" }, { status: 400 }));
+        const { done, text, doneNote } = (body ?? {}) as { done?: boolean; text?: string; doneNote?: string };
+        if (typeof done !== "boolean" && typeof text !== "string" && typeof doneNote !== "string") {
+          return withCors(request, json({ error: "patch_required" }, { status: 400 }));
         }
-        const item = await setTodoDone(env, id, done);
+        const item = await updateTodo(env, { id, done, text, doneNote });
+        if ((item as any)?.ok === false) {
+          const err = item as any;
+          const status = err.error === "not_found" ? 404 : 400;
+          return withCors(request, json(err, { status }));
+        }
         if (!item) return withCors(request, json({ error: "not_found" }, { status: 404 }));
         return withCors(request, json({ ok: true, item }));
       }
