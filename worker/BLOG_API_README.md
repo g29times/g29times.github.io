@@ -1,5 +1,7 @@
-
 # Blog API（Cloudflare Worker + D1）
+
+aimmar-blog-api.g29tony.workers.dev
+https://dash.cloudflare.com/390ce3a993dc5bffb7d21b6021ac1f14/workers/services/view/aimmar-blog-api/production
 
 该文档描述本仓库的博客后端：使用 Cloudflare Worker 提供 API、Cloudflare D1 存储文章数据，并通过 Cloudflare Access 对管理类接口做鉴权。
 

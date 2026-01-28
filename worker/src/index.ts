@@ -196,6 +196,16 @@ async function requireAccess(request: Request, env: Env) {
   }
 }
 
+/**
+ * 汇总与融合 TODO（最终输出给 Neo 的 1~N 条可执行 TODO）。
+ *
+ * - geminiKey: Gemini API Key
+ * - startDate/endDate: 这次讨论对应的时间范围（用于提示模型上下文）
+ * - reviews: 多位顾问的输出（包含 chat 与各自提炼的 todo）
+ * - backlog: 当前未完成的遗留 TODO 文本列表（用于防重与优先级竞争）
+ * - doneItems: 已完成 TODO 及其完成说明（用于防重，减少重复建议）
+ * - todoLimit: 最终返回 todo 的上限（默认 3）
+ */
 async function mergeTodoWithGemini(opts: {
   geminiKey: string;
   startDate: string;
@@ -239,7 +249,6 @@ async function mergeTodoWithGemini(opts: {
       todoLimit,
       backlog,
       doneItems,
-      advisorTodos: merged,
       reviews: reviews.map((r) => ({
         agentId: r.agentId,
         agentName: r.agentName,
@@ -257,8 +266,8 @@ async function mergeTodoWithGemini(opts: {
         {
           text: [
             "你是 Neo 的执行秘书（Chief of Staff）。",
-            `你会把多位顾问的观点与 Neo 的遗留 TODO 融合为 Neo 当下最该做的 1-${todoLimit} 条可执行 TODO。`,
-            `规则：去重、合并同类项、按收益/紧迫/杠杆排序；每条尽量短并可执行；最多 ${todoLimit} 条。`,
+            `你会考虑多位顾问的观点与 Neo 的 TODO，建模“价值-成本”四象限，为 Neo 推荐当下最该做的 1-${todoLimit} 条 高价值低成本 TODO。`,
+            `规则：去重、合并同类项，按 四象限 排序；每条尽量短并可执行；最多 ${todoLimit} 条。`,
             "输出必须是严格 JSON，只包含 { todo: string[] }。",
           ].join("\n"),
         },
@@ -619,6 +628,16 @@ function buildSharedBackground() {
   ].join("\n");
 }
 
+/**
+ * 单个顾问生成点评（chat）与该顾问建议的 todo 列表。
+ *
+ * - geminiKey: Gemini API Key
+ * - agent: 当前顾问 persona（systemPrompt/topicPrefs 等）
+ * - startDate/endDate: 讨论时间范围
+ * - entries: 该时间范围内的日常记录（done/todo/note）
+ * - linkSnippets: 从日常记录中抽取的链接内容摘要（供顾问参考）
+ * - todosContext: Neo 的 todo 状态（未完成 + 已完成含完成说明），用于前置防重
+ */
 async function generateReviewWithGemini(opts: {
   geminiKey: string;
   agent: AgentInput;
