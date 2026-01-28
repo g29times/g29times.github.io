@@ -217,6 +217,10 @@ export default function Stats() {
     return rangeCells.flatMap((c) => c.entries ?? []);
   }, [rangeCells]);
 
+  const rangeEntriesDesc = useMemo(() => {
+    return [...rangeEntries].sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0));
+  }, [rangeEntries]);
+
   const reviewCacheKey = useMemo(() => {
     const active = personas
       .filter((p) => p.enabled)
@@ -913,8 +917,8 @@ export default function Stats() {
               <div className="text-sm font-semibold mb-2">Done</div>
               <div className="text-xs text-slate-500 mb-2">（用于给智能体提供事实输入）</div>
               <div className="space-y-3">
-                {rangeEntries.length > 0 ? (
-                  rangeEntries.map((e) => (
+                {rangeEntriesDesc.length > 0 ? (
+                  rangeEntriesDesc.map((e) => (
                     <div key={e.date} className="border border-slate-100 dark:border-slate-800 rounded-lg p-3">
                       <div className="text-xs font-semibold mb-2">{e.date}</div>
                       <ItemList items={e.done} />
