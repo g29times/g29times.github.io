@@ -555,11 +555,6 @@ export default {
       }
 
       if (request.method === "POST" && url.pathname === "/api/agents/review") {
-        const access = await requireAccess(request, env);
-        if (!access.ok) {
-          return withCors(request, json({ error: "unauthorized", reason: access.reason }, { status: 401 }));
-        }
-
         const body = (await request.json()) as unknown;
         const {
           geminiKey,
