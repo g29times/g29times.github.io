@@ -29,6 +29,7 @@ type AgentInput = {
   id: string;
   name: string;
   systemPrompt: string;
+  topicPrefs?: string;
 };
 
 type AgentReview = {
@@ -421,28 +422,6 @@ function buildSharedBackground() {
   ].join("\n");
 }
 
-function personaTopicPrefs(agentId: string) {
-  if (agentId === "munger") {
-    return [
-      "偏好话题：投资/商业与竞争优势、激励机制与人性偏差、风险与机会成本。",
-      "对纯技术细节可选择不评价，除非能映射到商业护城河、杠杆或风险控制。",
-    ].join("\n");
-  }
-  if (agentId === "jobs") {
-    return [
-      "偏好话题：产品与用户体验、审美与品味、聚焦与取舍、端到端系统构建。",
-      "对技术内容可从“是否服务于产品/体验/效率”角度评价。",
-    ].join("\n");
-  }
-  if (agentId === "hawking") {
-    return [
-      "偏好话题：科学与理性推理、系统与模型、可证伪的假设、长期积累。",
-      "对工程/技术可从“模型是否稳定、约束是否清晰、验证路径是否可靠”角度评价。",
-    ].join("\n");
-  }
-  return "";
-}
-
 async function generateReviewWithGemini(opts: {
   geminiKey: string;
   agent: AgentInput;
@@ -462,7 +441,7 @@ async function generateReviewWithGemini(opts: {
     systemInstruction: {
       parts: [
         { text: buildSharedBackground() },
-        { text: personaTopicPrefs(agent.id) },
+        { text: agent.topicPrefs ?? "" },
         { text: agent.systemPrompt },
       ],
     },

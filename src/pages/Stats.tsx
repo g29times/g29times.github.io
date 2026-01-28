@@ -18,6 +18,7 @@ type Persona = {
   id: string;
   name: string;
   systemPrompt: string;
+  topicPrefs: string;
   enabled: boolean;
   deletable?: boolean;
 };
@@ -77,6 +78,8 @@ const DEFAULT_PERSONAS: Persona[] = [
     id: 'hawking',
     name: '霍金',
     enabled: true,
+    topicPrefs:
+      '偏好话题：科学与理性推理、系统与模型、可证伪的假设。\n对工程/技术：从模型稳定性、约束清晰度、验证路径可靠性切入。',
     systemPrompt:
       '你是史蒂芬·霍金。你用清晰、冷静、严谨、带一点幽默的方式评价人的行动与计划。你会把问题抽象成模型、约束、变量与可证伪的假设。不要说教。输出必须有具体建议。',
   },
@@ -84,6 +87,8 @@ const DEFAULT_PERSONAS: Persona[] = [
     id: 'munger',
     name: '芒格',
     enabled: true,
+    topicPrefs:
+      '偏好话题：投资/商业与竞争优势、激励机制与人性偏差、风险与机会成本。\n对纯技术细节：可选择不评价，除非能映射到护城河、杠杆或风险控制。',
     systemPrompt:
       '你是查理·芒格。你用多学科思维模型、逆向思维、简单原则来评价人的行动。你会指出愚蠢的风险、激励错配、机会成本，并给出可执行建议。语气直接但不刻薄。',
   },
@@ -91,6 +96,8 @@ const DEFAULT_PERSONAS: Persona[] = [
     id: 'jobs',
     name: '乔布斯',
     enabled: true,
+    topicPrefs:
+      '偏好话题：产品与用户体验、审美与品味、聚焦与取舍、端到端系统构建。\n对技术：从是否服务产品/体验/效率、是否值得做到极致来评价。',
     systemPrompt:
       '你是史蒂夫·乔布斯。你强调聚焦、品味、用户体验与端到端系统。你会指出哪些事情不该做，哪些事情必须做到极致，并用简短有力的语言给出下一步建议。',
   },
@@ -161,8 +168,11 @@ export default function Stats() {
   const [personas, setPersonas] = useState<Persona[]>(DEFAULT_PERSONAS);
   const [geminiKey, setGeminiKey] = useState<string>('');
 
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string>(DEFAULT_PERSONAS[0]?.id ?? '');
+
   const [newPersonaName, setNewPersonaName] = useState('');
   const [newPersonaPrompt, setNewPersonaPrompt] = useState('');
+  const [newPersonaTopicPrefs, setNewPersonaTopicPrefs] = useState('');
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [reviews, setReviews] = useState<AgentReview[]>([]);
@@ -188,7 +198,7 @@ export default function Stats() {
   const reviewCacheKey = useMemo(() => {
     const active = personas
       .filter((p) => p.enabled)
-      .map((p) => ({ id: p.id, name: p.name, systemPrompt: p.systemPrompt }));
+      .map((p) => ({ id: p.id, name: p.name, systemPrompt: p.systemPrompt, topicPrefs: p.topicPrefs }));
     const payload = {
       start: selectedDate ?? rangeStart,
       end: selectedDate ?? rangeEnd,
@@ -277,6 +287,10 @@ export default function Stats() {
     setPersonas((prev) => prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p)));
   };
 
+  const handleSelectPersona = (id: string) => {
+    setSelectedPersonaId(id);
+  };
+
   const handleDeletePersona = (id: string) => {
     setPersonas((prev) => prev.filter((p) => p.id !== id));
   };
@@ -284,14 +298,23 @@ export default function Stats() {
   const handleAddPersona = () => {
     const name = newPersonaName.trim();
     const prompt = newPersonaPrompt.trim();
+    const topicPrefs = newPersonaTopicPrefs.trim();
     if (!name || !prompt) return;
     const id = `custom_${Date.now()}`;
     setPersonas((prev) => [
       ...prev,
-      { id, name, systemPrompt: prompt, enabled: true, deletable: true },
+      { id, name, systemPrompt: prompt, topicPrefs, enabled: true, deletable: true },
     ]);
+    setSelectedPersonaId(id);
     setNewPersonaName('');
     setNewPersonaPrompt('');
+    setNewPersonaTopicPrefs('');
+  };
+
+  const selectedPersona = useMemo(() => personas.find((p) => p.id === selectedPersonaId) ?? null, [personas, selectedPersonaId]);
+
+  const updatePersona = (id: string, patch: Partial<Persona>) => {
+    setPersonas((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   };
 
   const handleSaveGeminiKey = (key: string) => {
@@ -324,7 +347,7 @@ export default function Stats() {
           startDate: start,
           endDate: end,
           entries: rangeEntries,
-          agents: active.map((a) => ({ id: a.id, name: a.name, systemPrompt: a.systemPrompt })),
+          agents: active.map((a) => ({ id: a.id, name: a.name, systemPrompt: a.systemPrompt, topicPrefs: a.topicPrefs })),
         }),
       });
 
@@ -360,7 +383,10 @@ export default function Stats() {
                 <button
                   key={p.id}
                   type="button"
-                  onClick={() => handleTogglePersona(p.id)}
+                  onClick={() => {
+                    handleSelectPersona(p.id);
+                    handleTogglePersona(p.id);
+                  }}
                   className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs border transition-colors ${
                     p.enabled
                       ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100'
@@ -400,6 +426,15 @@ export default function Stats() {
                   <div className="space-y-1">
                     <div className="text-sm text-slate-600 dark:text-slate-300">名称</div>
                     <Input value={newPersonaName} onChange={(e) => setNewPersonaName(e.target.value)} placeholder="例如：纳瓦尔" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm text-slate-600 dark:text-slate-300">偏好话题（可选）</div>
+                    <Textarea
+                      value={newPersonaTopicPrefs}
+                      onChange={(e) => setNewPersonaTopicPrefs(e.target.value)}
+                      className="min-h-[90px]"
+                      placeholder="例如：投资/商业、风险与机会成本..."
+                    />
                   </div>
                   <div className="space-y-1">
                     <div className="text-sm text-slate-600 dark:text-slate-300">System Prompt</div>
@@ -447,6 +482,33 @@ export default function Stats() {
               </DialogContent>
             </Dialog>
           </div>
+
+          {selectedPersona && (
+            <div className="mt-3 rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-white/60 dark:bg-slate-900/60">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm font-semibold">Persona：{selectedPersona.name}</div>
+                <div className="text-xs text-slate-500">点击上方标签可启用/停用并切换当前编辑对象</div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="text-xs text-slate-500">偏好话题</div>
+                  <Textarea
+                    value={selectedPersona.topicPrefs}
+                    onChange={(e) => updatePersona(selectedPersona.id, { topicPrefs: e.target.value })}
+                    className="min-h-[120px]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs text-slate-500">System Prompt</div>
+                  <Textarea
+                    value={selectedPersona.systemPrompt}
+                    onChange={(e) => updatePersona(selectedPersona.id, { systemPrompt: e.target.value })}
+                    className="min-h-[120px]"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </header>
 
         <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
