@@ -626,8 +626,12 @@ async function generateReviewWithGemini(opts: {
   endDate: string;
   entries: DailyEntry[];
   linkSnippets: { url: string; title?: string; content: string; contentType?: string }[];
+  todosContext?: {
+    undone: string[];
+    done: Array<{ text: string; doneNote?: string }>;
+  };
 }): Promise<AgentReview> {
-  const { geminiKey, agent, startDate, endDate, entries, linkSnippets } = opts;
+  const { geminiKey, agent, startDate, endDate, entries, linkSnippets, todosContext } = opts;
 
   const model = "gemini-3-flash-preview";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
@@ -638,6 +642,12 @@ async function generateReviewWithGemini(opts: {
     systemInstruction: {
       parts: [
         { text: buildSharedBackground() },
+        {
+          text: [
+            "补充上下文：Neo 有一份持续维护的 TODO 列表（包含未完成与已完成及其完成说明）。",
+            "要求：你提出的 todo 要避免重复已完成事项；如果必须再次提及，请明确说明为什么需要二次处理。",
+          ].join("\n"),
+        },
         { text: agent.topicPrefs ?? "" },
         { text: agent.systemPrompt },
       ],
@@ -651,6 +661,10 @@ async function generateReviewWithGemini(opts: {
               {
                 startDate,
                 endDate,
+                todosContext: {
+                  undone: Array.isArray(todosContext?.undone) ? todosContext?.undone : [],
+                  done: Array.isArray(todosContext?.done) ? todosContext?.done : [],
+                },
                 entries: entries.map((e) => ({
                   date: e.date,
                   done: e.done.map(dailyItemToText),
@@ -765,6 +779,12 @@ export default {
 
         const linkSnippets = await fetchLinkSnippets(entries);
 
+        const todos = await listTodos(env);
+        const todosContext = {
+          undone: todos.filter((t) => !t.done).map((t) => t.text),
+          done: todos.filter((t) => t.done).map((t) => ({ text: t.text, doneNote: t.doneNote })),
+        };
+
         const validAgents = agents.filter((a) => a?.id && a?.name && a?.systemPrompt);
         const desiredConcurrency =
           typeof concurrency === "number" && Number.isFinite(concurrency) ? Math.floor(concurrency) : 3;
@@ -778,6 +798,7 @@ export default {
             endDate,
             entries,
             linkSnippets,
+            todosContext,
           }),
         );
 
@@ -787,7 +808,6 @@ export default {
         const desiredTodoLimit =
           typeof todoLimit === "number" && Number.isFinite(todoLimit) ? Math.floor(todoLimit) : 3;
         const safeTodoLimit = Math.max(1, Math.min(desiredTodoLimit, 10));
-        const todos = await listTodos(env);
         const backlog = todos.filter((t) => !t.done).map((t) => t.text);
         const doneItems = todos.filter((t) => t.done).map((t) => ({ text: t.text, doneNote: t.doneNote }));
 
