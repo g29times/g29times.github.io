@@ -288,7 +288,7 @@ export const dailyLog: DailyEntry[] = [
   {
     "date": "2026-01-26",
     "done": [
-      { text: "对比clawdbot和coze", links: [{ title: "compare", url: "https://r2-manager-api.g29tony.workers.dev/api/object?download=1&key=coze%2FClawdbot_vs_coze-gcli.md" }] },
+      { text: "对比clawdbot和coze，详情请阅读链接内容：", links: [{ title: "compare", url: "https://blog.aimmar.ink/blog/modular-ai-architecture-vs-clawdbot" }] },
       "完成研究报告：牡丹、芍药的谱系和演化研究"
     ]
   },
