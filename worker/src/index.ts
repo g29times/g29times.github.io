@@ -44,6 +44,14 @@ type ReviewResponse = {
   finalTodo: string[];
 };
 
+type TodoItem = {
+  id: string;
+  text: string;
+  done: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 type BlogPost = {
   title: string;
   titleZh: string;
@@ -77,6 +85,14 @@ function json(data: unknown, init?: ResponseInit) {
     },
     ...init,
   });
+}
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function uuid() {
+  return crypto.randomUUID();
 }
 
 function base64UrlToUint8Array(input: string) {
@@ -184,12 +200,52 @@ async function mergeTodoWithGemini(opts: {
   startDate: string;
   endDate: string;
   reviews: AgentReview[];
+  backlog?: string[];
+  todoLimit?: number;
 }): Promise<string[]> {
   const { geminiKey, startDate, endDate, reviews } = opts;
+  const backlog = Array.isArray(opts.backlog) ? opts.backlog : [];
+  const desiredLimit =
+    typeof opts.todoLimit === "number" && Number.isFinite(opts.todoLimit) ? Math.floor(opts.todoLimit) : 3;
+  const todoLimit = Math.max(1, Math.min(desiredLimit, 10));
+
+  const merged = reviews
+    .flatMap((r) => r.todo ?? [])
+    .map((t) => String(t ?? "").trim())
+    .filter(Boolean);
+
+  const mergedWithBacklog = Array.from(
+    new Set(
+      [...backlog, ...merged]
+        .map((t) => String(t ?? "").trim())
+        .filter(Boolean),
+    ),
+  );
+
+  if (mergedWithBacklog.length === 0) return [];
+
   const model = "gemini-3-flash-preview";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
     geminiKey,
   )}`;
+
+  const userContent = JSON.stringify(
+    {
+      startDate,
+      endDate,
+      todoLimit,
+      backlog,
+      advisorTodos: merged,
+      reviews: reviews.map((r) => ({
+        agentId: r.agentId,
+        agentName: r.agentName,
+        chat: r.chat,
+        todo: r.todo,
+      })),
+    },
+    null,
+    2,
+  );
 
   const payload = {
     systemInstruction: {
@@ -197,8 +253,8 @@ async function mergeTodoWithGemini(opts: {
         {
           text: [
             "你是 Neo 的执行秘书（Chief of Staff）。",
-            "你会把多位顾问的观点融合为 Neo 当下最该做的 1-3 条可执行 TODO。",
-            "规则：去重、合并同类项、按收益/紧迫/杠杆排序；每条尽量短并可执行；最多 3 条。",
+            `你会把多位顾问的观点与 Neo 的遗留 TODO 融合为 Neo 当下最该做的 1-${todoLimit} 条可执行 TODO。`,
+            `规则：去重、合并同类项、按收益/紧迫/杠杆排序；每条尽量短并可执行；最多 ${todoLimit} 条。`,
             "输出必须是严格 JSON，只包含 { todo: string[] }。",
           ].join("\n"),
         },
@@ -207,30 +263,9 @@ async function mergeTodoWithGemini(opts: {
     contents: [
       {
         role: "user",
-        parts: [
-          {
-            text: JSON.stringify(
-              {
-                startDate,
-                endDate,
-                reviews: reviews.map((r) => ({
-                  agentId: r.agentId,
-                  agentName: r.agentName,
-                  chat: r.chat,
-                  todo: r.todo,
-                })),
-              },
-              null,
-              2,
-            ),
-          },
-        ],
+        parts: [{ text: userContent }],
       },
     ],
-    generationConfig: {
-      temperature: 0.3,
-      responseMimeType: "application/json",
-    },
   };
 
   const res = await fetch(url, {
@@ -246,10 +281,116 @@ async function mergeTodoWithGemini(opts: {
   try {
     const parsed = JSON.parse(raw) as { todo?: unknown };
     if (!Array.isArray(parsed.todo)) return [];
-    return parsed.todo.filter((t) => typeof t === "string").slice(0, 3);
+    const todo = parsed.todo.filter((t) => typeof t === "string");
+    if (!todo.length) return [];
+    const safe = todo.map((t) => String(t ?? "").trim()).filter(Boolean).slice(0, todoLimit);
+    return safe;
   } catch {
     return [];
   }
+}
+
+async function listTodos(env: Env) {
+  const res = await env.DB.prepare(
+    "SELECT id, text, done, createdAt, updatedAt FROM todos ORDER BY done ASC, updatedAt DESC",
+  ).all();
+  const rows = (res.results ?? []) as Array<{
+    id: string;
+    text: string;
+    done: number;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  const todos: TodoItem[] = rows.map((r) => ({
+    id: String(r.id),
+    text: String(r.text),
+    done: Number(r.done) === 1,
+    createdAt: String(r.createdAt),
+    updatedAt: String(r.updatedAt),
+  }));
+  return todos;
+}
+
+async function countUndoneTodos(env: Env) {
+  const res = await env.DB.prepare("SELECT COUNT(1) as c FROM todos WHERE done = 0").first();
+  const c = (res as { c?: number } | null)?.c;
+  return typeof c === "number" ? c : 0;
+}
+
+async function confirmTodo(env: Env, text: string, todoLimit: number) {
+  const trimmed = String(text ?? "").trim();
+  if (!trimmed) return { ok: false as const, error: "text_required" };
+
+  const existing = await env.DB.prepare(
+    "SELECT id, text, done, createdAt, updatedAt FROM todos WHERE text = ?",
+  )
+    .bind(trimmed)
+    .first();
+  if (existing) {
+    const row = existing as {
+      id: string;
+      text: string;
+      done: number;
+      createdAt: string;
+      updatedAt: string;
+    };
+    return {
+      ok: true as const,
+      item: {
+        id: String(row.id),
+        text: String(row.text),
+        done: Number(row.done) === 1,
+        createdAt: String(row.createdAt),
+        updatedAt: String(row.updatedAt),
+      } satisfies TodoItem,
+      existed: true,
+    };
+  }
+
+  const undone = await countUndoneTodos(env);
+  if (undone >= todoLimit) {
+    return { ok: false as const, error: "todo_limit_reached", limit: todoLimit, undone };
+  }
+
+  const id = uuid();
+  const ts = nowIso();
+  await env.DB.prepare(
+    "INSERT INTO todos (id, text, done, createdAt, updatedAt) VALUES (?, ?, 0, ?, ?)",
+  )
+    .bind(id, trimmed, ts, ts)
+    .run();
+
+  return {
+    ok: true as const,
+    item: { id, text: trimmed, done: false, createdAt: ts, updatedAt: ts } satisfies TodoItem,
+    existed: false,
+  };
+}
+
+async function setTodoDone(env: Env, id: string, done: boolean) {
+  const ts = nowIso();
+  await env.DB.prepare("UPDATE todos SET done = ?, updatedAt = ? WHERE id = ?")
+    .bind(done ? 1 : 0, ts, id)
+    .run();
+  const row = await env.DB.prepare(
+    "SELECT id, text, done, createdAt, updatedAt FROM todos WHERE id = ?",
+  )
+    .bind(id)
+    .first();
+  if (!row) return null;
+  const r = row as { id: string; text: string; done: number; createdAt: string; updatedAt: string };
+  return {
+    id: String(r.id),
+    text: String(r.text),
+    done: Number(r.done) === 1,
+    createdAt: String(r.createdAt),
+    updatedAt: String(r.updatedAt),
+  } satisfies TodoItem;
+}
+
+async function deleteTodo(env: Env, id: string) {
+  await env.DB.prepare("DELETE FROM todos WHERE id = ?").bind(id).run();
+  return { ok: true };
 }
 
 async function requireAdmin(request: Request, env: Env) {
@@ -561,6 +702,7 @@ export default {
         const {
           geminiKey,
           concurrency,
+          todoLimit,
           startDate,
           endDate,
           entries,
@@ -568,6 +710,7 @@ export default {
         } = (body ?? {}) as {
           geminiKey?: string;
           concurrency?: number;
+          todoLimit?: number;
           startDate?: string;
           endDate?: string;
           entries?: DailyEntry[];
@@ -608,9 +751,53 @@ export default {
         const all = await runWithConcurrency(tasks, safeConcurrency);
         const reviews = all.filter((r) => r.chat?.trim() || (r.todo?.length ?? 0) > 0);
 
-        const finalTodo = await mergeTodoWithGemini({ geminiKey, startDate, endDate, reviews });
+        const desiredTodoLimit =
+          typeof todoLimit === "number" && Number.isFinite(todoLimit) ? Math.floor(todoLimit) : 3;
+        const safeTodoLimit = Math.max(1, Math.min(desiredTodoLimit, 10));
+        const todos = await listTodos(env);
+        const backlog = todos.filter((t) => !t.done).map((t) => t.text);
+
+        const finalTodo = await mergeTodoWithGemini({ geminiKey, startDate, endDate, reviews, backlog, todoLimit: safeTodoLimit });
         const response: ReviewResponse = { reviews, finalTodo };
         return withCors(request, json(response));
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/todos") {
+        const todos = await listTodos(env);
+        return withCors(request, json({ todos }));
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/todos/confirm") {
+        const body = (await request.json()) as unknown;
+        const { text, todoLimit } = (body ?? {}) as { text?: string; todoLimit?: number };
+        const desiredTodoLimit =
+          typeof todoLimit === "number" && Number.isFinite(todoLimit) ? Math.floor(todoLimit) : 3;
+        const safeTodoLimit = Math.max(1, Math.min(desiredTodoLimit, 10));
+        const result = await confirmTodo(env, text ?? "", safeTodoLimit);
+        if (!result.ok) {
+          return withCors(request, json(result, { status: 400 }));
+        }
+        return withCors(request, json(result));
+      }
+
+      if (request.method === "PATCH" && url.pathname.startsWith("/api/todos/")) {
+        const id = decodeURIComponent(url.pathname.slice("/api/todos/".length));
+        if (!id) return withCors(request, json({ error: "id_required" }, { status: 400 }));
+        const body = (await request.json()) as unknown;
+        const { done } = (body ?? {}) as { done?: boolean };
+        if (typeof done !== "boolean") {
+          return withCors(request, json({ error: "done_required" }, { status: 400 }));
+        }
+        const item = await setTodoDone(env, id, done);
+        if (!item) return withCors(request, json({ error: "not_found" }, { status: 404 }));
+        return withCors(request, json({ ok: true, item }));
+      }
+
+      if (request.method === "DELETE" && url.pathname.startsWith("/api/todos/")) {
+        const id = decodeURIComponent(url.pathname.slice("/api/todos/".length));
+        if (!id) return withCors(request, json({ error: "id_required" }, { status: 400 }));
+        const result = await deleteTodo(env, id);
+        return withCors(request, json(result));
       }
 
       if (request.method === "GET" && url.pathname.startsWith("/api/posts/")) {

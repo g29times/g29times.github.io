@@ -35,6 +35,14 @@ type ReviewResponse = {
   finalTodo: string[];
 };
 
+type TodoItem = {
+  id: string;
+  text: string;
+  done: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 // 颜色分桶阈值（含）
 const BUCKETS = [0, 1, 2, 4, 6];
 
@@ -73,6 +81,7 @@ const STORAGE_KEY_PERSONAS = 'stats_personas_v1';
 const STORAGE_KEY_GEMINI = 'stats_gemini_key_v1';
 const STORAGE_KEY_REVIEW = 'stats_agent_review_v1';
 const STORAGE_KEY_CONCURRENCY = 'stats_llm_concurrency_v1';
+const STORAGE_KEY_TODO_LIMIT = 'stats_todo_limit_v1';
 
 const DEFAULT_PERSONAS: Persona[] = [
   {
@@ -170,6 +179,9 @@ export default function Stats() {
   const [geminiKey, setGeminiKey] = useState<string>('');
 
   const [llmConcurrency, setLlmConcurrency] = useState<number>(3);
+  const [todoLimit, setTodoLimit] = useState<number>(3);
+
+  const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
 
   const [selectedPersonaId, setSelectedPersonaId] = useState<string>(DEFAULT_PERSONAS[0]?.id ?? '');
 
@@ -180,6 +192,8 @@ export default function Stats() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [reviews, setReviews] = useState<AgentReview[]>([]);
   const [finalTodo, setFinalTodo] = useState<string[]>([]);
+
+  const [persistedTodos, setPersistedTodos] = useState<TodoItem[]>([]);
 
   const rangeCells = useMemo(() => {
     const start = selectedDate ?? rangeStart;
@@ -205,6 +219,7 @@ export default function Stats() {
     const payload = {
       start: selectedDate ?? rangeStart,
       end: selectedDate ?? rangeEnd,
+      selectedAgentIds,
       active,
       entries: rangeEntries.map((e) => ({
         date: e.date,
@@ -214,7 +229,7 @@ export default function Stats() {
       })),
     };
     return stableStringify(payload);
-  }, [personas, rangeEnd, rangeEntries, rangeStart, selectedDate]);
+  }, [personas, rangeEnd, rangeEntries, rangeStart, selectedAgentIds, selectedDate]);
 
   useEffect(() => {
     try {
@@ -265,6 +280,32 @@ export default function Stats() {
 
   useEffect(() => {
     try {
+      const raw = localStorage.getItem(STORAGE_KEY_TODO_LIMIT);
+      if (!raw) return;
+      const n = Number(raw);
+      if (Number.isFinite(n) && n > 0) setTodoLimit(n);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const loadTodos = async () => {
+    try {
+      const res = await fetch('/api/todos', { method: 'GET', credentials: 'include' });
+      if (!res.ok) return;
+      const data = (await res.json()) as { todos?: TodoItem[] };
+      setPersistedTodos(Array.isArray(data?.todos) ? data.todos : []);
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    loadTodos();
+  }, []);
+
+  useEffect(() => {
+    try {
       const raw = localStorage.getItem(STORAGE_KEY_REVIEW);
       if (!raw) return;
       const parsed = JSON.parse(raw) as { key: string; reviews: AgentReview[]; finalTodo?: string[] };
@@ -280,6 +321,7 @@ export default function Stats() {
   useEffect(() => {
     setReviews([]);
     setFinalTodo([]);
+    setSelectedAgentIds([]);
   }, [selectedDate, rangeStart, rangeEnd, personas]);
 
   // 转成周列（列=周，行=周内星期，周一在上）
@@ -357,6 +399,77 @@ export default function Stats() {
     }
   };
 
+  const handleSaveTodoLimit = (n: number) => {
+    const next = Number.isFinite(n) && n > 0 ? Math.floor(n) : 1;
+    setTodoLimit(next);
+    try {
+      localStorage.setItem(STORAGE_KEY_TODO_LIMIT, String(next));
+    } catch {
+      // ignore
+    }
+  };
+
+  const confirmTodo = async (text: string) => {
+    try {
+      const res = await fetch('/api/todos/confirm', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text, todoLimit }),
+      });
+      const data = (await res.json()) as any;
+      if (!res.ok) {
+        if (data?.error === 'todo_limit_reached') {
+          window.alert(`未完成 TODO 已达到上限 ${data?.limit ?? todoLimit}。请先完成/删除库内 TODO 或清理建议 TODO。`);
+        }
+        return;
+      }
+      await loadTodos();
+    } catch {
+      // ignore
+    }
+  };
+
+  const toggleTodoDone = async (id: string, done: boolean) => {
+    try {
+      const res = await fetch(`/api/todos/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ done }),
+      });
+      if (!res.ok) return;
+      await loadTodos();
+    } catch {
+      // ignore
+    }
+  };
+
+  const deleteTodo = async (id: string) => {
+    try {
+      const res = await fetch(`/api/todos/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) return;
+      await loadTodos();
+    } catch {
+      // ignore
+    }
+  };
+
+  const pickRandomAgents = (active: Persona[], k: number) => {
+    const kk = Math.max(1, Math.min(Math.floor(k || 1), active.length));
+    const arr = active.slice();
+    for (let i = arr.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = arr[i];
+      arr[i] = arr[j];
+      arr[j] = tmp;
+    }
+    return arr.slice(0, kk);
+  };
+
   const generateReviews = async () => {
     const active = personas.filter((p) => p.enabled);
     if (active.length === 0) return;
@@ -367,6 +480,8 @@ export default function Stats() {
 
     setIsGenerating(true);
     try {
+      const picked = pickRandomAgents(active, llmConcurrency);
+      setSelectedAgentIds(picked.map((p) => p.id));
       const start = selectedDate ?? rangeStart;
       const end = selectedDate ?? rangeEnd;
 
@@ -377,10 +492,11 @@ export default function Stats() {
         body: JSON.stringify({
           geminiKey: geminiKey.trim(),
           concurrency: llmConcurrency,
+          todoLimit,
           startDate: start,
           endDate: end,
           entries: rangeEntries,
-          agents: active.map((a) => ({ id: a.id, name: a.name, systemPrompt: a.systemPrompt, topicPrefs: a.topicPrefs })),
+          agents: picked.map((a) => ({ id: a.id, name: a.name, systemPrompt: a.systemPrompt, topicPrefs: a.topicPrefs })),
         }),
       });
 
@@ -390,6 +506,7 @@ export default function Stats() {
       const nextFinalTodo = Array.isArray(data?.finalTodo) ? data.finalTodo : [];
       setReviews(next);
       setFinalTodo(nextFinalTodo);
+      await loadTodos();
       try {
         localStorage.setItem(STORAGE_KEY_REVIEW, JSON.stringify({ key: reviewCacheKey, reviews: next, finalTodo: nextFinalTodo }));
       } catch {
@@ -517,12 +634,24 @@ export default function Stats() {
                       placeholder="例如：3"
                     />
                   </div>
+                  <div className="space-y-1">
+                    <div className="text-sm text-slate-600 dark:text-slate-300">未完成 TODO 上限（默认 3）</div>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={todoLimit}
+                      onChange={(e) => setTodoLimit(Number(e.target.value))}
+                      placeholder="例如：3"
+                    />
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button
                     onClick={() => {
                       handleSaveGeminiKey(geminiKey.trim());
                       handleSaveConcurrency(llmConcurrency);
+                      handleSaveTodoLimit(todoLimit);
                     }}
                     disabled={!geminiKey.trim()}
                   >
@@ -729,18 +858,57 @@ export default function Stats() {
             <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
               <div className="text-sm font-semibold mb-2">Todo</div>
               <div className="space-y-3 text-sm">
-                {finalTodo.length > 0 ? (
-                  <div className="border border-slate-100 dark:border-slate-800 rounded-lg p-3">
-                    <div className="text-xs text-slate-500 mb-2">融合后的可执行 TODO（最多 3 条）</div>
-                    <ul className="list-disc list-inside space-y-1">
-                      {finalTodo.map((t, idx) => (
-                        <li key={idx}>{t}</li>
+                <div className="border border-slate-100 dark:border-slate-800 rounded-lg p-3">
+                  <div className="text-xs text-slate-500 mb-2">我的 TODO（已确认入库）</div>
+                  {persistedTodos.length > 0 ? (
+                    <div className="space-y-2">
+                      {persistedTodos.map((t) => (
+                        <div key={t.id} className="flex items-center justify-between gap-2">
+                          <label className="flex items-center gap-2 flex-1">
+                            <input
+                              type="checkbox"
+                              checked={t.done}
+                              onChange={(e) => toggleTodoDone(t.id, e.target.checked)}
+                            />
+                            <span className={t.done ? 'line-through text-slate-400' : ''}>{t.text}</span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => deleteTodo(t.id)}
+                            className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+                          >
+                            删除
+                          </button>
+                        </div>
                       ))}
-                    </ul>
-                  </div>
-                ) : (
-                  <div className="text-slate-400 text-sm">点击“生成点评”后展示</div>
-                )}
+                    </div>
+                  ) : (
+                    <div className="text-slate-400 text-sm">暂无</div>
+                  )}
+                </div>
+
+                <div className="border border-slate-100 dark:border-slate-800 rounded-lg p-3">
+                  <div className="text-xs text-slate-500 mb-2">融合后的可执行 TODO（建议）</div>
+                  {finalTodo.length > 0 ? (
+                    <div className="space-y-2">
+                      {finalTodo.map((text, idx) => {
+                        const already = persistedTodos.some((p) => p.text === text);
+                        return (
+                          <div key={idx} className="flex items-center justify-between gap-2">
+                            <div className={already ? 'text-slate-400 line-through flex-1' : 'flex-1'}>{text}</div>
+                            {!already && (
+                              <Button variant="outline" size="sm" onClick={() => confirmTodo(text)}>
+                                确认
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-slate-400 text-sm">点击“生成点评”后展示</div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
