@@ -1,5 +1,16 @@
 [
   {
+    "slug": "modular-ai-architecture-vs-clawdbot",
+    "title": "Sovereign AI: Why Modular Architectures Beat \"All-in-One\" Assistant Platforms",
+    "titleZh": "主权 AI：为何模块化架构优于“全家桶”式助手平台",
+    "excerpt": "A comparison between Clawdbot and a custom Coze + Gemini-CLI stack, focusing on security, memory management, and avoiding the 'brick' risk.",
+    "excerptZh": "对比 Clawdbot 与自建 Coze + Gemini-CLI 架构，重点探讨安全、记忆管理以及规避系统“失效”风险。",
+    "date": "2026-01-28",
+    "category": "Architecture",
+    "categoryZh": "架构",
+    "readTime": "5 min"
+  },
+  {
     "slug": "zhong-xi-jiyin-sixiang",
     "title": "Attribution of Tragedy: A 30-Year Cross-Cultural Psychology Observation",
     "titleZh": "悲剧的归因：跨越30年的文化心理学观察",
@@ -8,22 +19,7 @@
     "date": "2026-01-24",
     "category": "Culture",
     "categoryZh": "文化",
-    "readTime": "15 min",
-    "content": "",
-    "contentZh": "",
-    "contentType": "html",
-    "htmlPath": "/中西基因思想.html"
-  },
-  {
-    "slug": "ruanyf-weekly-381",
-    "title": "Technology Enthusiast Weekly (Issue 381): The Era of Personal AI Agents",
-    "titleZh": "科技爱好者周刊（第 381 期）：个人 AI 智能体时代",
-    "excerpt": "This issue explores the rise of DeepSeek, specialized AI tools, and the transition toward ubiquitous personal agents.",
-    "excerptZh": "本期探讨了 DeepSeek 的崛起、专业化 AI 工具，以及向个人智能体无处不在的转变。",
-    "date": "2026-01-22",
-    "category": "Tech",
-    "categoryZh": "科技",
-    "readTime": "6 min"
+    "readTime": "15 min"
   },
   {
     "slug": "ruanyf-weekly-381-ai-leaders",
