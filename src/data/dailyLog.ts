@@ -259,7 +259,6 @@ export const dailyLog: DailyEntry[] = [
   {
     "date": "2026-01-22",
     "done": [
-      { text: "对比clawdbot和coze", links: [{ title: "compare", url: "https://r2-manager-api.g29tony.workers.dev/api/object?download=1&key=coze%2FClawdbot_vs_coze-gcli.md" }] },
       "重构 weekly-digest-worker，将博客生成逻辑迁移至 JiJi (tmux agent) 实现本地化处理",
       "集成 Localtunnel 指令分发系统，实现 Worker 自动触发 JiJi 执行复杂 LLM 任务",
       "解决远程环境下 Wrangler OAuth 授权登录问题，更新至重要知识库",
@@ -289,6 +288,7 @@ export const dailyLog: DailyEntry[] = [
   {
     "date": "2026-01-26",
     "done": [
+      { text: "对比clawdbot和coze", links: [{ title: "compare", url: "https://r2-manager-api.g29tony.workers.dev/api/object?download=1&key=coze%2FClawdbot_vs_coze-gcli.md" }] },
       "完成研究报告：牡丹、芍药的谱系和演化研究"
     ]
   },
@@ -302,7 +302,7 @@ export const dailyLog: DailyEntry[] = [
     "date": "2026-01-28",
     "done": [
       "完成研究报告：AI设计集成电路/芯片/PCB的研究和工业落地进展",
-      "完成霍金等人设的stats页面分析及todo建议"
+      "完成stats页面霍金等人的agents顾问团，内容分析及todo建议"
     ]
   }
 ];

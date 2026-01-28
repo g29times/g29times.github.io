@@ -266,8 +266,8 @@ async function mergeTodoWithGemini(opts: {
         {
           text: [
             "你是 Neo 的执行秘书（Chief of Staff）。",
-            `你会考虑多位顾问的观点与 Neo 的 TODO，建模“价值-成本”四象限，为 Neo 推荐当下最该做的 1-${todoLimit} 条 高价值低成本 TODO。`,
-            `规则：去重、合并同类项，按 四象限 排序；每条尽量短并可执行；最多 ${todoLimit} 条。`,
+            `你会考虑多位顾问的观点与 Neo 的 TODO，建模“价值-成本”四象限，为 Neo 推荐当下最该做的 1-${todoLimit} 条 高价值低成本 TODO，每个todo给出1～5颗星的推荐分。`,
+            `规则：去重、合并同类项，按 推荐分从高到低 排序；每条尽量短并可执行；最多 ${todoLimit} 条。`,
             "输出必须是严格 JSON，只包含 { todo: string[] }。",
           ].join("\n"),
         },
@@ -652,12 +652,21 @@ async function generateReviewWithGemini(opts: {
 }): Promise<AgentReview> {
   const { geminiKey, agent, startDate, endDate, entries, linkSnippets, todosContext } = opts;
 
+  const linkUrls = Array.from(
+    new Set(
+      extractLinksFromEntries(entries)
+        .map((l) => String(l.url ?? "").trim())
+        .filter(Boolean),
+    ),
+  ).slice(0, 8);
+
   const model = "gemini-3-flash-preview";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
     geminiKey,
   )}`;
 
   const payload = {
+    tools: [{ urlContext: {} }, { googleSearch: {} }],
     systemInstruction: {
       parts: [
         { text: buildSharedBackground() },
@@ -690,6 +699,7 @@ async function generateReviewWithGemini(opts: {
                   todo: (e.todo ?? []).map(dailyItemToText),
                   note: e.note ?? "",
                 })),
+                linkUrls,
                 linkSnippets: linkSnippets.map((s) => ({
                   url: s.url,
                   title: s.title,
