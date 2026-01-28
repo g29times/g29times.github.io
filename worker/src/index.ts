@@ -276,7 +276,7 @@ async function generateReviewWithGemini(opts: {
 }): Promise<AgentReview> {
   const { geminiKey, agent, startDate, endDate, entries } = opts;
 
-  const model = "gemini-1.5-flash";
+  const model = "gemini-3-flash-preview";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
     geminiKey,
   )}`;
@@ -368,11 +368,6 @@ export default {
       }
 
       if (request.method === "POST" && url.pathname === "/api/agents/review") {
-        const access = await requireAccess(request, env);
-        if (!access.ok) {
-          return withCors(request, json({ error: "unauthorized", reason: access.reason }, { status: 401 }));
-        }
-
         const body = (await request.json()) as unknown;
         const {
           geminiKey,
