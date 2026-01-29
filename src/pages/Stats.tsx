@@ -186,6 +186,8 @@ export default function Stats() {
   const [editingPersonaSystemPrompt, setEditingPersonaSystemPrompt] = useState<string>('');
   const personaPatchTimersRef = useRef<Record<string, number>>({});
   const pendingToggleRef = useRef<{ id: string; nextEnabled: boolean; cur?: Persona } | null>(null);
+  const toggleInFlightRef = useRef<Record<string, boolean>>({});
+  const toggleDesiredRef = useRef<Record<string, boolean>>({});
 
   const loadPersonas = async () => {
     try {
@@ -422,23 +424,40 @@ export default function Stats() {
       const cur = prev.find((p) => p.id === id);
       const nextEnabled = !(cur?.enabled ?? false);
       pendingToggleRef.current = { id, nextEnabled, cur };
+      toggleDesiredRef.current[id] = nextEnabled;
       return prev.map((p) => (p.id === id ? { ...p, enabled: nextEnabled } : p));
     });
 
     const payload = pendingToggleRef.current;
     pendingToggleRef.current = null;
+    if (!payload?.cur) {
+      loadPersonas();
+      return;
+    }
+
+    if (toggleInFlightRef.current[id]) return;
+    toggleInFlightRef.current[id] = true;
+
     const run = async () => {
-      if (!payload?.cur) {
+      try {
+        while (Object.prototype.hasOwnProperty.call(toggleDesiredRef.current, id)) {
+          const desired = toggleDesiredRef.current[id];
+          delete toggleDesiredRef.current[id];
+
+          try {
+            await patchPersonaToServer(id, { enabled: desired });
+          } catch {
+            if (desired) {
+              await upsertPersonaToServer({ ...payload.cur!, enabled: true });
+            } else {
+              throw new Error('toggle_failed');
+            }
+          }
+        }
+      } finally {
+        toggleInFlightRef.current[id] = false;
         await loadPersonas();
-        return;
       }
-      if (payload.nextEnabled) {
-        await upsertPersonaToServer({ ...payload.cur, enabled: true });
-        await loadPersonas();
-        return;
-      }
-      await patchPersonaToServer(payload.id, { enabled: false });
-      await loadPersonas();
     };
     run();
   };
