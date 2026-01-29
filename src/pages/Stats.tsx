@@ -78,7 +78,6 @@ function buildCells(): Cell[] {
   });
 }
 
-const STORAGE_KEY_PERSONAS = 'stats_personas_v1';
 const STORAGE_KEY_GEMINI = 'stats_gemini_key_v1';
 const STORAGE_KEY_REVIEW = 'stats_agent_review_v1';
 const STORAGE_KEY_CONCURRENCY = 'stats_llm_concurrency_v1';
@@ -171,24 +170,96 @@ function ItemList({ items }: { items: DailyItem[] }) {
 
 export default function Stats() {
   const cells = useMemo(buildCells, []);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  const [rangeStart, setRangeStart] = useState<string>(() => format(subDays(startOfToday(), 6), 'yyyy-MM-dd'));
-  const [rangeEnd, setRangeEnd] = useState<string>(() => format(startOfToday(), 'yyyy-MM-dd'));
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [rangeStart, setRangeStart] = useState<string>(() => format(subDays(new Date(), 6), 'yyyy-MM-dd'));
+  const [rangeEnd, setRangeEnd] = useState<string>(() => format(new Date(), 'yyyy-MM-dd'));
 
   const [personas, setPersonas] = useState<Persona[]>(DEFAULT_PERSONAS);
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string>(DEFAULT_PERSONAS[0]?.id ?? '');
+  const [newPersonaName, setNewPersonaName] = useState<string>('');
+  const [newPersonaPrompt, setNewPersonaPrompt] = useState<string>('');
+  const [newPersonaTopicPrefs, setNewPersonaTopicPrefs] = useState<string>('');
+  const [isGeneratingPersona, setIsGeneratingPersona] = useState<boolean>(false);
+
+  const loadPersonas = async () => {
+    try {
+      const res = await fetch('/api/personas', { method: 'GET', credentials: 'include' });
+      if (!res.ok) return;
+      const data = (await res.json()) as { personas?: Array<{ id: string; name: string; enabled: boolean; topicPrefs: string; systemPrompt: string }> };
+      const list = Array.isArray(data?.personas) ? data.personas : [];
+      if (list.length === 0) return;
+      setPersonas(
+        list.map((p) => ({
+          id: String(p.id),
+          name: String(p.name),
+          enabled: Boolean(p.enabled),
+          topicPrefs: typeof p.topicPrefs === 'string' ? p.topicPrefs : '',
+          systemPrompt: typeof p.systemPrompt === 'string' ? p.systemPrompt : '',
+          deletable: !DEFAULT_PERSONAS.some((d) => d.id === p.id),
+        })),
+      );
+      if (list.some((p) => p.id === selectedPersonaId) === false && list[0]?.id) {
+        setSelectedPersonaId(String(list[0].id));
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const upsertPersonaToServer = async (p: Persona) => {
+    try {
+      await fetch('/api/personas', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          id: p.id,
+          name: p.name,
+          enabled: p.enabled,
+          topicPrefs: p.topicPrefs,
+          systemPrompt: p.systemPrompt,
+        }),
+      });
+    } catch {
+      // ignore
+    }
+  };
+
+  const patchPersonaToServer = async (id: string, patch: Partial<Persona>) => {
+    try {
+      await fetch(`/api/personas/${encodeURIComponent(id)}` as string, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+    } catch {
+      // ignore
+    }
+  };
+
+  const deletePersonaFromServer = async (id: string) => {
+    try {
+      await fetch(`/api/personas/${encodeURIComponent(id)}` as string, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    loadPersonas();
+  }, []);
+
   const [geminiKey, setGeminiKey] = useState<string>('');
 
   const [llmConcurrency, setLlmConcurrency] = useState<number>(3);
   const [todoLimit, setTodoLimit] = useState<number>(3);
 
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
-
-  const [selectedPersonaId, setSelectedPersonaId] = useState<string>(DEFAULT_PERSONAS[0]?.id ?? '');
-
-  const [newPersonaName, setNewPersonaName] = useState('');
-  const [newPersonaPrompt, setNewPersonaPrompt] = useState('');
-  const [newPersonaTopicPrefs, setNewPersonaTopicPrefs] = useState('');
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [reviews, setReviews] = useState<AgentReview[]>([]);
@@ -239,33 +310,6 @@ export default function Stats() {
     };
     return stableStringify(payload);
   }, [personas, rangeEnd, rangeEntries, rangeStart, selectedAgentIds, selectedDate]);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY_PERSONAS);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Persona[];
-        if (Array.isArray(parsed) && parsed.length > 0)
-          setPersonas(
-            parsed.map((p) => ({
-              ...p,
-              systemPrompt: typeof p.systemPrompt === 'string' ? p.systemPrompt : '',
-              topicPrefs: typeof (p as Persona).topicPrefs === 'string' ? (p as Persona).topicPrefs : '',
-            })),
-          );
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY_PERSONAS, JSON.stringify(personas));
-    } catch {
-      // ignore
-    }
-  }, [personas]);
 
   useEffect(() => {
     try {
@@ -356,7 +400,12 @@ export default function Stats() {
   }, [cells, selectedDate]);
 
   const handleTogglePersona = (id: string) => {
-    setPersonas((prev) => prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p)));
+    setPersonas((prev) => {
+      const next = prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p));
+      const updated = next.find((p) => p.id === id);
+      if (updated) upsertPersonaToServer(updated);
+      return next;
+    });
   };
 
   const handleSelectPersona = (id: string) => {
@@ -365,6 +414,7 @@ export default function Stats() {
 
   const handleDeletePersona = (id: string) => {
     setPersonas((prev) => prev.filter((p) => p.id !== id));
+    deletePersonaFromServer(id);
   };
 
   const handleAddPersona = () => {
@@ -373,20 +423,45 @@ export default function Stats() {
     const topicPrefs = newPersonaTopicPrefs.trim();
     if (!name || !prompt) return;
     const id = `custom_${Date.now()}`;
-    setPersonas((prev) => [
-      ...prev,
-      { id, name, systemPrompt: prompt, topicPrefs, enabled: true, deletable: true },
-    ]);
+    const created = { id, name, systemPrompt: prompt, topicPrefs, enabled: true, deletable: true } as Persona;
+    setPersonas((prev) => [...prev, created]);
+    upsertPersonaToServer(created);
     setSelectedPersonaId(id);
     setNewPersonaName('');
     setNewPersonaPrompt('');
     setNewPersonaTopicPrefs('');
   };
 
+  const handleGeneratePersona = async () => {
+    const name = newPersonaName.trim();
+    if (!name) return;
+    if (!geminiKey.trim()) {
+      window.alert('请先在“配置 Key”里填写 Gemini Key。');
+      return;
+    }
+
+    setIsGeneratingPersona(true);
+    try {
+      const res = await fetch('/api/personas/generate', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ geminiKey: geminiKey.trim(), name }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { topicPrefs?: string; systemPrompt?: string };
+      setNewPersonaTopicPrefs(typeof data?.topicPrefs === 'string' ? data.topicPrefs : '');
+      setNewPersonaPrompt(typeof data?.systemPrompt === 'string' ? data.systemPrompt : '');
+    } finally {
+      setIsGeneratingPersona(false);
+    }
+  };
+
   const selectedPersona = useMemo(() => personas.find((p) => p.id === selectedPersonaId) ?? null, [personas, selectedPersonaId]);
 
   const updatePersona = (id: string, patch: Partial<Persona>) => {
     setPersonas((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+    patchPersonaToServer(id, patch);
   };
 
   const handleSaveGeminiKey = (key: string) => {
@@ -644,6 +719,13 @@ export default function Stats() {
                   </div>
                 </div>
                 <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={handleGeneratePersona}
+                    disabled={!newPersonaName.trim() || isGeneratingPersona}
+                  >
+                    {isGeneratingPersona ? '生成中…' : '一键添加'}
+                  </Button>
                   <Button onClick={handleAddPersona} disabled={!newPersonaName.trim() || !newPersonaPrompt.trim()}>
                     添加
                   </Button>

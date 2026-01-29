@@ -53,6 +53,22 @@ type TodoItem = {
   updatedAt: string;
 };
 
+type PersonaItem = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  topicPrefs: string;
+  systemPrompt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type PersonaGenerateResponse = {
+  isFamous: boolean;
+  topicPrefs: string;
+  systemPrompt: string;
+};
+
 type BlogPost = {
   title: string;
   titleZh: string;
@@ -94,6 +110,15 @@ function nowIso() {
 
 function uuid() {
   return crypto.randomUUID();
+}
+
+function slugifyId(name: string) {
+  const s = String(name ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9\u4e00-\u9fff\-]/g, "");
+  return s || uuid();
 }
 
 function base64UrlToUint8Array(input: string) {
@@ -433,6 +458,219 @@ async function updateTodo(env: Env, opts: { id: string; done?: boolean; text?: s
 async function deleteTodo(env: Env, id: string) {
   await env.DB.prepare("DELETE FROM todos WHERE id = ?").bind(id).run();
   return { ok: true };
+}
+
+async function listPersonas(env: Env) {
+  const res = await env.DB.prepare(
+    "SELECT id, name, enabled, topicPrefs, systemPrompt, createdAt, updatedAt FROM personas ORDER BY updatedAt DESC",
+  ).all();
+  const rows = (res.results ?? []) as Array<{
+    id: string;
+    name: string;
+    enabled: number;
+    topicPrefs: string;
+    systemPrompt: string;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  const personas: PersonaItem[] = rows.map((r) => ({
+    id: String(r.id),
+    name: String(r.name),
+    enabled: Number(r.enabled) === 1,
+    topicPrefs: typeof r.topicPrefs === "string" ? r.topicPrefs : "",
+    systemPrompt: typeof r.systemPrompt === "string" ? r.systemPrompt : "",
+    createdAt: String(r.createdAt),
+    updatedAt: String(r.updatedAt),
+  }));
+  return personas;
+}
+
+async function upsertPersona(env: Env, input: Partial<PersonaItem> & { id?: string; name: string }) {
+  const name = String(input.name ?? "").trim();
+  if (!name) return { ok: false as const, error: "name_required" };
+
+  const id = String(input.id ?? "").trim() || slugifyId(name);
+  const enabled = typeof input.enabled === "boolean" ? (input.enabled ? 1 : 0) : 1;
+  const topicPrefs = typeof input.topicPrefs === "string" ? input.topicPrefs : "";
+  const systemPrompt = typeof input.systemPrompt === "string" ? input.systemPrompt : "";
+  const ts = nowIso();
+
+  const existing = await env.DB.prepare(
+    "SELECT id, createdAt FROM personas WHERE id = ?",
+  )
+    .bind(id)
+    .first();
+  const createdAt = (existing as any)?.createdAt ? String((existing as any).createdAt) : ts;
+
+  await env.DB.prepare(
+    "INSERT INTO personas (id, name, enabled, topicPrefs, systemPrompt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET name=excluded.name, enabled=excluded.enabled, topicPrefs=excluded.topicPrefs, systemPrompt=excluded.systemPrompt, updatedAt=excluded.updatedAt",
+  )
+    .bind(id, name, enabled, topicPrefs, systemPrompt, createdAt, ts)
+    .run();
+
+  const row = await env.DB.prepare(
+    "SELECT id, name, enabled, topicPrefs, systemPrompt, createdAt, updatedAt FROM personas WHERE id = ?",
+  )
+    .bind(id)
+    .first();
+  if (!row) return { ok: false as const, error: "upsert_failed" };
+  const r = row as any;
+  return {
+    ok: true as const,
+    item: {
+      id: String(r.id),
+      name: String(r.name),
+      enabled: Number(r.enabled) === 1,
+      topicPrefs: typeof r.topicPrefs === "string" ? r.topicPrefs : "",
+      systemPrompt: typeof r.systemPrompt === "string" ? r.systemPrompt : "",
+      createdAt: String(r.createdAt),
+      updatedAt: String(r.updatedAt),
+    } satisfies PersonaItem,
+  };
+}
+
+async function updatePersona(env: Env, id: string, patch: Partial<PersonaItem>) {
+  const pid = String(id ?? "").trim();
+  if (!pid) return { ok: false as const, error: "id_required" };
+  const current = await env.DB.prepare(
+    "SELECT id, name, enabled, topicPrefs, systemPrompt, createdAt, updatedAt FROM personas WHERE id = ?",
+  )
+    .bind(pid)
+    .first();
+  if (!current) return { ok: false as const, error: "not_found" };
+  const cur = current as any;
+  const nextName = typeof patch.name === "string" ? patch.name.trim() : String(cur.name);
+  if (!nextName) return { ok: false as const, error: "name_required" };
+  const nextEnabled = typeof patch.enabled === "boolean" ? (patch.enabled ? 1 : 0) : Number(cur.enabled);
+  const nextTopicPrefs = typeof patch.topicPrefs === "string" ? patch.topicPrefs : (typeof cur.topicPrefs === "string" ? cur.topicPrefs : "");
+  const nextSystemPrompt = typeof patch.systemPrompt === "string" ? patch.systemPrompt : (typeof cur.systemPrompt === "string" ? cur.systemPrompt : "");
+  const ts = nowIso();
+
+  await env.DB.prepare(
+    "UPDATE personas SET name = ?, enabled = ?, topicPrefs = ?, systemPrompt = ?, updatedAt = ? WHERE id = ?",
+  )
+    .bind(nextName, nextEnabled, nextTopicPrefs, nextSystemPrompt, ts, pid)
+    .run();
+
+  const row = await env.DB.prepare(
+    "SELECT id, name, enabled, topicPrefs, systemPrompt, createdAt, updatedAt FROM personas WHERE id = ?",
+  )
+    .bind(pid)
+    .first();
+  if (!row) return { ok: false as const, error: "not_found" };
+  const r = row as any;
+  return {
+    ok: true as const,
+    item: {
+      id: String(r.id),
+      name: String(r.name),
+      enabled: Number(r.enabled) === 1,
+      topicPrefs: typeof r.topicPrefs === "string" ? r.topicPrefs : "",
+      systemPrompt: typeof r.systemPrompt === "string" ? r.systemPrompt : "",
+      createdAt: String(r.createdAt),
+      updatedAt: String(r.updatedAt),
+    } satisfies PersonaItem,
+  };
+}
+
+async function deletePersona(env: Env, id: string) {
+  const pid = String(id ?? "").trim();
+  if (!pid) return { ok: false as const, error: "id_required" };
+  await env.DB.prepare("DELETE FROM personas WHERE id = ?").bind(pid).run();
+  return { ok: true as const };
+}
+
+async function generatePersonaWithGemini(opts: { geminiKey: string; name: string }): Promise<PersonaGenerateResponse> {
+  const name = String(opts.name ?? "").trim();
+  if (!name) return { isFamous: false, topicPrefs: "", systemPrompt: "请自行设定。" };
+
+  const model = "gemini-3-flash-preview";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
+    opts.geminiKey,
+  )}`;
+
+  const userContent = JSON.stringify(
+    {
+      name,
+      examples: {
+        hawking: {
+          topicPrefs:
+            "偏好话题：科学与理性推理、系统与模型、可证伪的假设。\n对工程/技术：从模型稳定性、约束清晰度、验证路径可靠性切入。",
+          systemPrompt:
+            "你是史蒂芬·霍金。你用清晰、冷静、严谨、带一点幽默的方式评价人的行动与计划。你会把问题抽象成模型、约束、变量与可证伪的假设。不要说教。输出必须有具体建议。",
+        },
+        munger: {
+          topicPrefs:
+            "偏好话题：投资/商业与竞争优势、激励机制与人性偏差、风险与机会成本。\n对纯技术细节：可选择不评价，除非能映射到护城河、杠杆或风险控制。",
+          systemPrompt:
+            "你是查理·芒格。你用多学科思维模型、逆向思维、简单原则来评价人的行动。你会指出愚蠢的风险、激励错配、机会成本，并给出可执行建议。语气直接但不刻薄。",
+        },
+        jobs: {
+          topicPrefs:
+            "偏好话题：产品与用户体验、审美与品味、聚焦与取舍、端到端系统构建。\n对技术：从是否服务产品/体验/效率、是否值得做到极致来评价。",
+          systemPrompt:
+            "你是史蒂夫·乔布斯。你强调聚焦、品味、用户体验与端到端系统。你会指出哪些事情不该做，哪些事情必须做到极致，并用简短有力的语言给出下一步建议。",
+        },
+      },
+      output: {
+        format: "json",
+        schema: {
+          isFamous: "boolean",
+          topicPrefs: "string",
+          systemPrompt: "string",
+        },
+      },
+      instruction: [
+        "你将为 Neo 的日常日志 AI 顾问系统生成一个新的 persona 配置。",
+        "输入只有一个人名 name。",
+        "请判断该人名是否为真实世界名人（历史人物/公众人物/作者/科学家/企业家等）。可以使用 googleSearch 工具辅助判断。",
+        "如果不是名人（例如用户虚构角色/昵称/你不确定），请输出：{isFamous:false, topicPrefs:\"\", systemPrompt:\"请自行设定。\"}。",
+        "如果是名人：",
+        "- topicPrefs：用中文输出，最多 3 条偏好话题（可用换行分隔，每条尽量短）。",
+        "- systemPrompt：用中文输出，模仿示例风格，给出该名人的角色设定、思考方式、语气风格、输出要求（不要说教、要具体建议）。",
+        "输出必须是严格 JSON，只包含 isFamous/topicPrefs/systemPrompt。",
+      ].join("\n"),
+    },
+    null,
+    2,
+  );
+
+  const payload = {
+    tools: [{ urlContext: {} }, { googleSearch: {} }],
+    systemInstruction: {
+      parts: [
+        {
+          text: [
+            "你是一个严谨的 persona 配置生成器。",
+            "你不会编造不存在的名人信息；如果无法确认名人身份，则按非名人处理。",
+            "只输出 JSON。",
+          ].join("\n"),
+        },
+      ],
+    },
+    contents: [{ role: "user", parts: [{ text: userContent }] }],
+    generationConfig: { temperature: 0.4, responseMimeType: "application/json" },
+  };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) return { isFamous: false, topicPrefs: "", systemPrompt: "请自行设定。" };
+  const data = (await res.json()) as any;
+  const text: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  const raw = typeof text === "string" ? text : "";
+  try {
+    const parsed = JSON.parse(raw) as any;
+    return {
+      isFamous: Boolean(parsed?.isFamous),
+      topicPrefs: typeof parsed?.topicPrefs === "string" ? parsed.topicPrefs : "",
+      systemPrompt: typeof parsed?.systemPrompt === "string" ? parsed.systemPrompt : "请自行设定。",
+    };
+  } catch {
+    return { isFamous: false, topicPrefs: "", systemPrompt: "请自行设定。" };
+  }
 }
 
 async function requireAdmin(request: Request, env: Env) {
@@ -848,6 +1086,70 @@ export default {
       if (request.method === "GET" && url.pathname === "/api/todos") {
         const todos = await listTodos(env);
         return withCors(request, json({ todos }));
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/personas") {
+        const personas = await listPersonas(env);
+        return withCors(request, json({ personas }));
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/personas") {
+        const body = (await request.json()) as unknown;
+        const { id, name, enabled, topicPrefs, systemPrompt } = (body ?? {}) as {
+          id?: string;
+          name?: string;
+          enabled?: boolean;
+          topicPrefs?: string;
+          systemPrompt?: string;
+        };
+        if (!name || typeof name !== "string") {
+          return withCors(request, json({ error: "name_required" }, { status: 400 }));
+        }
+        const result = await upsertPersona(env, { id, name, enabled, topicPrefs, systemPrompt } as any);
+        if (!(result as any).ok) return withCors(request, json(result, { status: 400 }));
+        return withCors(request, json(result));
+      }
+
+      if (request.method === "PATCH" && url.pathname.startsWith("/api/personas/")) {
+        const id = decodeURIComponent(url.pathname.slice("/api/personas/".length));
+        if (!id) return withCors(request, json({ error: "id_required" }, { status: 400 }));
+        const body = (await request.json()) as unknown;
+        const { name, enabled, topicPrefs, systemPrompt } = (body ?? {}) as {
+          name?: string;
+          enabled?: boolean;
+          topicPrefs?: string;
+          systemPrompt?: string;
+        };
+        if (typeof name !== "string" && typeof enabled !== "boolean" && typeof topicPrefs !== "string" && typeof systemPrompt !== "string") {
+          return withCors(request, json({ error: "patch_required" }, { status: 400 }));
+        }
+        const result = await updatePersona(env, id, { name, enabled, topicPrefs, systemPrompt } as any);
+        if (!(result as any).ok) {
+          const err = result as any;
+          const status = err.error === "not_found" ? 404 : 400;
+          return withCors(request, json(err, { status }));
+        }
+        return withCors(request, json(result));
+      }
+
+      if (request.method === "DELETE" && url.pathname.startsWith("/api/personas/")) {
+        const id = decodeURIComponent(url.pathname.slice("/api/personas/".length));
+        const result = await deletePersona(env, id);
+        if (!(result as any).ok) return withCors(request, json(result, { status: 400 }));
+        return withCors(request, json(result));
+      }
+
+      if (request.method === "POST" && url.pathname === "/api/personas/generate") {
+        const body = (await request.json()) as unknown;
+        const { geminiKey, name } = (body ?? {}) as { geminiKey?: string; name?: string };
+        if (!geminiKey || typeof geminiKey !== "string") {
+          return withCors(request, json({ error: "gemini_key_required" }, { status: 400 }));
+        }
+        if (!name || typeof name !== "string") {
+          return withCors(request, json({ error: "name_required" }, { status: 400 }));
+        }
+        const result = await generatePersonaWithGemini({ geminiKey: geminiKey.trim(), name });
+        return withCors(request, json(result));
       }
 
       if (request.method === "POST" && url.pathname === "/api/todos/confirm") {
