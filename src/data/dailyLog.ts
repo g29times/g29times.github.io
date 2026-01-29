@@ -304,5 +304,12 @@ export const dailyLog: DailyEntry[] = [
       "完成研究报告：AI设计集成电路/芯片/PCB的研究和工业落地进展",
       "完成stats页面霍金等人的agents顾问团，内容分析及todo建议"
     ]
+  },
+  {
+    "date": "2026-01-29",
+    "done": [
+      "完成2026年1月26日至29日本周复盘，核心要点：识别到物理AI成为范式转移信号（英伟达Cosmos模型与Vera Rubin平台发布），AI从虚拟走向物理世界；优化了信源国际化策略；已更新memory/spec.txt",
+      "完成stats页面顾问团优化"
+    ]
   }
 ];
