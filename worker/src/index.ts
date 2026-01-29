@@ -776,7 +776,7 @@ function withCors(request: Request, response: Response) {
     "Access-Control-Allow-Headers",
     "content-type, cf-access-jwt-assertion, cf-access-client-id, cf-access-client-secret",
   );
-  headers.set("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
+  headers.set("Access-Control-Allow-Methods", "GET,PUT,POST,PATCH,DELETE,OPTIONS");
   return new Response(response.body, { status: response.status, headers });
 }
 

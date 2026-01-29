@@ -185,6 +185,7 @@ export default function Stats() {
   const [editingPersonaTopicPrefs, setEditingPersonaTopicPrefs] = useState<string>('');
   const [editingPersonaSystemPrompt, setEditingPersonaSystemPrompt] = useState<string>('');
   const personaPatchTimersRef = useRef<Record<string, number>>({});
+  const pendingToggleRef = useRef<{ id: string; nextEnabled: boolean; cur?: Persona } | null>(null);
 
   const loadPersonas = async () => {
     try {
@@ -417,26 +418,26 @@ export default function Stats() {
   }, [cells, selectedDate]);
 
   const handleTogglePersona = (id: string) => {
-    let cur: Persona | undefined;
-    let nextEnabled = false;
-
     setPersonas((prev) => {
-      cur = prev.find((p) => p.id === id);
-      nextEnabled = !(cur?.enabled ?? false);
+      const cur = prev.find((p) => p.id === id);
+      const nextEnabled = !(cur?.enabled ?? false);
+      pendingToggleRef.current = { id, nextEnabled, cur };
       return prev.map((p) => (p.id === id ? { ...p, enabled: nextEnabled } : p));
     });
 
+    const payload = pendingToggleRef.current;
+    pendingToggleRef.current = null;
     const run = async () => {
-      if (!cur) {
+      if (!payload?.cur) {
         await loadPersonas();
         return;
       }
-      if (nextEnabled) {
-        await upsertPersonaToServer({ ...cur, enabled: true });
+      if (payload.nextEnabled) {
+        await upsertPersonaToServer({ ...payload.cur, enabled: true });
         await loadPersonas();
         return;
       }
-      await patchPersonaToServer(id, { enabled: false });
+      await patchPersonaToServer(payload.id, { enabled: false });
       await loadPersonas();
     };
     run();
