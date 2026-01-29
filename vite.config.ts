@@ -13,6 +13,13 @@ export default defineConfig(({ mode }) => {
         overlay: false,
       },
       allowedHosts: true,
+      proxy: {
+        "/api": {
+          target: "https://blog.aimmar.ink",
+          changeOrigin: true,
+          secure: true,
+        },
+      },
     },
     base: "/",
     plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),

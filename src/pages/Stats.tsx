@@ -188,6 +188,11 @@ export default function Stats() {
   const pendingToggleRef = useRef<{ id: string; nextEnabled: boolean; cur?: Persona } | null>(null);
   const toggleInFlightRef = useRef<Record<string, boolean>>({});
   const toggleDesiredRef = useRef<Record<string, boolean>>({});
+  const personasRef = useRef<Persona[]>(DEFAULT_PERSONAS);
+
+  useEffect(() => {
+    personasRef.current = personas;
+  }, [personas]);
 
   const loadPersonas = async () => {
     try {
@@ -195,19 +200,17 @@ export default function Stats() {
       if (!res.ok) return;
       const data = (await res.json()) as { personas?: Array<{ id: string; name: string; enabled: boolean; topicPrefs: string; systemPrompt: string }> };
       const list = Array.isArray(data?.personas) ? data.personas : [];
-      if (list.length === 0) return;
-      setPersonas(
-        list.map((p) => ({
-          id: String(p.id),
-          name: String(p.name),
-          enabled: Boolean(p.enabled),
-          topicPrefs: typeof p.topicPrefs === 'string' ? p.topicPrefs : '',
-          systemPrompt: typeof p.systemPrompt === 'string' ? p.systemPrompt : '',
-          deletable: !DEFAULT_PERSONAS.some((d) => d.id === p.id),
-        })),
-      );
-      if (list.some((p) => p.id === selectedPersonaId) === false && list[0]?.id) {
-        setSelectedPersonaId(String(list[0].id));
+      const mapped = list.map((p) => ({
+        id: String(p.id),
+        name: String(p.name),
+        enabled: Boolean(p.enabled),
+        topicPrefs: typeof p.topicPrefs === 'string' ? p.topicPrefs : '',
+        systemPrompt: typeof p.systemPrompt === 'string' ? p.systemPrompt : '',
+        deletable: !DEFAULT_PERSONAS.some((d) => d.id === p.id),
+      }));
+      setPersonas(mapped);
+      if (mapped.some((p) => p.id === selectedPersonaId) === false) {
+        setSelectedPersonaId(mapped[0]?.id ?? '');
       }
     } catch {
       // ignore
@@ -243,10 +246,13 @@ export default function Stats() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(patch),
       });
-      return res.ok;
-    } catch {
-      // ignore
-      return false;
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`patch_failed: ${res.status} ${text.slice(0, 120)}`);
+      }
+      return true;
+    } catch (err) {
+      throw err;
     }
   };
 
@@ -420,23 +426,22 @@ export default function Stats() {
   }, [cells, selectedDate]);
 
   const handleTogglePersona = (id: string) => {
-    setPersonas((prev) => {
-      const cur = prev.find((p) => p.id === id);
-      const nextEnabled = !(cur?.enabled ?? false);
-      pendingToggleRef.current = { id, nextEnabled, cur };
-      toggleDesiredRef.current[id] = nextEnabled;
-      return prev.map((p) => (p.id === id ? { ...p, enabled: nextEnabled } : p));
-    });
-
-    const payload = pendingToggleRef.current;
-    pendingToggleRef.current = null;
-    if (!payload?.cur) {
+    const cur = personasRef.current.find((p) => p.id === id);
+    if (!cur) {
       loadPersonas();
       return;
     }
+    const nextEnabled = !cur.enabled;
+
+    toggleDesiredRef.current[id] = nextEnabled;
+    setPersonas((prev) => prev.map((p) => (p.id === id ? { ...p, enabled: nextEnabled } : p)));
+
+    pendingToggleRef.current = { id, nextEnabled, cur };
 
     if (toggleInFlightRef.current[id]) return;
     toggleInFlightRef.current[id] = true;
+
+    const basePersona = cur;
 
     const run = async () => {
       try {
@@ -446,9 +451,14 @@ export default function Stats() {
 
           try {
             await patchPersonaToServer(id, { enabled: desired });
-          } catch {
+          } catch (err) {
+            const msg = String((err as any)?.message ?? '');
             if (desired) {
-              await upsertPersonaToServer({ ...payload.cur!, enabled: true });
+              if (msg.includes('patch_failed: 404')) {
+                await upsertPersonaToServer({ ...basePersona, enabled: true });
+              } else {
+                throw err;
+              }
             } else {
               throw new Error('toggle_failed');
             }
@@ -741,16 +751,31 @@ export default function Stats() {
                   type="button"
                   onClick={() => {
                     handleSelectPersona(p.id);
-                    handleTogglePersona(p.id);
                   }}
                   className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs border transition-colors ${
                     p.enabled
                       ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100'
                       : 'bg-transparent text-slate-600 border-slate-200 dark:text-slate-300 dark:border-slate-700'
-                  }`}
-                  title={p.enabled ? '点击停用' : '点击启用'}
+                  } ${selectedPersonaId === p.id ? 'ring-2 ring-slate-400/50 dark:ring-slate-500/50' : ''}`}
+                  title={'点击查看'}
                 >
                   <span>{p.name}</span>
+
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTogglePersona(p.id);
+                    }}
+                    className={`ml-1 inline-flex items-center justify-center rounded-full border px-2 py-[1px] text-[10px] transition-colors ${
+                      p.enabled
+                        ? 'border-white/40 hover:border-white/70 dark:border-slate-900/40 dark:hover:border-slate-900/70'
+                        : 'border-slate-300 hover:border-slate-500 dark:border-slate-600 dark:hover:border-slate-400'
+                    }`}
+                    title={p.enabled ? '停用' : '启用'}
+                  >
+                    {p.enabled ? 'ON' : 'OFF'}
+                  </span>
+
                   {p.deletable && (
                     <span
                       onClick={(e) => {
