@@ -735,16 +735,32 @@ export default function Stats() {
   };
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      <div className="h-[100svh] overflow-y-auto snap-y snap-mandatory scroll-smooth">
+    <div className="relative bg-slate-50/70 dark:bg-slate-950/70 text-slate-900 dark:text-slate-100">
+      <div className="fixed inset-0 pointer-events-none -z-10">
+        <div className="absolute inset-0 aurora-gradient" />
+        <div className="absolute inset-0 aurora-layer aurora-overlay" />
+        <div className="absolute inset-0 aurora-highlight" />
+        <div className="absolute inset-0 aurora-wave" />
+        <div className="absolute inset-0 aurora-glow" />
+        <div
+          className="absolute inset-0 opacity-[0.015]"
+          style={{
+            backgroundImage:
+              'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")',
+          }}
+        />
+      </div>
+
+      <div className="relative z-10 h-[100svh] overflow-y-auto snap-y snap-mandatory scroll-smooth">
         <section className="h-[100svh] snap-start overflow-hidden">
           <div className="h-full overflow-y-auto pt-24 pb-8">
             <div className="max-w-6xl mx-auto px-6 space-y-8">
               <header className="space-y-3">
-          <p className="text-sm uppercase tracking-[0.3em] text-slate-500">Daily Rhythm</p>
-          <h1 className="text-3xl font-bold">年度日常热力图</h1>
+          <p className="text-3xl uppercase tracking-[0.3em] text-slate-500">
+            Daily Rhythm · 岁序新笺
+          </p>
           <p className="text-sm text-slate-600 dark:text-slate-300 max-w-2xl">
-            以智慧驱动每日行为密度。
+            以智慧驱动每日行为
           </p>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -1021,8 +1037,12 @@ export default function Stats() {
               {selectedDate && <span className="text-xs text-slate-500">（当前以选中日期为准）</span>}
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="default" onClick={generateReviews} disabled={isGenerating || personas.every((p) => !p.enabled)}>
-                {isGenerating ? '生成中…' : '生成点评'}
+              <Button
+                onClick={generateReviews}
+                disabled={isGenerating || personas.every((p) => !p.enabled)}
+                className="bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+              >
+                {isGenerating ? '讨论中…' : '智能点评'}
               </Button>
             </div>
           </div>
@@ -1074,7 +1094,7 @@ export default function Stats() {
             <div className="max-w-6xl mx-auto px-6">
               <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">AI 讨论与评价</h2>
+            <h2 className="text-lg font-semibold">AI顾问讨论与评价</h2>
             <div className="text-xs text-slate-500">
               {selectedDate ? `日期：${selectedDate}` : `范围：${rangeStart} → ${rangeEnd}`}
             </div>

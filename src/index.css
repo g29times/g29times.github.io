@@ -377,4 +377,176 @@
       transform: translateY(0);
     }
   }
+
+  @keyframes aurora-breathe {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    25% {
+      background-position: 30% 70%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    75% {
+      background-position: 70% 30%;
+    }
+  }
+
+  @keyframes aurora-flow {
+    0% {
+      transform: translateX(-3%) translateY(-3%) rotate(0deg) scale(1);
+    }
+    25% {
+      transform: translateX(2%) translateY(2%) rotate(0.5deg) scale(1.01);
+    }
+    50% {
+      transform: translateX(3%) translateY(-1%) rotate(1deg) scale(1.02);
+    }
+    75% {
+      transform: translateX(-1%) translateY(2%) rotate(-0.5deg) scale(1);
+    }
+    100% {
+      transform: translateX(-3%) translateY(-3%) rotate(0deg) scale(1);
+    }
+  }
+
+  @keyframes gradient-shift {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  @keyframes subtle-pulse {
+    0%, 100% {
+      opacity: 0.7;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes hue-breathe {
+    0%, 100% {
+      filter: hue-rotate(0deg) saturate(1) brightness(1);
+    }
+    25% {
+      filter: hue-rotate(8deg) saturate(1.05) brightness(1.02);
+    }
+    50% {
+      filter: hue-rotate(-5deg) saturate(0.95) brightness(0.98);
+    }
+    75% {
+      filter: hue-rotate(5deg) saturate(1.02) brightness(1.01);
+    }
+  }
+
+  @keyframes green-wave {
+    0%, 100% {
+      transform: translateX(-10%) translateY(5%) rotate(-8deg) scale(1);
+      opacity: 0.8;
+    }
+    33% {
+      transform: translateX(0%) translateY(0%) rotate(-5deg) scale(1.05);
+      opacity: 0.9;
+    }
+    66% {
+      transform: translateX(5%) translateY(-3%) rotate(-3deg) scale(1.02);
+      opacity: 0.85;
+    }
+  }
+
+  @keyframes orange-glow {
+    0%, 100% {
+      transform: translateX(5%) translateY(-5%) scale(1);
+      opacity: 0.8;
+    }
+    50% {
+      transform: translateX(-3%) translateY(3%) scale(1.08);
+      opacity: 0.95;
+    }
+  }
+
+  .aurora-gradient {
+    background:
+      linear-gradient(
+        135deg,
+        hsl(115, 55%, 48%) 0%,
+        hsl(125, 60%, 52%) 12%,
+        hsl(85, 65%, 55%) 25%,
+        hsl(55, 85%, 55%) 40%,
+        hsl(42, 95%, 55%) 55%,
+        hsl(32, 92%, 58%) 70%,
+        hsl(28, 88%, 62%) 85%,
+        hsl(35, 75%, 72%) 100%
+      );
+    background-size: 300% 300%;
+    animation: aurora-breathe 15s ease-in-out infinite, hue-breathe 25s ease-in-out infinite;
+  }
+
+  .aurora-layer {
+    animation: aurora-flow 20s ease-in-out infinite;
+  }
+
+  .aurora-overlay {
+    background:
+      radial-gradient(
+        ellipse 90% 70% at 15% 85%,
+        hsla(130, 70%, 45%, 0.75) 0%,
+        hsla(120, 65%, 50%, 0.5) 25%,
+        hsla(100, 55%, 55%, 0.25) 50%,
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 75% 55% at 85% 25%,
+        hsla(32, 95%, 55%, 0.55) 0%,
+        hsla(38, 90%, 58%, 0.35) 35%,
+        transparent 65%
+      );
+    background-size: 200% 200%;
+    animation: gradient-shift 18s ease-in-out infinite;
+  }
+
+  .aurora-highlight {
+    background:
+      radial-gradient(
+        ellipse 70% 50% at 55% 35%,
+        hsla(52, 100%, 82%, 0.45) 0%,
+        hsla(48, 95%, 78%, 0.2) 40%,
+        transparent 60%
+      ),
+      radial-gradient(
+        ellipse 55% 45% at 20% 65%,
+        hsla(135, 55%, 60%, 0.35) 0%,
+        transparent 45%
+      );
+    animation: subtle-pulse 12s ease-in-out infinite;
+  }
+
+  .aurora-wave {
+    background:
+      radial-gradient(
+        ellipse 140% 100% at -10% 110%,
+        hsla(130, 68%, 48%, 0.8) 0%,
+        hsla(115, 60%, 52%, 0.6) 20%,
+        hsla(95, 55%, 55%, 0.4) 40%,
+        hsla(75, 50%, 60%, 0.2) 60%,
+        transparent 80%
+      );
+    animation: green-wave 12s ease-in-out infinite;
+  }
+
+  .aurora-glow {
+    background:
+      radial-gradient(
+        ellipse 80% 70% at 90% 20%,
+        hsla(30, 95%, 58%, 0.5) 0%,
+        hsla(38, 90%, 62%, 0.3) 40%,
+        transparent 70%
+      );
+    animation: orange-glow 14s ease-in-out infinite;
+  }
 }
