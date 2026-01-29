@@ -482,13 +482,22 @@ export default function Stats() {
       return;
     }
 
+    const examples = personas
+      .map((p) => ({
+        name: p.name,
+        topicPrefs: (p.topicPrefs ?? '').trim(),
+        systemPrompt: (p.systemPrompt ?? '').trim(),
+      }))
+      .filter((e) => e.name && (e.topicPrefs || e.systemPrompt))
+      .slice(0, 6);
+
     setIsGeneratingPersona(true);
     try {
       const res = await fetch('/api/personas/generate', {
         method: 'POST',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ geminiKey: geminiKey.trim(), name }),
+        body: JSON.stringify({ geminiKey: geminiKey.trim(), name, examples }),
       });
       if (!res.ok) return;
       const data = (await res.json()) as { topicPrefs?: string; systemPrompt?: string };

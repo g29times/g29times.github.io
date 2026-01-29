@@ -69,6 +69,12 @@ type PersonaGenerateResponse = {
   systemPrompt: string;
 };
 
+type PersonaExample = {
+  name: string;
+  topicPrefs: string;
+  systemPrompt: string;
+};
+
 type BlogPost = {
   title: string;
   titleZh: string;
@@ -580,9 +586,24 @@ async function deletePersona(env: Env, id: string) {
   return { ok: true as const };
 }
 
-async function generatePersonaWithGemini(opts: { geminiKey: string; name: string }): Promise<PersonaGenerateResponse> {
+async function generatePersonaWithGemini(opts: {
+  geminiKey: string;
+  name: string;
+  examples?: PersonaExample[];
+}): Promise<PersonaGenerateResponse> {
   const name = String(opts.name ?? "").trim();
   if (!name) return { isFamous: false, topicPrefs: "", systemPrompt: "请自行设定。" };
+
+  const examples = Array.isArray(opts.examples)
+    ? opts.examples
+        .map((e) => ({
+          name: String((e as any)?.name ?? "").trim(),
+          topicPrefs: String((e as any)?.topicPrefs ?? "").trim(),
+          systemPrompt: String((e as any)?.systemPrompt ?? "").trim(),
+        }))
+        .filter((e) => e.name && (e.topicPrefs || e.systemPrompt))
+        .slice(0, 6)
+    : [];
 
   const model = "gemini-3-flash-preview";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
@@ -592,26 +613,7 @@ async function generatePersonaWithGemini(opts: { geminiKey: string; name: string
   const userContent = JSON.stringify(
     {
       name,
-      examples: {
-        hawking: {
-          topicPrefs:
-            "偏好话题：科学与理性推理、系统与模型、可证伪的假设。\n对工程/技术：从模型稳定性、约束清晰度、验证路径可靠性切入。",
-          systemPrompt:
-            "你是史蒂芬·霍金。你用清晰、冷静、严谨、带一点幽默的方式评价人的行动与计划。你会把问题抽象成模型、约束、变量与可证伪的假设。不要说教。输出必须有具体建议。",
-        },
-        munger: {
-          topicPrefs:
-            "偏好话题：投资/商业与竞争优势、激励机制与人性偏差、风险与机会成本。\n对纯技术细节：可选择不评价，除非能映射到护城河、杠杆或风险控制。",
-          systemPrompt:
-            "你是查理·芒格。你用多学科思维模型、逆向思维、简单原则来评价人的行动。你会指出愚蠢的风险、激励错配、机会成本，并给出可执行建议。语气直接但不刻薄。",
-        },
-        jobs: {
-          topicPrefs:
-            "偏好话题：产品与用户体验、审美与品味、聚焦与取舍、端到端系统构建。\n对技术：从是否服务产品/体验/效率、是否值得做到极致来评价。",
-          systemPrompt:
-            "你是史蒂夫·乔布斯。你强调聚焦、品味、用户体验与端到端系统。你会指出哪些事情不该做，哪些事情必须做到极致，并用简短有力的语言给出下一步建议。",
-        },
-      },
+      examples,
       output: {
         format: "json",
         schema: {
@@ -623,6 +625,7 @@ async function generatePersonaWithGemini(opts: { geminiKey: string; name: string
       instruction: [
         "你将为 Neo 的日常日志 AI 顾问系统生成一个新的 persona 配置。",
         "输入只有一个人名 name。",
+        "如果提供了 examples（来自 Neo 当前页面已配置的顾问），请参考其写法风格与结构（但不要照抄人物设定）。",
         "请判断该人名是否为真实世界名人（历史人物/公众人物/作者/科学家/企业家等）。可以使用 googleSearch 工具辅助判断。",
         "如果不是名人（例如用户虚构角色/昵称/你不确定），请输出：{isFamous:false, topicPrefs:\"\", systemPrompt:\"请自行设定。\"}。",
         "如果是名人：",
@@ -1141,14 +1144,14 @@ export default {
 
       if (request.method === "POST" && url.pathname === "/api/personas/generate") {
         const body = (await request.json()) as unknown;
-        const { geminiKey, name } = (body ?? {}) as { geminiKey?: string; name?: string };
+        const { geminiKey, name, examples } = (body ?? {}) as { geminiKey?: string; name?: string; examples?: PersonaExample[] };
         if (!geminiKey || typeof geminiKey !== "string") {
           return withCors(request, json({ error: "gemini_key_required" }, { status: 400 }));
         }
         if (!name || typeof name !== "string") {
           return withCors(request, json({ error: "name_required" }, { status: 400 }));
         }
-        const result = await generatePersonaWithGemini({ geminiKey: geminiKey.trim(), name });
+        const result = await generatePersonaWithGemini({ geminiKey: geminiKey.trim(), name, examples });
         return withCors(request, json(result));
       }
 
