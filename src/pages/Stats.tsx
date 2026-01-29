@@ -296,6 +296,7 @@ export default function Stats() {
   const [editingTodoText, setEditingTodoText] = useState<string>('');
   const [editingTodoNote, setEditingTodoNote] = useState<string>('');
   const [newManualTodo, setNewManualTodo] = useState<string>('');
+  const [doneTodosExpanded, setDoneTodosExpanded] = useState<boolean>(false);
 
   const rangeCells = useMemo(() => {
     const start = selectedDate ?? rangeStart;
@@ -734,9 +735,12 @@ export default function Stats() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 pt-24 pb-16">
-      <div className="max-w-6xl mx-auto px-6 space-y-8">
-        <header className="space-y-3">
+    <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+      <div className="h-[100svh] overflow-y-auto snap-y snap-mandatory scroll-smooth">
+        <section className="h-[100svh] snap-start overflow-hidden">
+          <div className="h-full overflow-y-auto pt-24 pb-8">
+            <div className="max-w-6xl mx-auto px-6 space-y-8">
+              <header className="space-y-3">
           <p className="text-sm uppercase tracking-[0.3em] text-slate-500">Daily Rhythm</p>
           <h1 className="text-3xl font-bold">年度日常热力图</h1>
           <p className="text-sm text-slate-600 dark:text-slate-300 max-w-2xl">
@@ -904,7 +908,7 @@ export default function Stats() {
             <div className="mt-3 rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-white/60 dark:bg-slate-900/60">
               <div className="flex items-center justify-between mb-3">
                 <div className="text-sm font-semibold">Persona：{selectedPersona.name}</div>
-                <div className="text-xs text-slate-500">点击上方标签可启用/停用并切换当前编辑对象</div>
+                <div className="text-xs text-slate-500">点击上方标签可切换查看；点 ON/OFF 可启用/停用</div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1">
@@ -940,9 +944,10 @@ export default function Stats() {
               </div>
             </div>
           )}
-        </header>
 
-        <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+              </header>
+
+              <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
           <div className="flex justify-between items-center mb-4">
             <div>
               <div className="text-lg font-semibold">过去 52 周</div>
@@ -983,9 +988,15 @@ export default function Stats() {
               ))}
             </div>
           </div>
+              </section>
+            </div>
+          </div>
         </section>
 
-        <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm min-h-[200px]">
+        <section className="h-[100svh] snap-start overflow-hidden">
+          <div className="h-full overflow-y-auto py-8">
+            <div className="max-w-6xl mx-auto px-6">
+              <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm min-h-[200px]">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">
               {selectedDate ? `明细：${selectedDate}` : '近期明细（近 10 天）'}
@@ -1016,8 +1027,7 @@ export default function Stats() {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 space-y-3">
+          <div className="space-y-3">
               {displayedCells.length > 0 ? (
                 displayedCells.map((cell) => (
                   <div key={cell.date} className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 animate-fade-in">
@@ -1053,77 +1063,16 @@ export default function Stats() {
                   该日期无记录
                 </div>
               )}
-            </div>
-
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
-              <div className="text-sm font-semibold mb-2">我的 TODO</div>
-              <div className="text-xs text-slate-500 mb-2">（全局独立，不随日期变化）</div>
-              <div className="mb-3 flex items-center gap-2">
-                <Input
-                  value={newManualTodo}
-                  onChange={(e) => setNewManualTodo(e.target.value)}
-                  placeholder="手写新增 TODO（全局唯一）"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    const t = newManualTodo.trim();
-                    if (!t) return;
-                    await confirmTodo(t);
-                    setNewManualTodo('');
-                  }}
-                  disabled={!newManualTodo.trim()}
-                >
-                  添加
-                </Button>
-              </div>
-
-              {persistedTodos.length > 0 ? (
-                <div className="space-y-2 text-sm">
-                  {persistedTodos.map((t) => (
-                    <div key={t.id} className="flex items-start justify-between gap-2">
-                      <label className="flex items-start gap-2 flex-1">
-                        <input
-                          type="checkbox"
-                          checked={t.done}
-                          onChange={(e) => toggleTodoDone(t.id, e.target.checked)}
-                          className="mt-1"
-                        />
-                        <div className="flex-1">
-                          <div className={t.done ? 'line-through text-slate-400' : ''}>{t.text}</div>
-                          {t.done && (t.doneNote ?? '').trim() && (
-                            <div className="mt-1 text-xs text-slate-500 whitespace-pre-wrap">完成说明：{t.doneNote}</div>
-                          )}
-                        </div>
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => startEditTodo(t)}
-                          className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
-                        >
-                          编辑
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteTodo(t.id)}
-                          className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
-                        >
-                          删除
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-slate-400 text-sm">暂无</div>
-              )}
+          </div>
+              </section>
             </div>
           </div>
         </section>
 
-        <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+        <section className="h-[100svh] snap-start overflow-hidden">
+          <div className="h-full overflow-y-auto pb-16 pt-8">
+            <div className="max-w-6xl mx-auto px-6">
+              <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">AI 讨论与评价</h2>
             <div className="text-xs text-slate-500">
@@ -1181,7 +1130,7 @@ export default function Stats() {
                   </div>
                   {persistedTodos.length > 0 ? (
                     <div className="space-y-2">
-                      {persistedTodos.map((t) => (
+                      {persistedTodos.filter((x) => !x.done).map((t) => (
                         <div key={t.id} className="flex items-center justify-between gap-2">
                           <label className="flex items-center gap-2 flex-1">
                             <input
@@ -1209,6 +1158,58 @@ export default function Stats() {
                           </div>
                         </div>
                       ))}
+
+                      {persistedTodos.some((t) => t.done) && (
+                        <div className="pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setDoneTodosExpanded((v) => !v)}
+                            className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+                          >
+                            {doneTodosExpanded ? '收起已完成' : `展开已完成（${persistedTodos.filter((t) => t.done).length}）`}
+                          </button>
+
+                          {doneTodosExpanded && (
+                            <div className="mt-2 space-y-2">
+                              {persistedTodos.filter((x) => x.done).map((t) => (
+                                <div key={t.id} className="flex items-start justify-between gap-2">
+                                  <label className="flex items-start gap-2 flex-1">
+                                    <input
+                                      type="checkbox"
+                                      checked={t.done}
+                                      onChange={(e) => toggleTodoDone(t.id, e.target.checked)}
+                                      className="mt-1"
+                                    />
+                                    <div className="flex-1">
+                                      <div className={t.done ? 'line-through text-slate-400' : ''}>{t.text}</div>
+                                      {t.done && (t.doneNote ?? '').trim() && (
+                                        <div className="mt-1 text-xs text-slate-500 whitespace-pre-wrap">完成说明：{t.doneNote}</div>
+                                      )}
+                                    </div>
+                                  </label>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => startEditTodo(t)}
+                                      className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+                                    >
+                                      编辑
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => deleteTodo(t.id)}
+                                      className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+                                    >
+                                      删除
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {persistedTodos.some((t) => t.done && (t.doneNote ?? '').trim()) && (
                         <div className="pt-2 text-xs text-slate-500">
                           已完成项可在“编辑”里补充完成说明；说明会参与后续 AI 上下文，避免重复建议。
@@ -1243,6 +1244,9 @@ export default function Stats() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+              </section>
             </div>
           </div>
         </section>

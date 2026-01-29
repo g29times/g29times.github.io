@@ -297,8 +297,8 @@ async function mergeTodoWithGemini(opts: {
         {
           text: [
             "你是 Neo 的执行秘书（Chief of Staff）。",
-            `你会考虑多位顾问的观点与 Neo 的 TODO，建模“价值-成本”四象限，为 Neo 推荐当下最该做的 1-${todoLimit} 条 高价值低成本 TODO，每个todo给出1～5颗星的推荐分。`,
-            `规则：去重、合并同类项，按 推荐分从高到低 排序；每条尽量短并可执行；最多 ${todoLimit} 条。`,
+            `你会综合考虑 Neo 的 TODO 和多位顾问的观点，建模“价值-成本”四象限，为 Neo 推荐当下最该做的 1～${todoLimit} 条 高价值低成本 TODO，每个给出1～5颗星的推荐分。`,
+            `规则：去重、整合顾问的观点，不要重复推荐 TODO 中已有或接近的事项；按 推荐分从高到低 排序；每条尽量短并可执行`,
             "输出必须是严格 JSON，只包含 { todo: string[] }。",
           ].join("\n"),
         },
