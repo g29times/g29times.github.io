@@ -308,6 +308,10 @@ export const dailyLog: DailyEntry[] = [
   {
     "date": "2026-01-29",
     "done": [
+      {
+        "text": "深度研读全球范式转移信号报告：物理AI (Physical AI) 成为关键拐点。6要素分析：1.我感兴趣(实体智能跃迁) 2.新技术(世界模型/Cosmos) 3.用户习惯(从对话到协作) 4.环境变化(基础设施万亿投入) 5.新渠道(硬件代理) 6.新法规(欧盟AI法案)。",
+        "links": [{ "title": "信号报告", "url": "https://390ce3a993dc5bffb7d21b6021ac1f14.r2.cloudflarestorage.com/media/coze/outputs/%E6%AF%8F%E6%97%A5%E4%BF%A1%E5%8F%B7/2026-01-29-%E4%BF%A1%E5%8F%B7%E6%8A%A5%E5%91%8A.md" }]
+      },
       "完成2026年1月26日至29日本周复盘，核心要点：识别到物理AI成为范式转移信号（英伟达Cosmos模型与Vera Rubin平台发布），AI从虚拟走向物理世界；优化了信源国际化策略；已更新memory/spec.txt",
       "完成stats页面顾问团优化"
     ]
