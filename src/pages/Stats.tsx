@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { eachDayOfInterval, format, startOfToday, subDays } from 'date-fns';
 import { DailyEntry, DailyItem, dailyLog } from '@/data/dailyLog';
 import { Plus, Settings, X } from 'lucide-react';
@@ -182,6 +182,10 @@ export default function Stats() {
   const [newPersonaTopicPrefs, setNewPersonaTopicPrefs] = useState<string>('');
   const [isGeneratingPersona, setIsGeneratingPersona] = useState<boolean>(false);
 
+  const [editingPersonaTopicPrefs, setEditingPersonaTopicPrefs] = useState<string>('');
+  const [editingPersonaSystemPrompt, setEditingPersonaSystemPrompt] = useState<string>('');
+  const personaPatchTimersRef = useRef<Record<string, number>>({});
+
   const loadPersonas = async () => {
     try {
       const res = await fetch('/api/personas', { method: 'GET', credentials: 'include' });
@@ -209,7 +213,7 @@ export default function Stats() {
 
   const upsertPersonaToServer = async (p: Persona) => {
     try {
-      await fetch('/api/personas', {
+      const res = await fetch('/api/personas', {
         method: 'POST',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
@@ -221,38 +225,51 @@ export default function Stats() {
           systemPrompt: p.systemPrompt,
         }),
       });
+      return res.ok;
     } catch {
       // ignore
+      return false;
     }
   };
 
   const patchPersonaToServer = async (id: string, patch: Partial<Persona>) => {
     try {
-      await fetch(`/api/personas/${encodeURIComponent(id)}` as string, {
+      const res = await fetch(`/api/personas/${encodeURIComponent(id)}` as string, {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(patch),
       });
+      return res.ok;
     } catch {
       // ignore
+      return false;
     }
   };
 
   const deletePersonaFromServer = async (id: string) => {
     try {
-      await fetch(`/api/personas/${encodeURIComponent(id)}` as string, {
+      const res = await fetch(`/api/personas/${encodeURIComponent(id)}` as string, {
         method: 'DELETE',
         credentials: 'include',
       });
+      return res.ok;
     } catch {
       // ignore
+      return false;
     }
   };
 
   useEffect(() => {
     loadPersonas();
   }, []);
+
+  useEffect(() => {
+    const p = personas.find((x) => x.id === selectedPersonaId);
+    if (!p) return;
+    setEditingPersonaTopicPrefs(typeof p.topicPrefs === 'string' ? p.topicPrefs : '');
+    setEditingPersonaSystemPrompt(typeof p.systemPrompt === 'string' ? p.systemPrompt : '');
+  }, [personas, selectedPersonaId]);
 
   const [geminiKey, setGeminiKey] = useState<string>('');
 
@@ -400,12 +417,29 @@ export default function Stats() {
   }, [cells, selectedDate]);
 
   const handleTogglePersona = (id: string) => {
+    let cur: Persona | undefined;
+    let nextEnabled = false;
+
     setPersonas((prev) => {
-      const next = prev.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p));
-      const updated = next.find((p) => p.id === id);
-      if (updated) upsertPersonaToServer(updated);
-      return next;
+      cur = prev.find((p) => p.id === id);
+      nextEnabled = !(cur?.enabled ?? false);
+      return prev.map((p) => (p.id === id ? { ...p, enabled: nextEnabled } : p));
     });
+
+    const run = async () => {
+      if (!cur) {
+        await loadPersonas();
+        return;
+      }
+      if (nextEnabled) {
+        await upsertPersonaToServer({ ...cur, enabled: true });
+        await loadPersonas();
+        return;
+      }
+      await patchPersonaToServer(id, { enabled: false });
+      await loadPersonas();
+    };
+    run();
   };
 
   const handleSelectPersona = (id: string) => {
@@ -414,7 +448,11 @@ export default function Stats() {
 
   const handleDeletePersona = (id: string) => {
     setPersonas((prev) => prev.filter((p) => p.id !== id));
-    deletePersonaFromServer(id);
+    const run = async () => {
+      await deletePersonaFromServer(id);
+      await loadPersonas();
+    };
+    run();
   };
 
   const handleAddPersona = () => {
@@ -425,7 +463,11 @@ export default function Stats() {
     const id = `custom_${Date.now()}`;
     const created = { id, name, systemPrompt: prompt, topicPrefs, enabled: true, deletable: true } as Persona;
     setPersonas((prev) => [...prev, created]);
-    upsertPersonaToServer(created);
+    const run = async () => {
+      await upsertPersonaToServer(created);
+      await loadPersonas();
+    };
+    run();
     setSelectedPersonaId(id);
     setNewPersonaName('');
     setNewPersonaPrompt('');
@@ -461,7 +503,20 @@ export default function Stats() {
 
   const updatePersona = (id: string, patch: Partial<Persona>) => {
     setPersonas((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
-    patchPersonaToServer(id, patch);
+  };
+
+  const schedulePersonaPatch = (id: string, patch: Partial<Persona>) => {
+    const key = `${id}:${Object.keys(patch).sort().join(',')}`;
+    const timers = personaPatchTimersRef.current;
+    const existing = timers[key];
+    if (existing) {
+      clearTimeout(existing);
+    }
+    timers[key] = window.setTimeout(async () => {
+      const ok = await patchPersonaToServer(id, patch);
+      await loadPersonas();
+      if (!ok) return;
+    }, 500);
   };
 
   const handleSaveGeminiKey = (key: string) => {
@@ -801,16 +856,30 @@ export default function Stats() {
                 <div className="space-y-1">
                   <div className="text-xs text-slate-500">偏好话题</div>
                   <Textarea
-                    value={selectedPersona.topicPrefs ?? ''}
-                    onChange={(e) => updatePersona(selectedPersona.id, { topicPrefs: e.target.value })}
+                    value={editingPersonaTopicPrefs}
+                    onChange={(e) => setEditingPersonaTopicPrefs(e.target.value)}
+                    onBlur={() => {
+                      const next = editingPersonaTopicPrefs;
+                      if (!selectedPersona) return;
+                      if ((selectedPersona.topicPrefs ?? '') !== next) {
+                        schedulePersonaPatch(selectedPersona.id, { topicPrefs: next });
+                      }
+                    }}
                     className="min-h-[120px]"
                   />
                 </div>
                 <div className="space-y-1">
                   <div className="text-xs text-slate-500">System Prompt</div>
                   <Textarea
-                    value={selectedPersona.systemPrompt ?? ''}
-                    onChange={(e) => updatePersona(selectedPersona.id, { systemPrompt: e.target.value })}
+                    value={editingPersonaSystemPrompt}
+                    onChange={(e) => setEditingPersonaSystemPrompt(e.target.value)}
+                    onBlur={() => {
+                      const next = editingPersonaSystemPrompt;
+                      if (!selectedPersona) return;
+                      if ((selectedPersona.systemPrompt ?? '') !== next) {
+                        schedulePersonaPatch(selectedPersona.id, { systemPrompt: next });
+                      }
+                    }}
                     className="min-h-[120px]"
                   />
                 </div>
