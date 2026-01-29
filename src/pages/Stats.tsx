@@ -811,90 +811,110 @@ export default function Stats() {
             </div>
           </div>
           
-          <div className="space-y-3">
-            {displayedCells.length > 0 ? (
-              displayedCells.map((cell) => (
-                <div key={cell.date} className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 animate-fade-in">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="font-semibold">{cell.date}</div>
-                    <span className={`text-xs px-2 py-1 rounded-full ${bucketClass(cell.count)} bg-opacity-80`}>
-                      {cell.count} 条
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    <div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 space-y-3">
+              {displayedCells.length > 0 ? (
+                displayedCells.map((cell) => (
+                  <div key={cell.date} className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 animate-fade-in">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-semibold">{cell.date}</div>
+                      <span className={`text-xs px-2 py-1 rounded-full ${bucketClass(cell.count)} bg-opacity-80`}>
+                        {cell.count} 条
+                      </span>
+                    </div>
+                    <div className="text-sm">
                       <div className="text-slate-500 mb-1">Done</div>
                       {cell.entries && cell.entries.length > 0 ? (
                         <ItemList items={cell.entries.flatMap((e) => e.done)} />
                       ) : (
                         <div className="text-slate-400">无</div>
                       )}
-                    </div>
-                    <div>
-                      <div className="text-slate-500 mb-1">Todo</div>
-                      <div className="mb-2 border border-slate-100 dark:border-slate-800 rounded-lg p-3">
-                        <div className="text-xs text-slate-500 mb-2">我的 TODO（已确认入库）</div>
-                        {persistedTodos.length > 0 ? (
-                          <div className="space-y-2">
-                            {persistedTodos.map((t) => (
-                              <div key={t.id} className="flex items-start justify-between gap-2">
-                                <label className="flex items-start gap-2 flex-1">
-                                  <input
-                                    type="checkbox"
-                                    checked={t.done}
-                                    onChange={(e) => toggleTodoDone(t.id, e.target.checked)}
-                                    className="mt-1"
-                                  />
-                                  <div className="flex-1">
-                                    <div className={t.done ? 'line-through text-slate-400' : ''}>{t.text}</div>
-                                    {t.done && (t.doneNote ?? '').trim() && (
-                                      <div className="mt-1 text-xs text-slate-500 whitespace-pre-wrap">完成说明：{t.doneNote}</div>
-                                    )}
-                                  </div>
-                                </label>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => startEditTodo(t)}
-                                    className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
-                                  >
-                                    编辑
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => deleteTodo(t.id)}
-                                    className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
-                                  >
-                                    删除
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-slate-400 text-sm">暂无</div>
-                        )}
-                      </div>
-
-                      {cell.entries && cell.entries.length > 0 ? (
-                        <ItemList items={cell.entries.flatMap((e) => e.todo ?? [])} />
-                      ) : (
-                        <div className="text-slate-400">无</div>
+                      {cell.entries && cell.entries.some((e) => (e.todo ?? []).length > 0) && (
+                        <div className="mt-3">
+                          <div className="text-slate-500 mb-1">Todo</div>
+                          <ItemList items={cell.entries.flatMap((e) => e.todo ?? [])} />
+                        </div>
                       )}
                     </div>
+                    {cell.entries?.some((e) => e.note) && (
+                      <div className="mt-2 text-xs text-slate-500 border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
+                        {cell.entries?.map((e) => e.note).filter(Boolean).join(' / ')}
+                      </div>
+                    )}
                   </div>
-                  {cell.entries?.some((e) => e.note) && (
-                    <div className="mt-2 text-xs text-slate-500 border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
-                      {cell.entries?.map((e) => e.note).filter(Boolean).join(' / ')}
-                    </div>
-                  )}
+                ))
+              ) : (
+                <div className="text-center py-8 text-slate-400">
+                  该日期无记录
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-slate-400">
-                该日期无记录
+              )}
+            </div>
+
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+              <div className="text-sm font-semibold mb-2">我的 TODO</div>
+              <div className="text-xs text-slate-500 mb-2">（全局独立，不随日期变化）</div>
+              <div className="mb-3 flex items-center gap-2">
+                <Input
+                  value={newManualTodo}
+                  onChange={(e) => setNewManualTodo(e.target.value)}
+                  placeholder="手写新增 TODO（全局唯一）"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const t = newManualTodo.trim();
+                    if (!t) return;
+                    await confirmTodo(t);
+                    setNewManualTodo('');
+                  }}
+                  disabled={!newManualTodo.trim()}
+                >
+                  添加
+                </Button>
               </div>
-            )}
+
+              {persistedTodos.length > 0 ? (
+                <div className="space-y-2 text-sm">
+                  {persistedTodos.map((t) => (
+                    <div key={t.id} className="flex items-start justify-between gap-2">
+                      <label className="flex items-start gap-2 flex-1">
+                        <input
+                          type="checkbox"
+                          checked={t.done}
+                          onChange={(e) => toggleTodoDone(t.id, e.target.checked)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
+                          <div className={t.done ? 'line-through text-slate-400' : ''}>{t.text}</div>
+                          {t.done && (t.doneNote ?? '').trim() && (
+                            <div className="mt-1 text-xs text-slate-500 whitespace-pre-wrap">完成说明：{t.doneNote}</div>
+                          )}
+                        </div>
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => startEditTodo(t)}
+                          className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+                        >
+                          编辑
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteTodo(t.id)}
+                          className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+                        >
+                          删除
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-slate-400 text-sm">暂无</div>
+              )}
+            </div>
           </div>
         </section>
 
@@ -912,24 +932,7 @@ export default function Stats() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
-              <div className="text-sm font-semibold mb-2">Done</div>
-              <div className="text-xs text-slate-500 mb-2">（用于给智能体提供事实输入）</div>
-              <div className="space-y-3">
-                {rangeEntriesDesc.length > 0 ? (
-                  rangeEntriesDesc.map((e) => (
-                    <div key={e.date} className="border border-slate-100 dark:border-slate-800 rounded-lg p-3">
-                      <div className="text-xs font-semibold mb-2">{e.date}</div>
-                      <ItemList items={e.done} />
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-slate-400 text-sm">无数据</div>
-                )}
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
               <div className="text-sm font-semibold mb-2">Chat</div>
               <div className="space-y-3 text-sm">
