@@ -312,7 +312,12 @@ export const dailyLog: DailyEntry[] = [
         "text": "深度研读全球范式转移信号报告：物理AI (Physical AI) 成为关键拐点。6要素分析：1.我感兴趣(实体智能跃迁) 2.新技术(世界模型/Cosmos) 3.用户习惯(从对话到协作) 4.环境变化(基础设施万亿投入) 5.新渠道(硬件代理) 6.新法规(欧盟AI法案)。",
         "links": [{ "title": "信号报告", "url": "https://r2-manager-api.g29tony.workers.dev/api/object?download=1&key=coze%2Foutputs%2F%E6%AF%8F%E6%97%A5%E4%BF%A1%E5%8F%B7%2F2026-01-29-%E4%BF%A1%E5%8F%B7%E6%8A%A5%E5%91%8A.md" }]
       },
-      "完成stats页面顾问团优化",
+      "完成stats页面顾问团优化"
+    ]
+  },
+  {
+    "date": "2026-01-30",
+    "done": [
       {
         text: "研读网易深度文章并发布博客：LLM与弗洛伊德：AI壳中的灵魂。6要素分析：1.我感兴趣(AI内在冲突) 2.新技术(AI精神动力学框架) 3.用户习惯(重新定义AI“理解”) 4.环境变化(从行为主义转向内在模型研究) 5.新渠道(跨学科AI理论研究) 6.新法规(通过“超我”实现价值对齐)。",
         links: [{ title: "博客文章", url: "https://blog.aimmar.ink/blog/llm-freud-psychoanalysis" }]
