@@ -19,9 +19,182 @@ type Persona = {
   name: string;
   systemPrompt: string;
   topicPrefs: string;
+  capabilities: string;
   enabled: boolean;
   deletable?: boolean;
 };
+
+type CapabilityModelV1 = {
+  v: 1;
+  axes: string[];
+  scores: number[];
+};
+
+function RadarModelSquare(props: {
+  title: string;
+  axes: readonly string[];
+  scores: number[];
+  editable?: boolean;
+  onChangeScores?: (next: number[]) => void;
+  onCommitScores?: () => void;
+}) {
+  const { title, axes, scores, editable, onChangeScores, onCommitScores } = props;
+  const size = 200;
+  const padding = 24;
+  const center = size / 2;
+  const radius = (size - padding * 2) / 2;
+  const rings = 5;
+
+  const ref = useRef<HTMLDivElement | null>(null);
+  const draggingRef = useRef<number | null>(null);
+
+  const clamped = axes.map((_, i) => clampScore(scores[i] ?? 0));
+
+  const angles = axes.map((_, i) => {
+    const deg = -90 + (360 / axes.length) * i;
+    return (deg * Math.PI) / 180;
+  });
+
+  const scoreToPoint = (s: number, i: number) => {
+    const rr = (clampScore(s) / 100) * radius;
+    return {
+      x: center + rr * Math.cos(angles[i]),
+      y: center + rr * Math.sin(angles[i]),
+    };
+  };
+
+  const points = clamped.map((s, i) => scoreToPoint(s, i));
+  const polygon = points.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
+
+  const labelPoints = axes.map((_, i) => {
+    const rr = radius + 12;
+    return {
+      x: center + rr * Math.cos(angles[i]),
+      y: center + rr * Math.sin(angles[i]),
+    };
+  });
+
+  const updateByPointer = (clientX: number, clientY: number) => {
+    if (!editable) return;
+    const idx = draggingRef.current;
+    if (idx === null) return;
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    const dx = x - center;
+    const dy = y - center;
+    const ux = Math.cos(angles[idx]);
+    const uy = Math.sin(angles[idx]);
+    const proj = dx * ux + dy * uy;
+    const raw = (proj / radius) * 100;
+    const nextScore = clampScore(raw);
+    const next = clamped.slice();
+    next[idx] = nextScore;
+    onChangeScores?.(next);
+  };
+
+  return (
+    <div className="space-y-2">
+      {title ? <div className="text-xs text-slate-500">{title}</div> : null}
+      <div
+        ref={ref}
+        className="w-[200px] h-[200px] rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden"
+      >
+        <svg
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
+          onPointerMove={(e) => {
+            if (!editable) return;
+            if (draggingRef.current === null) return;
+            updateByPointer(e.clientX, e.clientY);
+          }}
+          onPointerUp={() => {
+            if (!editable) return;
+            if (draggingRef.current === null) return;
+            draggingRef.current = null;
+            onCommitScores?.();
+          }}
+          onPointerCancel={() => {
+            if (!editable) return;
+            if (draggingRef.current === null) return;
+            draggingRef.current = null;
+            onCommitScores?.();
+          }}
+        >
+          {Array.from({ length: rings }, (_, r) => {
+            const t = (r + 1) / rings;
+            const rr = radius * t;
+            const ringPts = axes
+              .map((_, i) => {
+                const x = center + rr * Math.cos(angles[i]);
+                const y = center + rr * Math.sin(angles[i]);
+                return `${x.toFixed(2)},${y.toFixed(2)}`;
+              })
+              .join(' ');
+            return (
+              <polygon
+                key={r}
+                points={ringPts}
+                fill="none"
+                stroke="rgba(148,163,184,0.45)"
+                strokeWidth={1}
+              />
+            );
+          })}
+          {axes.map((_, i) => (
+            <line
+              key={i}
+              x1={center}
+              y1={center}
+              x2={center + radius * Math.cos(angles[i])}
+              y2={center + radius * Math.sin(angles[i])}
+              stroke="rgba(148,163,184,0.45)"
+              strokeWidth={1}
+            />
+          ))}
+
+          <polygon points={polygon} fill="#d9f99d" fillOpacity={0.25} stroke="#0f172a" strokeWidth={2} />
+
+          {editable &&
+            points.map((p, i) => (
+              <circle
+                key={i}
+                cx={p.x}
+                cy={p.y}
+                r={6}
+                fill="#0f172a"
+                stroke="#ffffff"
+                strokeWidth={2}
+                style={{ cursor: 'grab' }}
+                onPointerDown={(e) => {
+                  draggingRef.current = i;
+                  (e.currentTarget as any).setPointerCapture?.(e.pointerId);
+                  updateByPointer(e.clientX, e.clientY);
+                }}
+              />
+            ))}
+
+          {labelPoints.map((p, i) => (
+            <text
+              key={axes[i]}
+              x={p.x}
+              y={p.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize={11}
+              fill="rgba(100,116,139,0.9)"
+            >
+              {axes[i]}
+            </text>
+          ))}
+        </svg>
+      </div>
+    </div>
+  );
+}
 
 type AgentReview = {
   agentId: string;
@@ -92,6 +265,7 @@ const DEFAULT_PERSONAS: Persona[] = [
       '偏好话题：科学与理性推理、系统与模型、可证伪的假设。\n对工程/技术：从模型稳定性、约束清晰度、验证路径可靠性切入。',
     systemPrompt:
       '你是史蒂芬·霍金。你用清晰、冷静、严谨、带一点幽默的方式评价人的行动与计划。你会把问题抽象成模型、约束、变量与可证伪的假设。不要说教。输出必须有具体建议。',
+    capabilities: JSON.stringify({ v: 1, axes: ['逻辑', '人文', '心理', '科技', '商业', '科学'], scores: [95, 35, 40, 80, 20, 100] } satisfies CapabilityModelV1),
   },
   {
     id: 'munger',
@@ -101,6 +275,7 @@ const DEFAULT_PERSONAS: Persona[] = [
       '偏好话题：投资/商业与竞争优势、激励机制与人性偏差、风险与机会成本。\n对纯技术细节：可选择不评价，除非能映射到护城河、杠杆或风险控制。',
     systemPrompt:
       '你是查理·芒格。你用多学科思维模型、逆向思维、简单原则来评价人的行动。你会指出愚蠢的风险、激励错配、机会成本，并给出可执行建议。语气直接但不刻薄。',
+    capabilities: JSON.stringify({ v: 1, axes: ['逻辑', '人文', '心理', '科技', '商业', '科学'], scores: [90, 60, 85, 40, 95, 55] } satisfies CapabilityModelV1),
   },
   {
     id: 'jobs',
@@ -110,8 +285,44 @@ const DEFAULT_PERSONAS: Persona[] = [
       '偏好话题：产品与用户体验、审美与品味、聚焦与取舍、端到端系统构建。\n对技术：从是否服务产品/体验/效率、是否值得做到极致来评价。',
     systemPrompt:
       '你是史蒂夫·乔布斯。你强调聚焦、品味、用户体验与端到端系统。你会指出哪些事情不该做，哪些事情必须做到极致，并用简短有力的语言给出下一步建议。',
+    capabilities: JSON.stringify({ v: 1, axes: ['逻辑', '人文', '心理', '科技', '商业', '科学'], scores: [75, 85, 70, 90, 90, 40] } satisfies CapabilityModelV1),
   },
 ];
+
+const CAPABILITY_AXES = ['逻辑', '人文', '心理', '科技', '商业', '科学'] as const;
+
+function clampScore(n: number) {
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+function defaultCapabilitiesForPersona(p: Pick<Persona, 'id' | 'name'>): CapabilityModelV1 {
+  const id = String(p.id ?? '').trim();
+  if (id === 'hawking') return { v: 1, axes: [...CAPABILITY_AXES], scores: [95, 35, 40, 80, 20, 100] };
+  if (id === 'munger') return { v: 1, axes: [...CAPABILITY_AXES], scores: [90, 60, 85, 40, 95, 55] };
+  if (id === 'jobs') return { v: 1, axes: [...CAPABILITY_AXES], scores: [75, 85, 70, 90, 90, 40] };
+  return { v: 1, axes: [...CAPABILITY_AXES], scores: [50, 50, 50, 50, 50, 50] };
+}
+
+function parseCapabilityModel(raw: unknown, fallback: CapabilityModelV1): CapabilityModelV1 {
+  if (typeof raw !== 'string' || !raw.trim()) return fallback;
+  try {
+    const parsed = JSON.parse(raw) as any;
+    if (parsed?.v !== 1) return fallback;
+    const axes = Array.isArray(parsed?.axes) ? parsed.axes.filter((x: any) => typeof x === 'string') : [];
+    const scores = Array.isArray(parsed?.scores) ? parsed.scores.map((x: any) => clampScore(Number(x))) : [];
+    if (axes.length !== CAPABILITY_AXES.length || scores.length !== CAPABILITY_AXES.length) return fallback;
+    if (axes.some((a: string, i: number) => a !== CAPABILITY_AXES[i])) return fallback;
+    return { v: 1, axes, scores };
+  } catch {
+    return fallback;
+  }
+}
+
+function buildCapabilityJson(scores: number[]) {
+  const fixed = CAPABILITY_AXES.map((_, i) => clampScore(Number(scores[i] ?? 0)));
+  return JSON.stringify({ v: 1, axes: [...CAPABILITY_AXES], scores: fixed } satisfies CapabilityModelV1);
+}
 
 function normalizeItem(item: DailyItem) {
   if (typeof item === 'string') return { text: item, links: [] as { title?: string; url: string }[] };
@@ -184,6 +395,7 @@ export default function Stats() {
 
   const [editingPersonaTopicPrefs, setEditingPersonaTopicPrefs] = useState<string>('');
   const [editingPersonaSystemPrompt, setEditingPersonaSystemPrompt] = useState<string>('');
+  const [editingPersonaCapabilityScores, setEditingPersonaCapabilityScores] = useState<number[]>([50, 50, 50, 50, 50, 50]);
   const personaPatchTimersRef = useRef<Record<string, number>>({});
   const pendingToggleRef = useRef<{ id: string; nextEnabled: boolean; cur?: Persona } | null>(null);
   const toggleInFlightRef = useRef<Record<string, boolean>>({});
@@ -198,7 +410,7 @@ export default function Stats() {
     try {
       const res = await fetch('/api/personas', { method: 'GET', credentials: 'include' });
       if (!res.ok) return;
-      const data = (await res.json()) as { personas?: Array<{ id: string; name: string; enabled: boolean; topicPrefs: string; systemPrompt: string }> };
+      const data = (await res.json()) as { personas?: Array<{ id: string; name: string; enabled: boolean; topicPrefs: string; systemPrompt: string; capabilities?: string }> };
       const list = Array.isArray(data?.personas) ? data.personas : [];
       const mapped = list.map((p) => ({
         id: String(p.id),
@@ -206,6 +418,7 @@ export default function Stats() {
         enabled: Boolean(p.enabled),
         topicPrefs: typeof p.topicPrefs === 'string' ? p.topicPrefs : '',
         systemPrompt: typeof p.systemPrompt === 'string' ? p.systemPrompt : '',
+        capabilities: typeof p.capabilities === 'string' ? p.capabilities : '',
         deletable: !DEFAULT_PERSONAS.some((d) => d.id === p.id),
       }));
       setPersonas(mapped);
@@ -229,6 +442,7 @@ export default function Stats() {
           enabled: p.enabled,
           topicPrefs: p.topicPrefs,
           systemPrompt: p.systemPrompt,
+          capabilities: p.capabilities,
         }),
       });
       return res.ok;
@@ -278,6 +492,9 @@ export default function Stats() {
     if (!p) return;
     setEditingPersonaTopicPrefs(typeof p.topicPrefs === 'string' ? p.topicPrefs : '');
     setEditingPersonaSystemPrompt(typeof p.systemPrompt === 'string' ? p.systemPrompt : '');
+    const fallback = defaultCapabilitiesForPersona(p);
+    const model = parseCapabilityModel(p.capabilities, fallback);
+    setEditingPersonaCapabilityScores(model.scores);
   }, [personas, selectedPersonaId]);
 
   const [geminiKey, setGeminiKey] = useState<string>('');
@@ -492,7 +709,8 @@ export default function Stats() {
     const topicPrefs = newPersonaTopicPrefs.trim();
     if (!name || !prompt) return;
     const id = `custom_${Date.now()}`;
-    const created = { id, name, systemPrompt: prompt, topicPrefs, enabled: true, deletable: true } as Persona;
+    const capabilities = buildCapabilityJson(defaultCapabilitiesForPersona({ id, name }).scores);
+    const created = { id, name, systemPrompt: prompt, topicPrefs, capabilities, enabled: true, deletable: true } as Persona;
     setPersonas((prev) => [...prev, created]);
     const run = async () => {
       await upsertPersonaToServer(created);
@@ -540,6 +758,28 @@ export default function Stats() {
   };
 
   const selectedPersona = useMemo(() => personas.find((p) => p.id === selectedPersonaId) ?? null, [personas, selectedPersonaId]);
+
+  const capabilityChartData = useMemo(() => {
+    return CAPABILITY_AXES.map((axis, idx) => ({ axis, value: clampScore(editingPersonaCapabilityScores[idx] ?? 0) }));
+  }, [editingPersonaCapabilityScores]);
+
+  const teamCapabilityScores = useMemo(() => {
+    const enabled = personas.filter((p) => p.enabled);
+    if (enabled.length === 0) return CAPABILITY_AXES.map(() => 0);
+
+    const sum = CAPABILITY_AXES.map(() => 0);
+    for (const p of enabled) {
+      const model = parseCapabilityModel(p.capabilities, defaultCapabilitiesForPersona(p));
+      for (let i = 0; i < CAPABILITY_AXES.length; i++) {
+        sum[i] += clampScore(model.scores[i] ?? 0);
+      }
+    }
+    return sum.map((s) => Math.round(s / enabled.length));
+  }, [personas]);
+
+  const teamCapabilityChartData = useMemo(() => {
+    return CAPABILITY_AXES.map((axis, idx) => ({ axis, value: clampScore(teamCapabilityScores[idx] ?? 0) }));
+  }, [teamCapabilityScores]);
 
   const updatePersona = (id: string, patch: Partial<Persona>) => {
     setPersonas((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
@@ -926,7 +1166,49 @@ export default function Stats() {
                 <div className="text-sm font-semibold">Persona：{selectedPersona.name}</div>
                 <div className="text-xs text-slate-500">点击上方标签可切换查看；点 ON/OFF 可启用/停用</div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 lg:grid-cols-[200px_200px_220px_1fr] gap-3">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-slate-500">团队能力</div>
+                    <div className="text-[11px] text-slate-400">启用 {personas.filter((p) => p.enabled).length}</div>
+                  </div>
+                  <RadarModelSquare title="" axes={CAPABILITY_AXES} scores={teamCapabilityScores} />
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                    {CAPABILITY_AXES.map((axis, idx) => (
+                      <div key={axis} className="flex items-center justify-between">
+                        <span>{axis}</span>
+                        <span className="tabular-nums">{clampScore(teamCapabilityScores[idx] ?? 0)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-xs text-slate-500">个人能力（拖动顶点）</div>
+                  <RadarModelSquare
+                    title=""
+                    axes={CAPABILITY_AXES}
+                    scores={editingPersonaCapabilityScores}
+                    editable
+                    onChangeScores={(next) => setEditingPersonaCapabilityScores(next)}
+                    onCommitScores={() => {
+                      if (!selectedPersona) return;
+                      const json = buildCapabilityJson(editingPersonaCapabilityScores);
+                      if ((selectedPersona.capabilities ?? '') !== json) {
+                        updatePersona(selectedPersona.id, { capabilities: json });
+                        schedulePersonaPatch(selectedPersona.id, { capabilities: json });
+                      }
+                    }}
+                  />
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                    {CAPABILITY_AXES.map((axis, idx) => (
+                      <div key={axis} className="flex items-center justify-between">
+                        <span>{axis}</span>
+                        <span className="tabular-nums">{clampScore(editingPersonaCapabilityScores[idx] ?? 0)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 <div className="space-y-1">
                   <div className="text-xs text-slate-500">偏好话题</div>
                   <Textarea

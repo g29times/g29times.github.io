@@ -59,6 +59,7 @@ type PersonaItem = {
   enabled: boolean;
   topicPrefs: string;
   systemPrompt: string;
+  capabilities: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -468,7 +469,7 @@ async function deleteTodo(env: Env, id: string) {
 
 async function listPersonas(env: Env) {
   const res = await env.DB.prepare(
-    "SELECT id, name, enabled, topicPrefs, systemPrompt, createdAt, updatedAt FROM personas ORDER BY updatedAt DESC",
+    "SELECT id, name, enabled, topicPrefs, systemPrompt, capabilities, createdAt, updatedAt FROM personas ORDER BY updatedAt DESC",
   ).all();
   const rows = (res.results ?? []) as Array<{
     id: string;
@@ -476,6 +477,7 @@ async function listPersonas(env: Env) {
     enabled: number;
     topicPrefs: string;
     systemPrompt: string;
+    capabilities?: string;
     createdAt: string;
     updatedAt: string;
   }>;
@@ -485,6 +487,7 @@ async function listPersonas(env: Env) {
     enabled: Number(r.enabled) === 1,
     topicPrefs: typeof r.topicPrefs === "string" ? r.topicPrefs : "",
     systemPrompt: typeof r.systemPrompt === "string" ? r.systemPrompt : "",
+    capabilities: typeof r.capabilities === "string" ? r.capabilities : "",
     createdAt: String(r.createdAt),
     updatedAt: String(r.updatedAt),
   }));
@@ -499,6 +502,7 @@ async function upsertPersona(env: Env, input: Partial<PersonaItem> & { id?: stri
   const enabled = typeof input.enabled === "boolean" ? (input.enabled ? 1 : 0) : 1;
   const topicPrefs = typeof input.topicPrefs === "string" ? input.topicPrefs : "";
   const systemPrompt = typeof input.systemPrompt === "string" ? input.systemPrompt : "";
+  const capabilities = typeof input.capabilities === "string" ? input.capabilities : "";
   const ts = nowIso();
 
   const existing = await env.DB.prepare(
@@ -509,13 +513,13 @@ async function upsertPersona(env: Env, input: Partial<PersonaItem> & { id?: stri
   const createdAt = (existing as any)?.createdAt ? String((existing as any).createdAt) : ts;
 
   await env.DB.prepare(
-    "INSERT INTO personas (id, name, enabled, topicPrefs, systemPrompt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET name=excluded.name, enabled=excluded.enabled, topicPrefs=excluded.topicPrefs, systemPrompt=excluded.systemPrompt, updatedAt=excluded.updatedAt",
+    "INSERT INTO personas (id, name, enabled, topicPrefs, systemPrompt, capabilities, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET name=excluded.name, enabled=excluded.enabled, topicPrefs=excluded.topicPrefs, systemPrompt=excluded.systemPrompt, capabilities=excluded.capabilities, updatedAt=excluded.updatedAt",
   )
-    .bind(id, name, enabled, topicPrefs, systemPrompt, createdAt, ts)
+    .bind(id, name, enabled, topicPrefs, systemPrompt, capabilities, createdAt, ts)
     .run();
 
   const row = await env.DB.prepare(
-    "SELECT id, name, enabled, topicPrefs, systemPrompt, createdAt, updatedAt FROM personas WHERE id = ?",
+    "SELECT id, name, enabled, topicPrefs, systemPrompt, capabilities, createdAt, updatedAt FROM personas WHERE id = ?",
   )
     .bind(id)
     .first();
@@ -529,6 +533,7 @@ async function upsertPersona(env: Env, input: Partial<PersonaItem> & { id?: stri
       enabled: Number(r.enabled) === 1,
       topicPrefs: typeof r.topicPrefs === "string" ? r.topicPrefs : "",
       systemPrompt: typeof r.systemPrompt === "string" ? r.systemPrompt : "",
+      capabilities: typeof r.capabilities === "string" ? r.capabilities : "",
       createdAt: String(r.createdAt),
       updatedAt: String(r.updatedAt),
     } satisfies PersonaItem,
@@ -539,7 +544,7 @@ async function updatePersona(env: Env, id: string, patch: Partial<PersonaItem>) 
   const pid = String(id ?? "").trim();
   if (!pid) return { ok: false as const, error: "id_required" };
   const current = await env.DB.prepare(
-    "SELECT id, name, enabled, topicPrefs, systemPrompt, createdAt, updatedAt FROM personas WHERE id = ?",
+    "SELECT id, name, enabled, topicPrefs, systemPrompt, capabilities, createdAt, updatedAt FROM personas WHERE id = ?",
   )
     .bind(pid)
     .first();
@@ -550,16 +555,17 @@ async function updatePersona(env: Env, id: string, patch: Partial<PersonaItem>) 
   const nextEnabled = typeof patch.enabled === "boolean" ? (patch.enabled ? 1 : 0) : Number(cur.enabled);
   const nextTopicPrefs = typeof patch.topicPrefs === "string" ? patch.topicPrefs : (typeof cur.topicPrefs === "string" ? cur.topicPrefs : "");
   const nextSystemPrompt = typeof patch.systemPrompt === "string" ? patch.systemPrompt : (typeof cur.systemPrompt === "string" ? cur.systemPrompt : "");
+  const nextCapabilities = typeof patch.capabilities === "string" ? patch.capabilities : (typeof cur.capabilities === "string" ? cur.capabilities : "");
   const ts = nowIso();
 
   await env.DB.prepare(
-    "UPDATE personas SET name = ?, enabled = ?, topicPrefs = ?, systemPrompt = ?, updatedAt = ? WHERE id = ?",
+    "UPDATE personas SET name = ?, enabled = ?, topicPrefs = ?, systemPrompt = ?, capabilities = ?, updatedAt = ? WHERE id = ?",
   )
-    .bind(nextName, nextEnabled, nextTopicPrefs, nextSystemPrompt, ts, pid)
+    .bind(nextName, nextEnabled, nextTopicPrefs, nextSystemPrompt, nextCapabilities, ts, pid)
     .run();
 
   const row = await env.DB.prepare(
-    "SELECT id, name, enabled, topicPrefs, systemPrompt, createdAt, updatedAt FROM personas WHERE id = ?",
+    "SELECT id, name, enabled, topicPrefs, systemPrompt, capabilities, createdAt, updatedAt FROM personas WHERE id = ?",
   )
     .bind(pid)
     .first();
@@ -573,6 +579,7 @@ async function updatePersona(env: Env, id: string, patch: Partial<PersonaItem>) 
       enabled: Number(r.enabled) === 1,
       topicPrefs: typeof r.topicPrefs === "string" ? r.topicPrefs : "",
       systemPrompt: typeof r.systemPrompt === "string" ? r.systemPrompt : "",
+      capabilities: typeof r.capabilities === "string" ? r.capabilities : "",
       createdAt: String(r.createdAt),
       updatedAt: String(r.updatedAt),
     } satisfies PersonaItem,
@@ -1098,17 +1105,18 @@ export default {
 
       if (request.method === "POST" && url.pathname === "/api/personas") {
         const body = (await request.json()) as unknown;
-        const { id, name, enabled, topicPrefs, systemPrompt } = (body ?? {}) as {
+        const { id, name, enabled, topicPrefs, systemPrompt, capabilities } = (body ?? {}) as {
           id?: string;
           name?: string;
           enabled?: boolean;
           topicPrefs?: string;
           systemPrompt?: string;
+          capabilities?: string;
         };
         if (!name || typeof name !== "string") {
           return withCors(request, json({ error: "name_required" }, { status: 400 }));
         }
-        const result = await upsertPersona(env, { id, name, enabled, topicPrefs, systemPrompt } as any);
+        const result = await upsertPersona(env, { id, name, enabled, topicPrefs, systemPrompt, capabilities } as any);
         if (!(result as any).ok) return withCors(request, json(result, { status: 400 }));
         return withCors(request, json(result));
       }
@@ -1117,16 +1125,23 @@ export default {
         const id = decodeURIComponent(url.pathname.slice("/api/personas/".length));
         if (!id) return withCors(request, json({ error: "id_required" }, { status: 400 }));
         const body = (await request.json()) as unknown;
-        const { name, enabled, topicPrefs, systemPrompt } = (body ?? {}) as {
+        const { name, enabled, topicPrefs, systemPrompt, capabilities } = (body ?? {}) as {
           name?: string;
           enabled?: boolean;
           topicPrefs?: string;
           systemPrompt?: string;
+          capabilities?: string;
         };
-        if (typeof name !== "string" && typeof enabled !== "boolean" && typeof topicPrefs !== "string" && typeof systemPrompt !== "string") {
+        if (
+          typeof name !== "string" &&
+          typeof enabled !== "boolean" &&
+          typeof topicPrefs !== "string" &&
+          typeof systemPrompt !== "string" &&
+          typeof capabilities !== "string"
+        ) {
           return withCors(request, json({ error: "patch_required" }, { status: 400 }));
         }
-        const result = await updatePersona(env, id, { name, enabled, topicPrefs, systemPrompt } as any);
+        const result = await updatePersona(env, id, { name, enabled, topicPrefs, systemPrompt, capabilities } as any);
         if (!(result as any).ok) {
           const err = result as any;
           const status = err.error === "not_found" ? 404 : 400;

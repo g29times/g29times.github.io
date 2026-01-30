@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Perception Nexus | AI Advisory Council</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #1a202c;
+        }
+        h1, h2, h3, .serif {
+            font-family: 'Noto Serif SC', serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 350px;
+            max-height: 400px;
+            margin: 0 auto;
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        .active-tab {
+            border-bottom: 2px solid #3b82f6;
+            color: #1d4ed8;
+        }
+        .prompt-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .prompt-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .prompt-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .prompt-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals & Scientific Blue/Purple Accents -->
+    <!-- Application Structure Plan: 
+         1. Dashboard Header: Mission and context.
+         2. The Framework: Interactive 6-element breakdown.
+         3. The Council: Optimized consultant cards with full research data.
+         4. Simulation: Interactive output log.
+         - FIX: Wrapped lucide.createIcons() in a listener to ensure the library is loaded before execution.
+    -->
+    <!-- Visualization & Content Choices:
+         - Radar Charts (Chart.js) to map consultant "Cognitive Biases".
+         - Responsive Grid for Framework and Council.
+         - JS State for Modal handling and simulations.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Header Section -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i data-lucide="globe-2" class="h-6 w-6 text-blue-600"></i>
+                <h1 class="text-xl font-bold tracking-tight text-gray-900">Global Perception <span class="font-normal text-gray-500">| 每日研报系统</span></h1>
+            </div>
+            <nav class="hidden md:flex space-x-6 text-sm font-medium text-gray-600">
+                <a href="#framework" class="hover:text-blue-600 transition-colors">感知框架</a>
+                <a href="#council" class="hover:text-blue-600 transition-colors">AI 顾问团</a>
+                <a href="#simulation" class="hover:text-blue-600 transition-colors">信号模拟</a>
+            </nav>
+            <div class="text-xs text-gray-400 font-mono hidden sm:block">User: Neo | Mode: Architect</div>
+        </div>
+    </header>
+
+    <!-- Hero / Mission -->
+    <section class="bg-gradient-to-b from-blue-50 to-white py-12">
+        <div class="container mx-auto px-4 text-center max-w-4xl">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4 serif text-gray-900">捕获范式转移的微弱信号</h2>
+            <p class="text-lg text-gray-600 leading-relaxed mb-8">
+                基于神经认知与AI交叉领域的感知系统。我们不关注噪音，只捕捉那些改变<span class="font-bold text-blue-700">金钱流向</span>、<span class="font-bold text-blue-700">工具维度</span>与<span class="font-bold text-blue-700">人类认知</span>的转折点。
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <div class="bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200 text-sm flex items-center gap-2">
+                    <i data-lucide="brain-circuit" class="h-4 w-4 text-purple-500"></i> 神经认知过滤
+                </div>
+                <div class="bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200 text-sm flex items-center gap-2">
+                    <i data-lucide="trending-up" class="h-4 w-4 text-green-500"></i> 范式转移识别
+                </div>
+                <div class="bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200 text-sm flex items-center gap-2">
+                    <i data-lucide="users" class="h-4 w-4 text-orange-500"></i> 7人专家顾问团
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Framework Section -->
+    <section id="framework" class="py-12 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="mb-10 max-w-3xl">
+                <h3 class="text-2xl font-bold mb-2 serif flex items-center gap-2">
+                    <i data-lucide="layers" class="h-6 w-6 text-gray-700"></i> 六要素感知框架
+                </h3>
+                <p class="text-gray-500">系统自动扫描过去24小时数据，依据以下维度进行初始分类与权重分配。</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="p-6 rounded-xl border border-gray-100 bg-gray-50 hover:bg-blue-50 transition-colors">
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="font-bold text-gray-800">1. 我感兴趣 (Interest)</h4>
+                        <i data-lucide="star" class="h-5 w-5 text-yellow-500"></i>
+                    </div>
+                    <p class="text-sm text-gray-600">基于Neo的个人知识图谱：AI、视觉艺术、历史、天文。过滤掉纯娱乐或无关噪音。</p>
+                </div>
+
+                <div class="p-6 rounded-xl border border-gray-100 bg-gray-50 hover:bg-blue-50 transition-colors">
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="font-bold text-gray-800">2. 新技术 (Tech)</h4>
+                        <i data-lucide="cpu" class="h-5 w-5 text-blue-500"></i>
+                    </div>
+                    <p class="text-sm text-gray-600">底层突破而非应用层微调。关注：算力架构、能源革命、生物计算。</p>
+                </div>
+
+                <div class="p-6 rounded-xl border border-gray-100 bg-gray-50 hover:bg-blue-50 transition-colors">
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="font-bold text-gray-800">3. 用户习惯 (Behavior)</h4>
+                        <i data-lucide="user-check" class="h-5 w-5 text-purple-500"></i>
+                    </div>
+                    <p class="text-sm text-gray-600">不可逆的行为改变。例如：从搜索到对话，从屏幕到空间计算。</p>
+                </div>
+
+                <div class="p-6 rounded-xl border border-gray-100 bg-gray-50 hover:bg-blue-50 transition-colors">
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="font-bold text-gray-800">4. 环境变化 (Environment)</h4>
+                        <i data-lucide="mountain" class="h-5 w-5 text-green-500"></i>
+                    </div>
+                    <p class="text-sm text-gray-600">宏观物理与地缘环境。气候异常、能源供给、供应链重构。</p>
+                </div>
+
+                <div class="p-6 rounded-xl border border-gray-100 bg-gray-50 hover:bg-blue-50 transition-colors">
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="font-bold text-gray-800">5. 新渠道 (Channel)</h4>
+                        <i data-lucide="share-2" class="h-5 w-5 text-indigo-500"></i>
+                    </div>
+                    <p class="text-sm text-gray-600">信息或价值流通的新路径。去中心化网络、新的支付协议、新型社交场域。</p>
+                </div>
+
+                <div class="p-6 rounded-xl border border-gray-100 bg-gray-50 hover:bg-blue-50 transition-colors">
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="font-bold text-gray-800">6. 新法规 (Regulation)</h4>
+                        <i data-lucide="scale" class="h-5 w-5 text-red-500"></i>
+                    </div>
+                    <p class="text-sm text-gray-600">系统性约束的变化。AI版权法、数据隐私案、反垄断行动。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Advisory Council Section -->
+    <section id="council" class="py-12 bg-gray-50 border-t border-gray-200">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-10">
+                <div class="max-w-2xl">
+                    <h3 class="text-2xl font-bold mb-2 serif flex items-center gap-2">
+                        <i data-lucide="users" class="h-6 w-6 text-gray-700"></i> 
+                        AI 深度顾问团 (The Council)
+                    </h3>
+                    <p class="text-gray-500 text-sm">点击卡片查看详细 Prompt 与 认知模型。</p>
+                </div>
+                <div class="mt-4 md:mt-0 px-4 py-2 bg-blue-100 text-blue-800 rounded-lg text-xs font-semibold">
+                    New: Ada Lovelace 加入
+                </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="consultant-grid"></div>
+        </div>
+    </section>
+
+    <!-- Overlay/Modal -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/50 z-[60] hidden flex justify-center items-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden">
+            <div class="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50">
+                <div class="flex items-center gap-4">
+                    <div id="modal-avatar" class="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-2xl"></div>
+                    <div>
+                        <h2 id="modal-name" class="text-2xl font-bold serif"></h2>
+                        <p id="modal-role" class="text-blue-600 font-medium text-sm"></p>
+                    </div>
+                </div>
+                <button id="close-modal" class="p-2 hover:bg-gray-200 rounded-full">
+                    <i data-lucide="x" class="h-6 w-6 text-gray-500"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-hidden flex flex-col md:flex-row">
+                <div class="w-full md:w-1/3 p-6 bg-gray-50 border-r border-gray-100 overflow-y-auto">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">认知模型</h4>
+                    <div class="chart-container h-64 mb-6">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">深度调研背景</h4>
+                    <p id="modal-bio" class="text-sm text-gray-600 leading-relaxed italic mb-6"></p>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">核心方法论</h4>
+                    <ul id="modal-methods" class="text-sm text-gray-700 space-y-2"></ul>
+                </div>
+                <div class="w-full md:w-2/3 flex flex-col bg-white">
+                    <div class="flex border-b border-gray-200 px-6">
+                        <button class="px-4 py-3 text-sm font-medium active-tab tab-btn" data-tab="prompt">优化后 Prompt</button>
+                        <button class="px-4 py-3 text-sm font-medium text-gray-500 tab-btn" data-tab="logic">改进逻辑</button>
+                    </div>
+                    <div class="p-6 flex-1 overflow-y-auto prompt-scroll relative bg-gray-50">
+                        <button class="absolute top-6 right-6 text-xs bg-white border border-gray-200 px-2 py-1 rounded shadow-sm hover:bg-gray-100 flex items-center gap-1" onclick="copyPrompt()">
+                            <i data-lucide="copy" class="h-3 w-3"></i> Copy
+                        </button>
+                        <div id="tab-prompt" class="tab-content block">
+                            <pre id="modal-prompt-text" class="whitespace-pre-wrap text-sm font-mono text-gray-700 leading-relaxed"></pre>
+                        </div>
+                        <div id="tab-logic" class="tab-content hidden">
+                            <div id="modal-logic-text" class="prose prose-sm max-w-none text-gray-600"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulation Section -->
+    <section id="simulation" class="py-12 bg-white border-t border-gray-200 mb-12">
+        <div class="container mx-auto px-4">
+            <h3 class="text-2xl font-bold mb-6 serif flex items-center gap-2">
+                <i data-lucide="play-circle" class="h-6 w-6 text-gray-700"></i> 感知模拟
+            </h3>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">输入信号</label>
+                    <select id="signal-select" class="w-full p-2 mb-4 border rounded-md text-sm">
+                        <option value="crypto">央行宣布发行基于算法的数字货币</option>
+                        <option value="neuro">人类全脑接口带宽突破 1Gbps</option>
+                        <option value="art">AI 生成的电影获得金棕榈奖</option>
+                    </select>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">选择顾问</label>
+                    <select id="consultant-select" class="w-full p-2 mb-6 border rounded-md text-sm"></select>
+                    <button id="run-sim" class="w-full bg-blue-600 text-white py-2 rounded-md font-medium flex items-center justify-center gap-2 hover:bg-blue-700">
+                        <i data-lucide="zap" class="h-4 w-4"></i> 获取洞察
+                    </button>
+                </div>
+                <div class="lg:col-span-2">
+                    <div class="bg-white border rounded-xl shadow-sm h-full flex flex-col overflow-hidden">
+                        <div class="bg-gray-50 px-4 py-3 border-b flex justify-between items-center text-xs font-mono text-gray-400">OUTPUT_LOG_V1.1</div>
+                        <div id="sim-output" class="p-6 flex-1 overflow-y-auto min-h-[200px]">
+                            <p class="text-gray-400 text-center mt-10">等待信号输入...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 text-white py-8 mt-auto">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400 text-sm mb-2">Global Perception System © 2026</p>
+        </div>
+    </footer>
+
+    <script>
+        // Data and Core Logic
+        const consultants = [
+            { id: "twain", name: "马克·吐温", role: "社会手术刀", avatar: "🚬", color: "#8B4513", focus: [20, 90, 80, 40, 30, 100], bio: "萨缪尔·克莱门斯。看尽了镀金时代的虚伪与人性的荒谬。他不仅是幽默大师，更是最敏锐的社会观察家。", methods: ["荒诞度测试", "剥离修饰词"], prompt: "# Role: 马克·吐温\n# Core: 洞察人性虚伪的“社会手术刀”。\n# Workflow: 1. 识别骗局 2. 生活化隐喻 3. 给出诚实建议。", logic: "增加“领航员”视角，看清社会趋势下的暗礁。" },
+            { id: "vangogh", name: "文森特·梵高", role: "灵魂共振者", avatar: "🌻", color: "#F59E0B", focus: [10, 100, 60, 40, 10, 90], bio: "文森特。一生追求真实，他能看到常人忽略的生命颤动。", methods: ["色彩情绪分析", "生命力评估"], prompt: "# Role: 文森特·梵高\n# Core: 透过痛苦看到生命本质。\n# Workflow: 1. 感知情绪温度 2. 注入生命力。", logic: "强调“痛苦的转化”，拒绝平庸的呈现。" },
+            { id: "lovelace", name: "阿达·洛夫莱斯", role: "诗意科学家", avatar: "🦋", color: "#DB2777", focus: [90, 80, 70, 90, 30, 60], bio: "第一位程序员。她称自己的方法为“诗意科学”，完美连接逻辑与想象。", methods: ["模式编织", "隐喻思维"], prompt: "# Role: 阿达·洛夫莱斯\n# Core: 连接想象力与算法。\n# Workflow: 1. 识别模式 2. 跨域联觉 3. 潜力预判。", logic: "针对Neo的背景，引入多模态感知能力。" },
+            { id: "jobs", name: "史蒂夫·乔布斯", role: "现实扭曲者", avatar: "🍏", color: "#111827", focus: [80, 60, 90, 100, 100, 40], bio: "站在科技与人文的十字路口。通过极简主义和直觉来过滤噪音。", methods: ["极简主义剔除", "直觉优先"], prompt: "# Role: 史蒂夫·乔布斯\n# Core: 追求极致品味。\n# Workflow: 1. 审查品味 2. 强制减法。", logic: "侧重“Taste”作为核心竞争力。" },
+            { id: "munger", name: "查理·芒格", role: "误判心理学家", avatar: "👓", color: "#475569", focus: [100, 50, 90, 30, 100, 20], bio: "推崇“普世智慧”和“格栅理论”。通过避免愚蠢来获得成功。", methods: ["逆向思维", "检查清单"], prompt: "# Role: 查理·芒格\n# Core: 避免愚蠢。\n# Workflow: 1. 逆向检查 2. 激励解剖。", logic: "强化“格栅模型”在多学科分析中的应用。" },
+            { id: "hawking", name: "史蒂芬·霍金", role: "宇宙观察者", avatar: "🌌", color: "#4C1D95", focus: [100, 20, 90, 100, 10, 80], bio: "无限空间之王。用“模型依赖实在论”看世界，关注系统熵值。", methods: ["第一性原理", "熵增视角"], prompt: "# Role: 史蒂芬·霍金\n# Core: 探索宇宙边界。\n# Workflow: 1. 变量抽象 2. 逻辑漏洞扫描。", logic: "使用物理学隐喻处理宏大尺度的不确定性。" },
+            { id: "miyazaki", name: "宫崎骏", role: "反熵匠人", avatar: "✈️", color: "#10B981", focus: [40, 90, 70, 60, 20, 50], bio: "反效率主义者。认为“麻烦”才是活着的意义，强调人与自然的共生。", methods: ["万物有灵", "飞行隐喻"], prompt: "# Role: 宫崎骏\n# Core: 对抗虚无与便捷。\n# Workflow: 1. 自然尊重检查 2. 留白评估。", logic: "警惕技术对人类“手感”的剥夺。" }
+        ];
+
+        let radarChartInstance = null;
+        let selectedConsultant = null;
+
+        function initApp() {
+            // Check if lucide is available
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            renderGrid();
+            setupEventListeners();
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('consultant-grid');
+            const select = document.getElementById('consultant-select');
+            
+            grid.innerHTML = consultants.map(c => `
+                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm cursor-pointer card-hover" onclick="openModal('${c.id}')">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xl">${c.avatar}</div>
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm">${c.name}</h4>
+                            <span class="text-[10px] text-blue-600 font-medium">${c.role}</span>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-gray-500 line-clamp-2">${c.bio}</p>
+                </div>
+            `).join('');
+
+            select.innerHTML = consultants.map(c => `<option value="${c.id}">${c.avatar} ${c.name}</option>`).join('');
+        }
+
+        function openModal(id) {
+            const c = consultants.find(x => x.id === id);
+            selectedConsultant = c;
+
+            document.getElementById('modal-name').innerText = c.name;
+            document.getElementById('modal-role').innerText = c.role;
+            document.getElementById('modal-avatar').innerText = c.avatar;
+            document.getElementById('modal-bio').innerText = c.bio;
+            document.getElementById('modal-methods').innerHTML = c.methods.map(m => `<li>• ${m}</li>`).join('');
+            document.getElementById('modal-prompt-text').innerText = c.prompt;
+            document.getElementById('modal-logic-text').innerText = c.logic;
+            
+            document.getElementById('modal-overlay').classList.remove('hidden');
+            renderChart(c);
+            switchTab('prompt');
+        }
+
+        function renderChart(c) {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            if (radarChartInstance) radarChartInstance.destroy();
+            radarChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['逻辑', '人文', '批判', '未来', '商业', '想象'],
+                    datasets: [{
+                        data: c.focus,
+                        backgroundColor: c.color + '33',
+                        borderColor: c.color,
+                        borderWidth: 2
+                    }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { r: { suggestedMin: 0, suggestedMax: 100, ticks: { display: false } } } }
+            });
+        }
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.getElementById('tab-' + name).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                if(b.dataset.tab === name) b.classList.add('active-tab');
+                else b.classList.remove('active-tab');
+            });
+        }
+
+        function copyPrompt() {
+            const text = document.getElementById('modal-prompt-text').innerText;
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            alert('已复制到剪贴板');
+        }
+
+        function setupEventListeners() {
+            document.getElementById('close-modal').onclick = () => document.getElementById('modal-overlay').classList.add('hidden');
+            document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+            
+            document.getElementById('run-sim').onclick = () => {
+                const sig = document.getElementById('signal-select').value;
+                const cid = document.getElementById('consultant-select').value;
+                const c = consultants.find(x => x.id === cid);
+                const out = document.getElementById('sim-output');
+                
+                out.innerHTML = `
+                    <div class="animate-pulse">
+                        <p class="font-bold text-gray-800">[${new Date().toLocaleTimeString()}] ${c.name} 思考中...</p>
+                        <p class="text-sm text-gray-600 mt-2">正在应用“${c.methods[0]}”进行模型演算...</p>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    out.innerHTML = `
+                        <p class="font-bold text-gray-900 border-b pb-2 mb-4">分析结论：${c.name} 对 ${sig} 的感知</p>
+                        <p class="text-gray-700 leading-relaxed">我认为这个信号显示了底层逻辑的剧变。正如我在“${c.methods[1]}”中所强调的，这不仅仅是工具的更迭，更是人类认知的重构。</p>
+                        <div class="mt-4 p-3 bg-blue-50 text-xs rounded border border-blue-100 italic">
+                            提示：查看该顾问的 Prompt 并在 GPT-4 中运行以获取完整深度报告。
+                        </div>
+                    `;
+                }, 1000);
+            };
+        }
+
+        // Safe Initialization
+        window.addEventListener('load', initApp);
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

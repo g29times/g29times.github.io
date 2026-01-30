@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS personas (
   enabled INTEGER NOT NULL DEFAULT 1,
   topicPrefs TEXT NOT NULL DEFAULT '',
   systemPrompt TEXT NOT NULL DEFAULT '',
+  capabilities TEXT NOT NULL DEFAULT '',
   createdAt TEXT NOT NULL,
   updatedAt TEXT NOT NULL
 );
