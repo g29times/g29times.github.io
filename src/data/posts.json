@@ -1,5 +1,16 @@
 [
   {
+    "slug": "llm-freud-psychoanalysis",
+    "title": "LLMs & Freud: The AI Ghost in the Shell (Psychodynamic Perspective)",
+    "titleZh": "LLM 与弗洛伊德：AI 壳中的灵魂（精神动力学视角）",
+    "excerpt": "Exploring the internal conflicts of Large Language Models through the lens of Freud's Id, Ego, and Superego.",
+    "excerptZh": "借用弗洛伊德的本我、自我与超我框架，剖析大语言模型的内在冲突与运作机制。",
+    "date": "2026-01-29",
+    "category": "AI / Philosophy",
+    "categoryZh": "AI / 哲学",
+    "readTime": "5 min"
+  },
+  {
     "slug": "modular-ai-architecture-vs-clawdbot",
     "title": "Sovereign AI: Why Modular Architectures Beat \"All-in-One\" Assistant Platforms",
     "titleZh": "主权 AI：为何模块化架构优于“全家桶”式助手平台",
