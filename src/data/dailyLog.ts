@@ -323,5 +323,14 @@ export const dailyLog: DailyEntry[] = [
         links: [{ title: "博客文章", url: "https://blog.aimmar.ink/blog/llm-freud-psychoanalysis" }]
       }
     ]
+  },
+  {
+    "date": "2026-01-31",
+    "done": [
+      {
+        text: "发布2026-01-31市场研究报告：神经AI、法律边界与全民AI时代。6要素分析：1.我感兴趣(神经AI奇点) 2.新技术(脑基础模型Neuro-GPT) 3.用户习惯(38%渗透率/依赖形成) 4.环境变化(监管司法化/判例兴起) 5.新渠道(消费级神经接口) 6.新法规(三层注意义务)。",
+        links: [{ title: "市场研报", url: "https://blog.aimmar.ink/blog/market-research-neuro-ai-2026-01-31" }]
+      }
+    ]
   }
 ];
