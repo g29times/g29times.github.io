@@ -330,6 +330,10 @@ export const dailyLog: DailyEntry[] = [
       {
         text: "发布2026-01-31市场研究报告：神经AI、法律边界与全民AI时代。6要素分析：1.我感兴趣(神经AI奇点) 2.新技术(脑基础模型Neuro-GPT) 3.用户习惯(38%渗透率/依赖形成) 4.环境变化(监管司法化/判例兴起) 5.新渠道(消费级神经接口) 6.新法规(三层注意义务)。",
         links: [{ title: "市场研报", url: "https://blog.aimmar.ink/blog/market-research-neuro-ai-2026-01-31" }]
+      },
+      {
+        text: "发布市场研究报告博客：AI 代理的“数字员工”时代与金融市场的深夜惊魂。6要素分析：1.我感兴趣(Agent-Native架构) 2.新技术(TTT-Discover/推理范式) 3.用户习惯(OS级别交互) 4.环境变化(美联储鹰派冲击/流动性收缩) 5.新渠道(消息软件Agent分发) 6.新法规(欧盟AI法案简化)。",
+        links: [{ title: "博客文章", url: "https://blog.aimmar.ink/blog/ai-agent-digital-employee-market-shock" }]
       }
     ]
   }
