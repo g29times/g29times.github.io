@@ -44,56 +44,46 @@ const extractTableData = (node: Element) => {
     .filter(c => c.type === 'tag' && c.name === 'th')
     .map(th => getText(th as Element).trim());
 
-  // We expect at least: MetricName, Description (optional), Value1, Value2...
-  // Heuristic: If we have "Databricks", "Snowflake", "ClickHouse" in headers, OR explicit "(Chart)" marker
-  const targetKeywords = ['Databricks', 'Snowflake', 'ClickHouse'];
-  
-  const dataKeys: string[] = [];
-  const valueIndices: number[] = [];
+  if (headers.length < 2) return null; // need dimension + at least one value
 
-  headers.forEach((h, i) => {
-    // Check for explicit chart trigger
-    const isChartTrigger = h.includes('(Chart)');
-    
-    // Clean header: remove (得分) or (Chart) or similar
-    const cleanHeader = h.replace(/\(.*\)/, '').trim();
-    
-    if (isChartTrigger || targetKeywords.some(k => cleanHeader.includes(k))) {
-      dataKeys.push(cleanHeader);
-      valueIndices.push(i);
-    }
-  });
+  const firstHeaderRaw = headers[0] || '';
+  const firstHeaderClean = firstHeaderRaw.replace(/\(.*\)/, '').trim();
 
-  if (dataKeys.length < 2) return null; // Need at least 2 series to compare
+  // identify chart type from any header marker
+  let chartType: 'bar' | 'pie' | 'chart' | null = null;
+  for (const h of headers) {
+    if (/\(\s*pie\s*\)/i.test(h)) { chartType = 'pie'; break; }
+    if (/\(\s*bar\s*\)/i.test(h)) { chartType = 'bar'; break; }
+    if (/\(\s*chart\s*\)/i.test(h)) { chartType = 'chart'; break; }
+  }
+
+  // We only support one value column per table per需求
+  const valueHeaderRaw = headers[1] || '';
+  const valueKey = valueHeaderRaw.replace(/\(.*\)/, '').trim() || 'value';
 
   // Parse Rows
   const rows = tbody.children.filter(c => c.type === 'tag' && c.name === 'tr') as Element[];
   const data = rows.map(row => {
     const cells = row.children.filter(c => c.type === 'tag' && c.name === 'td') as Element[];
-    if (cells.length < headers.length) return null;
+    if (cells.length < 2) return null;
 
-    const name = getText(cells[0] as Element).replace(/\(.*\)/, '').trim(); // First column is usually the metric
-    
-    const rowData: any = { name };
-    let hasValidNumber = false;
+    const name = getText(cells[0] as Element).replace(/\(.*\)/, '').trim();
+    const valText = getText(cells[1] as Element).replace(/\*\*/g, '').trim();
+    const val = parseFloat(valText);
+    if (isNaN(val)) return null;
 
-    valueIndices.forEach((colIndex, i) => {
-      const valText = getText(cells[colIndex] as Element).replace(/\*\*/g, '').trim();
-      const val = parseFloat(valText);
-      if (!isNaN(val)) {
-        rowData[dataKeys[i]] = val;
-        hasValidNumber = true;
-      } else {
-        rowData[dataKeys[i]] = 0;
-      }
-    });
-
-    return hasValidNumber ? rowData : null;
+    return { name, [valueKey]: val };
   }).filter(Boolean);
 
   if (data.length === 0) return null;
 
-  return { data, keys: dataKeys };
+  return {
+    data,
+    keys: [valueKey],
+    headers,
+    title: firstHeaderClean,
+    chartType,
+  };
 };
 
 const BlogPost = () => {
@@ -297,9 +287,15 @@ const BlogPost = () => {
                         if (domNode.name === 'table') {
                           const chartInfo = extractTableData(domNode);
                           if (chartInfo) {
+                            const chartType = chartInfo.chartType ?? 'bar';
                             return (
                               <div className="my-8">
-                                <BlogChart data={chartInfo.data} keys={chartInfo.keys} />
+                                <BlogChart
+                                  data={chartInfo.data}
+                                  keys={chartInfo.keys}
+                                  type={chartType === 'chart' ? 'bar' : chartType}
+                                  title={chartInfo.title}
+                                />
                                 <div className="overflow-x-auto">
                                   {domToReact([domNode])}
                                 </div>
