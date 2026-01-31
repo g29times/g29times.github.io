@@ -45,15 +45,20 @@ const extractTableData = (node: Element) => {
     .map(th => getText(th as Element).trim());
 
   // We expect at least: MetricName, Description (optional), Value1, Value2...
-  // Heuristic: If we have "Databricks" or "Snowflake" in headers, it's likely our target table
+  // Heuristic: If we have "Databricks", "Snowflake", "ClickHouse" in headers, OR explicit "(Chart)" marker
   const targetKeywords = ['Databricks', 'Snowflake', 'ClickHouse'];
+  
   const dataKeys: string[] = [];
   const valueIndices: number[] = [];
 
   headers.forEach((h, i) => {
-    // Clean header: remove (得分) or similar
+    // Check for explicit chart trigger
+    const isChartTrigger = h.includes('(Chart)');
+    
+    // Clean header: remove (得分) or (Chart) or similar
     const cleanHeader = h.replace(/\(.*\)/, '').trim();
-    if (targetKeywords.some(k => cleanHeader.includes(k))) {
+    
+    if (isChartTrigger || targetKeywords.some(k => cleanHeader.includes(k))) {
       dataKeys.push(cleanHeader);
       valueIndices.push(i);
     }
