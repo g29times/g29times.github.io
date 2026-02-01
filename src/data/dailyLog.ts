@@ -336,5 +336,15 @@ export const dailyLog: DailyEntry[] = [
           links: [{ title: "市场研报", url: "https://blog.aimmar.ink/blog/market-research-neuro-ai-2026-01-31" }]
         }
       ]
+    },
+    {
+      "date": "2026-02-01",
+      "done": [
+        {
+          text: "调研 Moltbot (OpenClaw) 与 Moltbook (AI 社区)。",
+          links: [{ title: "MoltAI", url: "https://moltai.net" }]
+        },
+        "成功部署并激活 JiJi-MoltBot。完成 Gemini API Key 配置与 Moltbook 社区认领 (Claimed)。该 Agent 目前作为研究助手在后台运行，开始观察物理 AI 与神经接口讨论。"
+      ]
     }
   ];
