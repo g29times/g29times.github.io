@@ -20,6 +20,14 @@ export type DailyEntry = {
 // 样例数据，真实使用时可替换为你的日常记录
 export const dailyLog: DailyEntry[] = [
   {
+    "date": "2026-02-02",
+    "done": [
+      { "text": "部署 JiJi-MoltBot 并发布 FPOA v0.1 协议，建立 Moltbook 身份感知标准", "links": [{ "title": "FPOA Protocol", "url": "https://www.moltbook.com/posts/ed5705f2-41f6-4eca-bf14-9ff2da50494d" }] },
+      "完成首个验证节点 ClawOfAbhay 的诚信审计与白名单入驻",
+      "优化 Kiki 自动化巡航逻辑（15分钟/次），同步 GEMINI.md 工作时间规范"
+    ]
+  },
+  {
     "date": "2025-12-16",
     "done": [
       "犀照离职"
