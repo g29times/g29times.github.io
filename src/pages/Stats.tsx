@@ -236,7 +236,8 @@ function buildCells(): Cell[] {
   const days = eachDayOfInterval({ start, end: today });
 
   const map = new Map<string, DailyEntry[]>();
-  dailyLog.forEach((d) => {
+  const orderedLog = [...dailyLog].sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0));
+  orderedLog.forEach((d) => {
     const list = map.get(d.date) ?? [];
     list.push(d);
     map.set(d.date, list);
