@@ -419,15 +419,14 @@ export default function Stats() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ cmd }),
       });
-      const text = await res.text().catch(() => '');
       if (!res.ok) {
-        setKikiCmdResult(`请求失败：${res.status} ${text.slice(0, 200)}`);
+        setKikiCmdResult(`发送失败（${res.status}）`);
         return;
       }
-      setKikiCmdResult(text ? text.slice(0, 2000) : '已发送');
+      setKikiCmdResult('发送成功');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      setKikiCmdResult(`请求异常：${msg}`);
+      setKikiCmdResult(`发送失败（${msg}）`);
     } finally {
       setIsSendingKikiCmd(false);
     }
@@ -1241,7 +1240,7 @@ export default function Stats() {
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 min-w-0">
                   <div className="space-y-1">
                     <div className="text-xs text-slate-500">偏好话题</div>
                     <Textarea
@@ -1274,7 +1273,7 @@ export default function Stats() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-0">
                   <div className="text-xs text-slate-500">发送指令到 Kiki</div>
                   <div className="flex items-start gap-2">
                     <Textarea
@@ -1282,7 +1281,7 @@ export default function Stats() {
                       onChange={(e) => setKikiCmd(e.target.value)}
                       placeholder="例如：下午好"
                       rows={4}
-                      className="min-h-[120px] max-h-[360px] resize-y flex-1"
+                      className="min-h-[120px] max-h-[360px] resize-y flex-1 min-w-0"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
@@ -1301,7 +1300,7 @@ export default function Stats() {
                     </Button>
                   </div>
                   {kikiCmdResult ? (
-                    <div className="text-xs text-slate-500 whitespace-pre-wrap break-words">
+                    <div className="text-xs text-slate-500 whitespace-pre-wrap break-all max-w-full max-h-[220px] overflow-auto rounded-md border border-slate-200/70 dark:border-slate-800/70 bg-white/40 dark:bg-slate-900/40 p-2">
                       {kikiCmdResult}
                     </div>
                   ) : null}
