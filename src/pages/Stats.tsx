@@ -397,11 +397,41 @@ export default function Stats() {
   const [editingPersonaTopicPrefs, setEditingPersonaTopicPrefs] = useState<string>('');
   const [editingPersonaSystemPrompt, setEditingPersonaSystemPrompt] = useState<string>('');
   const [editingPersonaCapabilityScores, setEditingPersonaCapabilityScores] = useState<number[]>([50, 50, 50, 50, 50, 50]);
+  const [kikiCmd, setKikiCmd] = useState<string>('');
+  const [isSendingKikiCmd, setIsSendingKikiCmd] = useState<boolean>(false);
+  const [kikiCmdResult, setKikiCmdResult] = useState<string>('');
   const personaPatchTimersRef = useRef<Record<string, number>>({});
   const pendingToggleRef = useRef<{ id: string; nextEnabled: boolean; cur?: Persona } | null>(null);
   const toggleInFlightRef = useRef<Record<string, boolean>>({});
   const toggleDesiredRef = useRef<Record<string, boolean>>({});
   const personasRef = useRef<Persona[]>(DEFAULT_PERSONAS);
+
+  const sendKikiCmd = async () => {
+    const cmd = kikiCmd.trim();
+    if (!cmd) return;
+    if (isSendingKikiCmd) return;
+
+    setIsSendingKikiCmd(true);
+    setKikiCmdResult('');
+    try {
+      const res = await fetch('https://kiki.aimmar.ink/command', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ cmd }),
+      });
+      const text = await res.text().catch(() => '');
+      if (!res.ok) {
+        setKikiCmdResult(`请求失败：${res.status} ${text.slice(0, 200)}`);
+        return;
+      }
+      setKikiCmdResult(text ? text.slice(0, 2000) : '已发送');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setKikiCmdResult(`请求异常：${msg}`);
+    } finally {
+      setIsSendingKikiCmd(false);
+    }
+  };
 
   useEffect(() => {
     personasRef.current = personas;
@@ -1167,7 +1197,7 @@ export default function Stats() {
                 <div className="text-sm font-semibold">Persona：{selectedPersona.name}</div>
                 <div className="text-xs text-slate-500">点击上方标签可切换查看；点 ON/OFF 可启用/停用</div>
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-[200px_200px_220px_1fr] gap-3">
+              <div className="grid grid-cols-1 lg:grid-cols-[200px_200px_1fr_1fr] gap-3">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="text-xs text-slate-500">团队能力</div>
@@ -1210,35 +1240,71 @@ export default function Stats() {
                     ))}
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <div className="text-xs text-slate-500">偏好话题</div>
-                  <Textarea
-                    value={editingPersonaTopicPrefs}
-                    onChange={(e) => setEditingPersonaTopicPrefs(e.target.value)}
-                    onBlur={() => {
-                      const next = editingPersonaTopicPrefs;
-                      if (!selectedPersona) return;
-                      if ((selectedPersona.topicPrefs ?? '') !== next) {
-                        schedulePersonaPatch(selectedPersona.id, { topicPrefs: next });
-                      }
-                    }}
-                    className="min-h-[120px]"
-                  />
+
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <div className="text-xs text-slate-500">偏好话题</div>
+                    <Textarea
+                      value={editingPersonaTopicPrefs}
+                      onChange={(e) => setEditingPersonaTopicPrefs(e.target.value)}
+                      onBlur={() => {
+                        const next = editingPersonaTopicPrefs;
+                        if (!selectedPersona) return;
+                        if ((selectedPersona.topicPrefs ?? '') !== next) {
+                          schedulePersonaPatch(selectedPersona.id, { topicPrefs: next });
+                        }
+                      }}
+                      className="min-h-[90px]"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs text-slate-500">System Prompt</div>
+                    <Textarea
+                      value={editingPersonaSystemPrompt}
+                      onChange={(e) => setEditingPersonaSystemPrompt(e.target.value)}
+                      onBlur={() => {
+                        const next = editingPersonaSystemPrompt;
+                        if (!selectedPersona) return;
+                        if ((selectedPersona.systemPrompt ?? '') !== next) {
+                          schedulePersonaPatch(selectedPersona.id, { systemPrompt: next });
+                        }
+                      }}
+                      className="min-h-[90px]"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <div className="text-xs text-slate-500">System Prompt</div>
-                  <Textarea
-                    value={editingPersonaSystemPrompt}
-                    onChange={(e) => setEditingPersonaSystemPrompt(e.target.value)}
-                    onBlur={() => {
-                      const next = editingPersonaSystemPrompt;
-                      if (!selectedPersona) return;
-                      if ((selectedPersona.systemPrompt ?? '') !== next) {
-                        schedulePersonaPatch(selectedPersona.id, { systemPrompt: next });
-                      }
-                    }}
-                    className="min-h-[120px]"
-                  />
+
+                <div className="space-y-2">
+                  <div className="text-xs text-slate-500">发送指令到 Kiki</div>
+                  <div className="flex items-start gap-2">
+                    <Textarea
+                      value={kikiCmd}
+                      onChange={(e) => setKikiCmd(e.target.value)}
+                      placeholder="例如：下午好"
+                      rows={4}
+                      className="min-h-[120px] max-h-[360px] resize-y flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          sendKikiCmd();
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={sendKikiCmd}
+                      disabled={!kikiCmd.trim() || isSendingKikiCmd}
+                      className="mt-1"
+                    >
+                      {isSendingKikiCmd ? '发送中…' : '发送'}
+                    </Button>
+                  </div>
+                  {kikiCmdResult ? (
+                    <div className="text-xs text-slate-500 whitespace-pre-wrap break-words">
+                      {kikiCmdResult}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
