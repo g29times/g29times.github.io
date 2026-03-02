@@ -730,7 +730,7 @@ export default function Stats() {
             note: typeof e.note === 'string' ? e.note : '',
           }));
 
-        setDailyEntriesSource(normalized.length ? normalized : dailyLog);
+        setDailyEntriesSource(normalized);
         setDailyLogsApiOk(true);
       } catch {
         setDailyLogsApiOk(false);
