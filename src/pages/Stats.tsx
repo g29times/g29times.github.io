@@ -256,6 +256,7 @@ const STORAGE_KEY_GEMINI = 'stats_gemini_key_v1';
 const STORAGE_KEY_REVIEW = 'stats_agent_review_v1';
 const STORAGE_KEY_CONCURRENCY = 'stats_llm_concurrency_v1';
 const STORAGE_KEY_TODO_LIMIT = 'stats_todo_limit_v1';
+const STORAGE_KEY_MANUAL_DONE = 'stats_manual_done_v1';
 
 const DEFAULT_PERSONAS: Persona[] = [
   {
@@ -381,7 +382,7 @@ function ItemList({ items }: { items: DailyItem[] }) {
 }
 
 export default function Stats() {
-  const cells = useMemo(buildCells, []);
+  const baseCells = useMemo(buildCells, []);
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [rangeStart, setRangeStart] = useState<string>(() => format(subDays(new Date(), 6), 'yyyy-MM-dd'));
@@ -545,6 +546,25 @@ export default function Stats() {
   const [newManualTodo, setNewManualTodo] = useState<string>('');
   const [doneTodosExpanded, setDoneTodosExpanded] = useState<boolean>(false);
 
+  const [manualDoneByDate, setManualDoneByDate] = useState<Record<string, string>>({});
+  const [editingManualDoneByDate, setEditingManualDoneByDate] = useState<Record<string, string>>({});
+
+  const countManualDone = (text: string) => {
+    const lines = String(text ?? '')
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return lines.length;
+  };
+
+  const cells = useMemo(() => {
+    return baseCells.map((c) => {
+      const extra = countManualDone(manualDoneByDate[c.date] ?? '');
+      if (!extra) return c;
+      return { ...c, count: c.count + extra };
+    });
+  }, [baseCells, manualDoneByDate]);
+
   const rangeCells = useMemo(() => {
     const start = selectedDate ?? rangeStart;
     const end = selectedDate ?? rangeEnd;
@@ -616,6 +636,24 @@ export default function Stats() {
     }
   }, []);
 
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_MANUAL_DONE);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as unknown;
+      if (!parsed || typeof parsed !== 'object') return;
+      const obj = parsed as Record<string, unknown>;
+      const normalized: Record<string, string> = {};
+      for (const [k, v] of Object.entries(obj)) {
+        if (typeof v === 'string') normalized[k] = v;
+      }
+      setManualDoneByDate(normalized);
+      setEditingManualDoneByDate(normalized);
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const loadTodos = async () => {
     try {
       const res = await fetch('/api/todos', { method: 'GET', credentials: 'include' });
@@ -652,17 +690,20 @@ export default function Stats() {
   }, [selectedDate, rangeStart, rangeEnd, personas]);
 
   // 转成周列（列=周，行=周内星期，周一在上）
-  const weeks: Cell[][] = [];
-  cells.forEach((cell) => {
-    const dateObj = new Date(cell.date);
-    const day = dateObj.getDay(); // 0=Sun
+  const weeks = useMemo(() => {
+    const list: Cell[][] = [];
+    cells.forEach((cell) => {
+      const dateObj = new Date(cell.date);
+      const day = dateObj.getDay(); // 0=Sun
 
-    if (weeks.length === 0 || day === 1) {
-      weeks.push(Array.from({ length: 7 }, () => undefined as unknown as Cell));
-    }
-    const currentWeek = weeks[weeks.length - 1];
-    currentWeek[day === 0 ? 6 : day - 1] = cell; // 以周一为第一行
-  });
+      if (list.length === 0 || day === 1) {
+        list.push(Array.from({ length: 7 }, () => undefined as unknown as Cell));
+      }
+      const currentWeek = list[list.length - 1];
+      currentWeek[day === 0 ? 6 : day - 1] = cell; // 以周一为第一行
+    });
+    return list;
+  }, [cells]);
 
   const legend = BUCKETS.map((_, idx) => idx);
 
@@ -1409,8 +1450,48 @@ export default function Stats() {
                       <div className="text-slate-500 mb-1">Done</div>
                       {cell.entries && cell.entries.length > 0 ? (
                         <ItemList items={cell.entries.flatMap((e) => e.done)} />
+                      ) : (manualDoneByDate[cell.date] ?? '').trim() ? (
+                        <div className="space-y-2">
+                          <div className="whitespace-pre-wrap break-words text-slate-700 dark:text-slate-200">
+                            {(manualDoneByDate[cell.date] ?? '').trim()}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const cur = manualDoneByDate[cell.date] ?? '';
+                              setEditingManualDoneByDate((prev) => ({ ...prev, [cell.date]: cur }));
+                              setManualDoneByDate((prev) => ({ ...prev, [cell.date]: '' }));
+                            }}
+                          >
+                            编辑
+                          </Button>
+                        </div>
                       ) : (
-                        <div className="text-slate-400">无</div>
+                        <div className="space-y-2">
+                          <Textarea
+                            value={editingManualDoneByDate[cell.date] ?? ''}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setEditingManualDoneByDate((prev) => ({ ...prev, [cell.date]: v }));
+                            }}
+                            onBlur={() => {
+                              const v = (editingManualDoneByDate[cell.date] ?? '').trim();
+                              setManualDoneByDate((prev) => {
+                                const next = { ...prev, [cell.date]: v };
+                                try {
+                                  localStorage.setItem(STORAGE_KEY_MANUAL_DONE, JSON.stringify(next));
+                                } catch {
+                                  // ignore
+                                }
+                                return next;
+                              });
+                              setEditingManualDoneByDate((prev) => ({ ...prev, [cell.date]: v }));
+                            }}
+                            className="min-h-[96px]"
+                            placeholder="手动补充今日 Done（失焦自动保存）"
+                          />
+                        </div>
                       )}
                       {cell.entries && cell.entries.some((e) => (e.todo ?? []).length > 0) && (
                         <div className="mt-3">

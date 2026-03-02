@@ -326,12 +326,20 @@ const Admin = () => {
               <a href="/Cloudflarer2management" target="_blank" rel="noopener noreferrer">
                 Resource management
               </a>
-            </p>
-            <p className="text-muted-foreground">
+              {'｜'}
               <a href="/stats" target="_blank" rel="noopener noreferrer">
                 Stats
               </a>
+              {'｜'}
+              <a href="https://app.aimmar.ink/" target="_blank" rel="noopener noreferrer">
+                Interior
+              </a>
             </p>
+            {/* <p className="text-muted-foreground">
+              <a href="/stats" target="_blank" rel="noopener noreferrer">
+                Stats
+              </a>
+            </p> */}
           </div>
 
           {editingPost ? renderEditor() : renderList()}
