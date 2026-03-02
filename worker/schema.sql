@@ -41,3 +41,14 @@ CREATE TABLE IF NOT EXISTS personas (
 );
 
 CREATE INDEX IF NOT EXISTS idx_personas_enabled ON personas(enabled);
+
+CREATE TABLE IF NOT EXISTS daily_logs (
+  date TEXT PRIMARY KEY,
+  doneJson TEXT NOT NULL DEFAULT '[]',
+  todoJson TEXT NOT NULL DEFAULT '[]',
+  note TEXT NOT NULL DEFAULT '',
+  createdAt TEXT NOT NULL,
+  updatedAt TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_logs_date ON daily_logs(date);

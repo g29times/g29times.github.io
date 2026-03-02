@@ -230,13 +230,13 @@ const bucketClass = (count: number) => {
 
 const bucketLabel = ['空', '少', '一般', '多', '爆表'];
 
-function buildCells(): Cell[] {
+function buildCells(entriesSource: DailyEntry[]): Cell[] {
   const today = startOfToday();
   const start = subDays(today, 364);
   const days = eachDayOfInterval({ start, end: today });
 
   const map = new Map<string, DailyEntry[]>();
-  const orderedLog = [...dailyLog].sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0));
+  const orderedLog = [...entriesSource].sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0));
   orderedLog.forEach((d) => {
     const list = map.get(d.date) ?? [];
     list.push(d);
@@ -382,7 +382,10 @@ function ItemList({ items }: { items: DailyItem[] }) {
 }
 
 export default function Stats() {
-  const baseCells = useMemo(buildCells, []);
+  const [dailyEntriesSource, setDailyEntriesSource] = useState<DailyEntry[]>(() => dailyLog);
+  const [dailyLogsApiOk, setDailyLogsApiOk] = useState<boolean>(false);
+
+  const baseCells = useMemo(() => buildCells(dailyEntriesSource), [dailyEntriesSource]);
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [rangeStart, setRangeStart] = useState<string>(() => format(subDays(new Date(), 6), 'yyyy-MM-dd'));
@@ -549,6 +552,46 @@ export default function Stats() {
   const [manualDoneByDate, setManualDoneByDate] = useState<Record<string, string>>({});
   const [editingManualDoneByDate, setEditingManualDoneByDate] = useState<Record<string, string>>({});
 
+  const splitManualDoneToItems = (text: string): DailyItem[] => {
+    const lines = String(text ?? '')
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return lines;
+  };
+
+  const upsertDailyLogViaApi = async (date: string, doneText: string) => {
+    const done = splitManualDoneToItems(doneText);
+    try {
+      const res = await fetch(`/api/daily-logs/${encodeURIComponent(date)}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ done, todo: [], note: '' }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as unknown;
+      const entry = (data as { entry?: unknown })?.entry as any;
+      if (!entry || typeof entry.date !== 'string' || !Array.isArray(entry.done)) return;
+
+      const normalized: DailyEntry = {
+        date: String(entry.date),
+        done: entry.done as DailyItem[],
+        todo: Array.isArray(entry.todo) ? (entry.todo as DailyItem[]) : [],
+        note: typeof entry.note === 'string' ? entry.note : '',
+      };
+
+      setDailyEntriesSource((prev) => {
+        const next = prev.filter((e) => e.date !== normalized.date);
+        next.push(normalized);
+        next.sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0));
+        return next;
+      });
+    } catch {
+      // ignore
+    }
+  };
+
   const countManualDone = (text: string) => {
     const lines = String(text ?? '')
       .split('\n')
@@ -558,12 +601,13 @@ export default function Stats() {
   };
 
   const cells = useMemo(() => {
+    if (dailyLogsApiOk) return baseCells;
     return baseCells.map((c) => {
       const extra = countManualDone(manualDoneByDate[c.date] ?? '');
       if (!extra) return c;
       return { ...c, count: c.count + extra };
     });
-  }, [baseCells, manualDoneByDate]);
+  }, [baseCells, dailyLogsApiOk, manualDoneByDate]);
 
   const rangeCells = useMemo(() => {
     const start = selectedDate ?? rangeStart;
@@ -652,6 +696,48 @@ export default function Stats() {
     } catch {
       // ignore
     }
+  }, []);
+
+  useEffect(() => {
+    const load = async () => {
+      const today = startOfToday();
+      const start = format(subDays(today, 364), 'yyyy-MM-dd');
+      const end = format(today, 'yyyy-MM-dd');
+
+      try {
+        const res = await fetch(`/api/daily-logs?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (!res.ok) {
+          setDailyLogsApiOk(false);
+          return;
+        }
+        const data = (await res.json()) as unknown;
+        const entries = (data as { entries?: unknown })?.entries;
+        if (!Array.isArray(entries)) {
+          setDailyLogsApiOk(false);
+          return;
+        }
+
+        const normalized: DailyEntry[] = entries
+          .map((e) => e as any)
+          .filter((e) => typeof e?.date === 'string' && Array.isArray(e?.done))
+          .map((e) => ({
+            date: String(e.date),
+            done: e.done as DailyItem[],
+            todo: Array.isArray(e.todo) ? (e.todo as DailyItem[]) : [],
+            note: typeof e.note === 'string' ? e.note : '',
+          }));
+
+        setDailyEntriesSource(normalized.length ? normalized : dailyLog);
+        setDailyLogsApiOk(true);
+      } catch {
+        setDailyLogsApiOk(false);
+      }
+    };
+
+    load();
   }, []);
 
   const loadTodos = async () => {
@@ -1475,8 +1561,16 @@ export default function Stats() {
                               const v = e.target.value;
                               setEditingManualDoneByDate((prev) => ({ ...prev, [cell.date]: v }));
                             }}
-                            onBlur={() => {
+                            onBlur={async () => {
                               const v = (editingManualDoneByDate[cell.date] ?? '').trim();
+                              setEditingManualDoneByDate((prev) => ({ ...prev, [cell.date]: v }));
+
+                              if (dailyLogsApiOk) {
+                                await upsertDailyLogViaApi(cell.date, v);
+                                setManualDoneByDate((prev) => ({ ...prev, [cell.date]: '' }));
+                                return;
+                              }
+
                               setManualDoneByDate((prev) => {
                                 const next = { ...prev, [cell.date]: v };
                                 try {
@@ -1486,7 +1580,6 @@ export default function Stats() {
                                 }
                                 return next;
                               });
-                              setEditingManualDoneByDate((prev) => ({ ...prev, [cell.date]: v }));
                             }}
                             className="min-h-[96px]"
                             placeholder="手动补充今日 Done（失焦自动保存）"

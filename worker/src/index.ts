@@ -25,6 +25,15 @@ type DailyEntry = {
   note?: string;
 };
 
+type DailyLogRow = {
+  date: string;
+  doneJson: string;
+  todoJson: string;
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 type AgentInput = {
   id: string;
   name: string;
@@ -111,12 +120,125 @@ function json(data: unknown, init?: ResponseInit) {
   });
 }
 
+async function listDailyLogs(env: Env, opts: { start?: string; end?: string }) {
+  const start = normalizeDailyEntryDate(opts.start);
+  const end = normalizeDailyEntryDate(opts.end);
+
+  let sql = "SELECT date, doneJson, todoJson, note, createdAt, updatedAt FROM daily_logs";
+  const binds: string[] = [];
+  if (start && end) {
+    sql += " WHERE date >= ? AND date <= ?";
+    binds.push(start, end);
+  } else if (start) {
+    sql += " WHERE date >= ?";
+    binds.push(start);
+  } else if (end) {
+    sql += " WHERE date <= ?";
+    binds.push(end);
+  }
+  sql += " ORDER BY date DESC";
+
+  const res = await env.DB.prepare(sql).bind(...binds).all();
+  const rows = (res.results ?? []) as DailyLogRow[];
+  return rows.map(rowToDailyEntry);
+}
+
+async function upsertDailyLog(env: Env, entry: DailyEntry) {
+  const date = normalizeDailyEntryDate(entry.date);
+  if (!date) return { ok: false as const, error: "invalid_date" };
+
+  const done = normalizeDailyItems(entry.done);
+  const todo = normalizeDailyItems(entry.todo ?? []);
+  const note = typeof entry.note === "string" ? entry.note : "";
+
+  const existing = await env.DB.prepare(
+    "SELECT date, doneJson, todoJson, note, createdAt, updatedAt FROM daily_logs WHERE date = ?",
+  )
+    .bind(date)
+    .first();
+
+  const ts = nowIso();
+  const createdAt = existing ? String((existing as any).createdAt ?? ts) : ts;
+
+  await env.DB.prepare(
+    "INSERT INTO daily_logs (date, doneJson, todoJson, note, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?) " +
+      "ON CONFLICT(date) DO UPDATE SET doneJson = excluded.doneJson, todoJson = excluded.todoJson, note = excluded.note, updatedAt = excluded.updatedAt",
+  )
+    .bind(date, JSON.stringify(done), JSON.stringify(todo), note, createdAt, ts)
+    .run();
+
+  const row = await env.DB.prepare(
+    "SELECT date, doneJson, todoJson, note, createdAt, updatedAt FROM daily_logs WHERE date = ?",
+  )
+    .bind(date)
+    .first();
+
+  if (!row) return { ok: false as const, error: "not_found" };
+  return { ok: true as const, entry: rowToDailyEntry(row as DailyLogRow) };
+}
+
 function nowIso() {
   return new Date().toISOString();
 }
 
 function uuid() {
   return crypto.randomUUID();
+}
+
+function safeJsonParse<T>(input: unknown, fallback: T): T {
+  if (typeof input !== "string") return fallback;
+  try {
+    return JSON.parse(input) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeDailyEntryDate(date: unknown) {
+  const s = String(date ?? "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
+}
+
+function normalizeDailyItems(items: unknown): DailyItem[] {
+  if (!Array.isArray(items)) return [];
+  const out: DailyItem[] = [];
+  for (const it of items) {
+    if (typeof it === "string") {
+      const t = it.trim();
+      if (t) out.push(t);
+      continue;
+    }
+    if (it && typeof it === "object") {
+      const obj = it as { text?: unknown; links?: unknown };
+      const text = typeof obj.text === "string" ? obj.text.trim() : "";
+      if (!text) continue;
+      const linksRaw = obj.links;
+      const links = Array.isArray(linksRaw)
+        ? linksRaw
+            .map((l): DailyLink | null => {
+              const ll = l as { title?: unknown; url?: unknown };
+              const url = typeof ll?.url === "string" ? ll.url.trim() : "";
+              if (!url) return null;
+              const title = typeof ll?.title === "string" ? ll.title.trim() : "";
+              return title ? ({ url, title } satisfies DailyLink) : ({ url } satisfies DailyLink);
+            })
+            .filter((x): x is DailyLink => x !== null)
+        : [];
+      out.push({ text, links } satisfies DailyItem);
+    }
+  }
+  return out;
+}
+
+function rowToDailyEntry(row: DailyLogRow): DailyEntry {
+  const done = normalizeDailyItems(safeJsonParse<unknown>(row.doneJson, []));
+  const todo = normalizeDailyItems(safeJsonParse<unknown>(row.todoJson, []));
+  return {
+    date: String(row.date),
+    done,
+    todo,
+    note: typeof row.note === "string" ? row.note : "",
+  } satisfies DailyEntry;
 }
 
 function slugifyId(name: string) {
@@ -1016,6 +1138,32 @@ export default {
     }
 
     try {
+      if (request.method === "GET" && url.pathname === "/api/daily-logs") {
+        const start = url.searchParams.get("start") ?? undefined;
+        const end = url.searchParams.get("end") ?? undefined;
+        const entries = await listDailyLogs(env, { start, end });
+        return withCors(request, json({ entries }));
+      }
+
+      if (request.method === "PUT" && url.pathname.startsWith("/api/daily-logs/")) {
+        const date = decodeURIComponent(url.pathname.slice("/api/daily-logs/".length));
+        const body = (await request.json()) as unknown;
+        const { done, todo, note } = (body ?? {}) as {
+          done?: unknown;
+          todo?: unknown;
+          note?: unknown;
+        };
+
+        const result = await upsertDailyLog(env, {
+          date,
+          done: normalizeDailyItems(done),
+          todo: normalizeDailyItems(todo),
+          note: typeof note === "string" ? note : "",
+        });
+        if (!result.ok) return withCors(request, json(result, { status: 400 }));
+        return withCors(request, json(result));
+      }
+
       if (request.method === "GET" && url.pathname === "/api/posts") {
         const posts = await listPosts(env);
         return withCors(request, json(posts));
