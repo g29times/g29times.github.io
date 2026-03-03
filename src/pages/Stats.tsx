@@ -551,6 +551,7 @@ export default function Stats() {
 
   const [manualDoneByDate, setManualDoneByDate] = useState<Record<string, string>>({});
   const [editingManualDoneByDate, setEditingManualDoneByDate] = useState<Record<string, string>>({});
+  const [editingDoneDate, setEditingDoneDate] = useState<string | null>(null);
 
   const splitManualDoneToItems = (text: string): DailyItem[] => {
     const lines = String(text ?? '')
@@ -560,14 +561,14 @@ export default function Stats() {
     return lines;
   };
 
-  const upsertDailyLogViaApi = async (date: string, doneText: string) => {
+  const upsertDailyLogViaApi = async (date: string, doneText: string, opts?: { todo?: DailyItem[]; note?: string }) => {
     const done = splitManualDoneToItems(doneText);
     try {
       const res = await fetch(`/api/daily-logs/${encodeURIComponent(date)}`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ done, todo: [], note: '' }),
+        body: JSON.stringify({ done, todo: opts?.todo ?? [], note: opts?.note ?? '' }),
       });
       if (!res.ok) return;
       const data = (await res.json()) as unknown;
@@ -1534,26 +1535,7 @@ export default function Stats() {
                     </div>
                     <div className="text-sm">
                       <div className="text-slate-500 mb-1">Done</div>
-                      {cell.entries && cell.entries.length > 0 ? (
-                        <ItemList items={cell.entries.flatMap((e) => e.done)} />
-                      ) : (manualDoneByDate[cell.date] ?? '').trim() ? (
-                        <div className="space-y-2">
-                          <div className="whitespace-pre-wrap break-words text-slate-700 dark:text-slate-200">
-                            {(manualDoneByDate[cell.date] ?? '').trim()}
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const cur = manualDoneByDate[cell.date] ?? '';
-                              setEditingManualDoneByDate((prev) => ({ ...prev, [cell.date]: cur }));
-                              setManualDoneByDate((prev) => ({ ...prev, [cell.date]: '' }));
-                            }}
-                          >
-                            编辑
-                          </Button>
-                        </div>
-                      ) : (
+                      {editingDoneDate === cell.date ? (
                         <div className="space-y-2">
                           <Textarea
                             value={editingManualDoneByDate[cell.date] ?? ''}
@@ -1566,8 +1548,13 @@ export default function Stats() {
                               setEditingManualDoneByDate((prev) => ({ ...prev, [cell.date]: v }));
 
                               if (dailyLogsApiOk) {
-                                await upsertDailyLogViaApi(cell.date, v);
+                                const existing = dailyEntriesSource.find((e) => e.date === cell.date);
+                                await upsertDailyLogViaApi(cell.date, v, {
+                                  todo: existing?.todo ?? [],
+                                  note: existing?.note ?? '',
+                                });
                                 setManualDoneByDate((prev) => ({ ...prev, [cell.date]: '' }));
+                                setEditingDoneDate(null);
                                 return;
                               }
 
@@ -1580,11 +1567,60 @@ export default function Stats() {
                                 }
                                 return next;
                               });
+                              setEditingDoneDate(null);
                             }}
                             className="min-h-[96px]"
                             placeholder="手动补充今日 Done（失焦自动保存）"
                           />
                         </div>
+                      ) : cell.entries && cell.entries.length > 0 ? (
+                        <div className="space-y-2">
+                          <ItemList items={cell.entries.flatMap((e) => e.done)} />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const text = cell.entries
+                                ?.flatMap((e) => e.done)
+                                .map(itemToPlainText)
+                                .join('\n');
+                              setEditingManualDoneByDate((prev) => ({ ...prev, [cell.date]: text ?? '' }));
+                              setEditingDoneDate(cell.date);
+                            }}
+                          >
+                            编辑
+                          </Button>
+                        </div>
+                      ) : (manualDoneByDate[cell.date] ?? '').trim() ? (
+                        <div className="space-y-2">
+                          <div className="whitespace-pre-wrap break-words text-slate-700 dark:text-slate-200">
+                            {(manualDoneByDate[cell.date] ?? '').trim()}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const cur = manualDoneByDate[cell.date] ?? '';
+                              setEditingManualDoneByDate((prev) => ({ ...prev, [cell.date]: cur }));
+                              setEditingDoneDate(cell.date);
+                            }}
+                          >
+                            编辑
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const existing = dailyEntriesSource.find((e) => e.date === cell.date);
+                            const text = (existing?.done ?? []).map(itemToPlainText).join('\n');
+                            setEditingManualDoneByDate((prev) => ({ ...prev, [cell.date]: text }));
+                            setEditingDoneDate(cell.date);
+                          }}
+                        >
+                          新增
+                        </Button>
                       )}
                       {cell.entries && cell.entries.some((e) => (e.todo ?? []).length > 0) && (
                         <div className="mt-3">
