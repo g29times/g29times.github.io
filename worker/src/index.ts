@@ -1169,6 +1169,25 @@ export default {
         return withCors(request, json(posts));
       }
 
+      if (request.method === "POST" && url.pathname === "/api/kiki/command") {
+        try {
+          const payload = await request.json();
+          const upstream = await fetch("https://kiki.aimmar.ink/command", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(payload ?? {}),
+          });
+          const text = await upstream.text();
+          if (!upstream.ok) {
+            return withCors(request, new Response(`upstream_error:${upstream.status} ${text.slice(0, 200)}`, { status: 502 }));
+          }
+          return withCors(request, new Response(text, { status: 200, headers: { "content-type": "text/plain; charset=utf-8" } }));
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          return withCors(request, new Response(`proxy_error:${msg}`, { status: 500 }));
+        }
+      }
+
       if (request.method === "POST" && url.pathname === "/api/agents/review") {
         const body = (await request.json()) as unknown;
         const {

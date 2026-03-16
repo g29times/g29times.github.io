@@ -418,7 +418,7 @@ export default function Stats() {
     setIsSendingKikiCmd(true);
     setKikiCmdResult('');
     try {
-      const res = await fetch('https://kiki.aimmar.ink/command', {
+      const res = await fetch('/api/kiki/command', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ cmd }),
@@ -427,7 +427,8 @@ export default function Stats() {
         setKikiCmdResult(`发送失败（${res.status}）`);
         return;
       }
-      setKikiCmdResult('发送成功');
+      const text = await res.text();
+      setKikiCmdResult(text || '发送成功');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setKikiCmdResult(`发送失败（${msg}）`);
