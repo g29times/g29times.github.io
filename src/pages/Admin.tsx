@@ -324,7 +324,7 @@ const Admin = () => {
             </h1>
             <p className="text-muted-foreground">
               <a href="/Cloudflarer2management" target="_blank" rel="noopener noreferrer">
-                Resource management
+                Resource(https://r2-manager-api.g29tony.workers.dev)
               </a>
               {'｜'}
               <a href="/stats" target="_blank" rel="noopener noreferrer">
