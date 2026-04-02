@@ -428,7 +428,25 @@ export default function Stats() {
         return;
       }
       const text = await res.text();
-      setKikiCmdResult(text || '发送成功');
+      if (!text) {
+        setKikiCmdResult('发送成功');
+        return;
+      }
+      try {
+        const maybeJson = JSON.parse(text) as unknown;
+        if (maybeJson && typeof maybeJson === 'object') {
+          const obj = maybeJson as Record<string, unknown>;
+          if (typeof obj.sent === 'string') {
+            setKikiCmdResult(obj.sent);
+            return;
+          }
+          setKikiCmdResult(JSON.stringify(obj, null, 2));
+          return;
+        }
+      } catch {
+        // ignore
+      }
+      setKikiCmdResult(text);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setKikiCmdResult(`发送失败（${msg}）`);
