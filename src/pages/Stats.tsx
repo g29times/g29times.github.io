@@ -1411,12 +1411,6 @@ export default function Stats() {
                       placeholder="例如：下午好"
                       rows={4}
                       className="min-h-[120px] max-h-[360px] resize-y flex-1 min-w-0"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          sendKikiCmd();
-                        }
-                      }}
                     />
                     <Button
                       variant="outline"
