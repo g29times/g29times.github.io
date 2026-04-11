@@ -1,5 +1,49 @@
 [
   {
+    "slug": "daily-log-2026-04-01",
+    "title": "Daily Log 2026-04-01",
+    "titleZh": "2026-04-01 日报",
+    "excerpt": "Collaborated with Buddy to finish training assignments and systematized multi-agent architecture.",
+    "excerptZh": "与 Buddy 协同完成两门训练作业，并梳理了多 Agent 系统架构。",
+    "date": "2026-04-01",
+    "category": "log",
+    "categoryZh": "日报",
+    "readTime": "1 min"
+  },
+  {
+    "slug": "self-from-ripple-to-soil",
+    "title": "Seeing the Self Through the Ripples of the Soil",
+    "titleZh": "从乡土的涟漪看到自我",
+    "excerpt": "A ten-thousand-character journey from neuroscience to sociology. Exploring how our 'self' is sculpted by biological predictions and social ripples, and how to reclaim our 'hand-feel' through action.",
+    "excerptZh": "一场从神经科学到社会学的万字远征。探讨我们的“自我”是如何被生物预测和社会涟漪所共同塑造的，以及如何通过行动重拾生命的“手感”。",
+    "date": "2026-02-08",
+    "category": "Philosophy",
+    "categoryZh": "哲学",
+    "readTime": "25 min"
+  },
+  {
+    "slug": "self-as-controlled-hallucination",
+    "title": "Stop Searching for the Self: It’s Just a 'Color' Created by the Brain and a 'Ripple' Pushed by Society",
+    "titleZh": "别再寻找自我了：它不过是大脑创造的“颜色”与社会推开的“波纹”",
+    "excerpt": "A deep dive into the nature of self from neuroscience, sociology, and psychology. Discover why the 'True Self' is a useful illusion and how to move from discovery to creation.",
+    "excerptZh": "从神经科学、社会学和心理学三个维度深度拆解自我的本质。揭示为什么“真我”是一个有用的幻觉，以及如何从“寻找”转向“主动创造”。",
+    "date": "2026-02-07",
+    "category": "Philosophy",
+    "categoryZh": "哲学",
+    "readTime": "8 min"
+  },
+  {
+    "slug": "wwc1",
+    "title": "Wild and Wrangled - Chapter 1 - Cam",
+    "titleZh": "Wild and Wrangled - Chapter 1 - Cam",
+    "excerpt": "描绘了女主角卡米尔（Cam）在惨遭逃婚后，身着婚纱在酒吧借酒消魂的狼狈时刻。叙述通过卡米尔的视角展开，深刻揭示了她因屈从家族压力而选择一段缺乏爱情的婚姻，却最终在婚礼当天被未婚夫抛弃的情感创伤。在这一人生低谷期，除了家人和朋友的支持，曾与她有深厚过往的达斯蒂（Dusty）意外现身，两人的重逢预示着旧情的复燃与自我救赎的开始。文本不仅呈现了一场混乱的生活危机，更探讨了在责任枷锁下寻找个人自由与真爱的深刻命题。",
+    "excerptZh": "描绘了女主角卡米尔（Cam）在惨遭逃婚后，身着婚纱在酒吧借酒消魂的狼狈时刻。叙述通过卡米尔的视角展开，深刻揭示了她因屈从家族压力而选择一段缺乏爱情的婚姻，却最终在婚礼当天被未婚夫抛弃的情感创伤。在这一人生低谷期，除了家人和朋友的支持，曾与她有深厚过往的达斯蒂（Dusty）意外现身，两人的重逢预示着旧情的复燃与自我救赎的开始。文本不仅呈现了一场混乱的生活危机，更探讨了在责任枷锁下寻找个人自由与真爱的深刻命题。",
+    "date": "January 2026",
+    "category": "Novel",
+    "categoryZh": "小说",
+    "readTime": "5 min read"
+  },
+  {
     "slug": "ai-agent-digital-employee-market-shock",
     "title": "AI 代理的“数字员工”时代与金融市场的深夜惊魂",
     "titleZh": "AI 代理的“数字员工”时代与金融市场的深夜惊魂",
