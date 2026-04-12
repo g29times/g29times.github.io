@@ -1,5 +1,27 @@
 [
   {
+    "slug": "ai-search-return-to-human-logic",
+    "title": "AI 搜索的尽头是“人工”？逻辑重构与知识可信度的博弈",
+    "titleZh": "AI 搜索的尽头是“人工”？逻辑重构与知识可信度的博弈",
+    "excerpt": "大模型时代的搜索进化，从概率匹配走向人工逻辑的深度嵌套。探讨 AI 如何在幻觉与效率之间寻找“人工”的专业锚点。",
+    "excerptZh": "大模型时代的搜索进化，从概率匹配走向人工逻辑的深度嵌套。探讨 AI 如何在幻觉与效率之间寻找“人工”的专业锚点。",
+    "date": "2026-04-12",
+    "category": "Philosophy",
+    "categoryZh": "哲学",
+    "readTime": "8 min"
+  },
+  {
+    "slug": "agent-memory-architecture",
+    "title": "智能体记忆：从生存本能到星系视野",
+    "titleZh": "智能体记忆：从生存本能到星系视野",
+    "excerpt": "A deep dive into memory palace architecture.",
+    "excerptZh": "智能体记忆架构的深度解析。",
+    "date": "2026-04-11",
+    "category": "Tech",
+    "categoryZh": "技术",
+    "readTime": "5 min"
+  },
+  {
     "slug": "daily-log-2026-04-01",
     "title": "Daily Log 2026-04-01",
     "titleZh": "2026-04-01 日报",
