@@ -1,5 +1,16 @@
 [
   {
+    "slug": "mirage-reasoning-stanford",
+    "title": "斯坦福MIRAGE海市蜃楼式推理：GPT-5、Gemini、Claude 没在“看图”？",
+    "titleZh": "斯坦福MIRAGE海市蜃楼式推理：GPT-5、Gemini、Claude 没在“看图”？",
+    "excerpt": "斯坦福李飞飞团队重磅论文：多模态大模型在缺乏图像输入时，仍能给出高准确率回答。揭秘“海市蜃楼式推理”现象，探讨多模态评测体系的系统性危机。",
+    "excerptZh": "斯坦福李飞飞团队重磅论文：多模态大模型在缺乏图像输入时，仍能给出高准确率回答。揭秘“海市蜃楼式推理”现象，探讨多模态评测体系的系统性危机。",
+    "date": "2026-04-12",
+    "category": "Technology",
+    "categoryZh": "技术",
+    "readTime": "12 min"
+  },
+  {
     "slug": "ai-search-return-to-human-logic",
     "title": "AI 搜索的尽头是“人工”？逻辑重构与知识可信度的博弈",
     "titleZh": "AI 搜索的尽头是“人工”？逻辑重构与知识可信度的博弈",
