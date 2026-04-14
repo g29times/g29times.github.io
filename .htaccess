@@ -661,3 +661,14 @@ FileETag None
 #        SetOutputFilter INCLUDES
 #    </FilesMatch>
 # </IfModule>
+
+# ===== Buddy fix: SPA routing fallback for React Router =====
+# All unmatched routes serve index.html so React Router handles them client-side
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    RewriteRule ^index\.html$ - [L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /index.html [L]
+</IfModule>
