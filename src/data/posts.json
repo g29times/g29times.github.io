@@ -1,5 +1,16 @@
 [
   {
+    "slug": "vkfs-knowledge-management",
+    "title": "From \"Searching Fragments\" to \"Building Directories\": The VKFS Evolution in Agent Knowledge Management",
+    "titleZh": "从“搜寻碎片”到“构建目录”：Agent 知识管理的 VKFS 进化",
+    "excerpt": "Exploring the VKFS evolution: shifting from fragment-based RAG searches to structured directory-driven navigation for AI Agent knowledge systems.",
+    "excerptZh": "探索 VKFS 的进化之路：从基于碎片的 RAG 搜索转向基于目录结构的结构化导航，以优化 AI Agent 的知识系统。",
+    "date": "2026-04-13",
+    "category": "Technology",
+    "categoryZh": "技术",
+    "readTime": "7 min"
+  },
+  {
     "slug": "mirage-reasoning-stanford",
     "title": "斯坦福MIRAGE海市蜃楼式推理：GPT-5、Gemini、Claude 没在“看图”？",
     "titleZh": "斯坦福MIRAGE海市蜃楼式推理：GPT-5、Gemini、Claude 没在“看图”？",
