@@ -402,6 +402,7 @@ export default function Stats() {
   const [editingPersonaSystemPrompt, setEditingPersonaSystemPrompt] = useState<string>('');
   const [editingPersonaCapabilityScores, setEditingPersonaCapabilityScores] = useState<number[]>([50, 50, 50, 50, 50, 50]);
   const [kikiCmd, setKikiCmd] = useState<string>('');
+  const [kikiChannel, setKikiChannel] = useState<string>('jiji');
   const [isSendingKikiCmd, setIsSendingKikiCmd] = useState<boolean>(false);
   const [kikiCmdResult, setKikiCmdResult] = useState<string>('');
   const personaPatchTimersRef = useRef<Record<string, number>>({});
@@ -415,10 +416,12 @@ export default function Stats() {
     if (!cmd) return;
     if (isSendingKikiCmd) return;
 
+    const channel = kikiChannel.trim() || 'jiji';
+
     setIsSendingKikiCmd(true);
     setKikiCmdResult('');
     try {
-      const res = await fetch('/api/kiki/command', {
+      const res = await fetch(`/api/kiki/command?channel=${encodeURIComponent(channel)}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ cmd }),
@@ -1423,6 +1426,19 @@ export default function Stats() {
                 <div className="space-y-2 min-w-0">
                   <div className="text-xs text-slate-500">发送指令到 Kiki</div>
                   <div className="flex items-start gap-2">
+                    <div className="w-[120px] shrink-0">
+                      <Input
+                        value={kikiChannel}
+                        onChange={(e) => setKikiChannel(e.target.value)}
+                        placeholder="通道"
+                        className="h-8 text-xs"
+                        list="kiki-channel-options"
+                      />
+                      <datalist id="kiki-channel-options">
+                        <option value="jiji" />
+                        <option value="xun" />
+                      </datalist>
+                    </div>
                     <Textarea
                       value={kikiCmd}
                       onChange={(e) => setKikiCmd(e.target.value)}

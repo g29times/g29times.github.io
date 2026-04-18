@@ -1171,11 +1171,26 @@ export default {
 
       if (request.method === "POST" && url.pathname === "/api/kiki/command") {
         try {
-          const payload = await request.json();
-          const upstream = await fetch("https://kiki.aimmar.ink/command", {
+          const payload = (await request.json()) as any;
+          const channelFromQuery = url.searchParams.get("channel") ?? undefined;
+          const channelFromBody = typeof payload?.channel === "string" ? payload.channel : undefined;
+          const channel = (channelFromQuery ?? channelFromBody ?? "jiji").trim();
+
+          if (channel !== "default") {
+            const isSafe = /^[a-zA-Z0-9_-]{1,32}$/.test(channel);
+            if (!isSafe) {
+              return withCors(request, json({ error: "invalid_channel" }, { status: 400 }));
+            }
+          }
+
+          const upstreamUrl =
+            channel === "default" ? "https://kiki.aimmar.ink/command" : `https://kiki.aimmar.ink/${channel}/command`;
+
+          const { channel: _omitChannel, ...forwardPayload } = (payload ?? {}) as Record<string, unknown>;
+          const upstream = await fetch(upstreamUrl, {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify(payload ?? {}),
+            body: JSON.stringify(forwardPayload ?? {}),
           });
           const text = await upstream.text();
           if (!upstream.ok) {
