@@ -4,13 +4,11 @@ import { Footer } from '@/components/Footer';
 import { EssayCard } from '@/components/EssayCard';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-import postsData from '@/data/posts.json';
 import { BlogPost } from '@/types/blog';
 
 const Blog = () => {
   const { language } = useLanguage();
-  // 先用本地索引即时渲染，再尝试远程覆盖
-  const [posts, setPosts] = useState<BlogPost[]>(postsData as BlogPost[]);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
 
   useEffect(() => {
     let cancelled = false;

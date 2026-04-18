@@ -8,10 +8,7 @@ import { BlogChart } from '@/components/BlogChart';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ArrowLeft } from 'lucide-react';
 
-import postsData from '@/data/posts.json';
 import { BlogPost as BlogPostType } from '@/types/blog';
-
-const allPosts = postsData as BlogPostType[];
 
 // Helper to extract text from a node recursively
 const getText = (node: DOMNode): string => {
@@ -90,9 +87,7 @@ const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
   const { language } = useLanguage();
 
-  const [post, setPost] = useState<BlogPostType | null>(() =>
-    slug ? allPosts.find((p) => p.slug === slug) ?? null : null,
-  );
+  const [post, setPost] = useState<BlogPostType | null>(null);
   const [isFetching, setIsFetching] = useState(true);
   const [htmlSource, setHtmlSource] = useState('');
   const [contentLoading, setContentLoading] = useState(false);

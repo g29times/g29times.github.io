@@ -10,11 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Edit, Trash, Save, ArrowLeft, Eye } from 'lucide-react';
 import { Link } from "react-router-dom";
 import { toast } from 'sonner';
-import postsData from '@/data/posts.json';
 import { BlogPost } from '@/types/blog';
 
 const Admin = () => {
-  const [posts, setPosts] = useState<BlogPost[]>(postsData as BlogPost[]);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
