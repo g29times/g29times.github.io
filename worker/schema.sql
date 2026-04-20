@@ -12,7 +12,10 @@ CREATE TABLE IF NOT EXISTS posts (
   readTime TEXT NOT NULL,
   content TEXT NOT NULL,
   contentZh TEXT NOT NULL,
-  updatedAt TEXT NOT NULL
+  updatedAt TEXT NOT NULL,
+  contentType TEXT NOT NULL DEFAULT 'markdown',
+  htmlPath TEXT,
+  contentHtml TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category);
