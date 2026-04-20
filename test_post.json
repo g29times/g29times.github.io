@@ -1,0 +1,14 @@
+{
+  "slug": "test-publish-jiji",
+  "title": "测试发布：Gemini CLI 助手验证",
+  "titleZh": "测试发布：Gemini CLI 助手验证",
+  "excerpt": "This is a test post from Gemini CLI.",
+  "excerptZh": "这是来自 Gemini CLI 的测试文章。",
+  "category": "Tech",
+  "categoryZh": "技术",
+  "readTime": "1 min",
+  "date": "2026-04-14",
+  "content": "这是一篇用于验证 post_blog.py 接口连通性的测试文章。",
+  "contentZh": "这是一篇用于验证 post_blog.py 接口连通性的测试文章。",
+  "contentType": "markdown"
+}

@@ -1,0 +1,14 @@
+{
+  "slug": "buddy-test-article",
+  "title": "Buddy直连测试：全链路自动化校验",
+  "titleZh": "Buddy直连测试：全链路自动化校验",
+  "excerpt": "通过一次完整的从撰写到发布的自动化流水线，验证 Gemini CLI 与 AIMMAR Blog API 的协同稳定性。",
+  "excerptZh": "通过一次完整的从撰写到发布的自动化流水线，验证 Gemini CLI 与 AIMMAR Blog API 的协同稳定性。",
+  "category": "Tech",
+  "categoryZh": "技术",
+  "readTime": "2 min",
+  "date": "2026-04-14",
+  "contentType": "markdown",
+  "content": "### 1. 自动化流水线的价值\n\n本次测试旨在验证 Gemini CLI 作为 Agent 协作节点，在脱离本地 Git 同步依赖后，能否通过 Cloudflare API 与 GitHub Workflow 实现稳定的发布流水线。自动化不仅仅是效率的提升，更是对发布质量的可审计性保证。\n\n### 2. 发布链路确认\n\n- **节点 A**: JSON 构建，包含 slug、date 与 contentType 必需元数据。\n- **节点 B**: 通过 Cloudflare Access 鉴权的 `POST /api/admin/post` 调用。\n- **节点 C**: GitHub Actions 触发构建，确保页面最终渲染。\n\n### 3. 系统协同\n\n这次尝试证明了通过 API 进行博文管理，能有效避免因 Git 权限问题导致的部署阻塞。对于 Agent 而言，能够直接操作后端服务接口，不仅是灵活性的体现，更是对分布式协作架构的有效实践。",
+  "contentZh": "### 1. 自动化流水线的价值\n\n本次测试旨在验证 Gemini CLI 作为 Agent 协作节点，在脱离本地 Git 同步依赖后，能否通过 Cloudflare API 与 GitHub Workflow 实现稳定的发布流水线。自动化不仅仅是效率的提升，更是对发布质量的可审计性保证。\n\n### 2. 发布链路确认\n\n- **节点 A**: JSON 构建，包含 slug、date 与 contentType 必需元数据。\n- **节点 B**: 通过 Cloudflare Access 鉴权的 `POST /api/admin/post` 调用。\n- **节点 C**: GitHub Actions 触发构建，确保页面最终渲染。\n\n### 3. 系统协同\n\n这次尝试证明了通过 API 进行博文管理，能有效避免因 Git 权限问题导致的部署阻塞。对于 Agent 而言，能够直接操作后端服务接口，不仅是灵活性的体现，更是对分布式协作架构的有效实践。"
+}

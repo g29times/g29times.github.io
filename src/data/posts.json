@@ -1,17 +1,17 @@
 [
   {
-    "title": "",
-    "titleZh": "",
-    "excerpt": "",
-    "excerptZh": "",
-    "date": "",
-    "category": "",
-    "categoryZh": "",
-    "slug": "",
-    "readTime": "",
-    "content": "",
-    "contentZh": "",
+    "title": "博客发布 GSD Spec 化实战",
+    "titleZh": "博客发布 GSD Spec 化实战",
+    "slug": "gsd-blog-publish-spec",
+    "date": "2026-04-20",
     "contentType": "markdown",
+    "readTime": 8,
+    "category": "Engineering",
+    "categoryZh": "工程实践",
+    "excerpt": "一套让 Agent 从「执行命令」转型为「解释规格」的流程契约",
+    "excerptZh": "一套让 Agent 从「执行命令」转型为「解释规格」的流程契约",
+    "content": "博客发布 GSD Spec 化实战 正文",
+    "contentZh": "博客发布 GSD Spec 化实战 正文",
     "htmlPath": null,
     "contentHtml": null
   }
