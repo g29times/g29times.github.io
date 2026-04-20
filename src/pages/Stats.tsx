@@ -1425,26 +1425,38 @@ export default function Stats() {
 
                 <div className="space-y-2 min-w-0">
                   <div className="text-xs text-slate-500">发送指令到 Kiki</div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-[120px] shrink-0">
-                      <Input
-                        value={kikiChannel}
-                        onChange={(e) => setKikiChannel(e.target.value)}
-                        placeholder="通道"
-                        className="h-8 text-xs"
-                        list="kiki-channel-options"
-                      />
-                      <datalist id="kiki-channel-options">
-                        <option value="jiji" />
-                        <option value="xun" />
-                      </datalist>
+                  <div className="rounded-lg border border-slate-200/70 dark:border-slate-800/70 bg-white/40 dark:bg-slate-900/40 p-3 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="w-[140px] shrink-0">
+                        <select
+                          value={kikiChannel}
+                          onChange={(e) => setKikiChannel(e.target.value)}
+                          className="h-9 w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-2 text-sm"
+                        >
+                          <option value="jiji">jiji</option>
+                          <option value="xun">xun</option>
+                        </select>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        onClick={sendKikiCmd}
+                        disabled={!kikiCmd.trim() || isSendingKikiCmd}
+                        className="h-9"
+                      >
+                        {isSendingKikiCmd ? '发送中…' : '发送'}
+                      </Button>
+                      <div className="text-[11px] text-slate-500 flex-1 min-w-[120px] truncate">
+                        通道选择后直接发送，输入支持换行
+                      </div>
                     </div>
                     <Textarea
                       value={kikiCmd}
                       onChange={(e) => setKikiCmd(e.target.value)}
                       placeholder="例如：下午好"
                       rows={4}
-                      className="min-h-[120px] max-h-[360px] resize-y flex-1 min-w-0"
+                      className="min-h-[120px] max-h-[320px] resize-y w-full"
                       onKeyDownCapture={(e) => {
                         if (e.key === 'Enter') {
                           e.stopPropagation();
@@ -1458,22 +1470,12 @@ export default function Stats() {
                         }
                       }}
                     />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      onClick={sendKikiCmd}
-                      disabled={!kikiCmd.trim() || isSendingKikiCmd}
-                      className="mt-1"
-                    >
-                      {isSendingKikiCmd ? '发送中…' : '发送'}
-                    </Button>
+                    {kikiCmdResult ? (
+                      <div className="text-xs text-slate-500 whitespace-pre-wrap break-all max-w-full max-h-[140px] overflow-auto rounded-md border border-slate-200/70 dark:border-slate-800/70 bg-white/60 dark:bg-slate-900/60 p-2">
+                        {kikiCmdResult}
+                      </div>
+                    ) : null}
                   </div>
-                  {kikiCmdResult ? (
-                    <div className="text-xs text-slate-500 whitespace-pre-wrap break-all max-w-full max-h-[220px] overflow-auto rounded-md border border-slate-200/70 dark:border-slate-800/70 bg-white/40 dark:bg-slate-900/40 p-2">
-                      {kikiCmdResult}
-                    </div>
-                  ) : null}
                 </div>
               </div>
             </div>
