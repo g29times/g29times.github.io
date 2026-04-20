@@ -381,6 +381,54 @@ function ItemList({ items }: { items: DailyItem[] }) {
   );
 }
 
+type DopamineTheme = {
+  cardBg: string;
+  cardBorder: string;
+  topBar: string;
+};
+
+const DOPAMINE_THEMES: DopamineTheme[] = [
+  {
+    cardBg: 'bg-rose-50/70 dark:bg-rose-950/20',
+    cardBorder: 'border-rose-200/80 dark:border-rose-900/40',
+    topBar: 'bg-rose-400/60 dark:bg-rose-500/30',
+  },
+  {
+    cardBg: 'bg-amber-50/70 dark:bg-amber-950/20',
+    cardBorder: 'border-amber-200/80 dark:border-amber-900/40',
+    topBar: 'bg-amber-400/60 dark:bg-amber-500/30',
+  },
+  {
+    cardBg: 'bg-lime-50/70 dark:bg-lime-950/20',
+    cardBorder: 'border-lime-200/80 dark:border-lime-900/40',
+    topBar: 'bg-lime-400/60 dark:bg-lime-500/30',
+  },
+  {
+    cardBg: 'bg-sky-50/70 dark:bg-sky-950/20',
+    cardBorder: 'border-sky-200/80 dark:border-sky-900/40',
+    topBar: 'bg-sky-400/60 dark:bg-sky-500/30',
+  },
+  {
+    cardBg: 'bg-violet-50/70 dark:bg-violet-950/20',
+    cardBorder: 'border-violet-200/80 dark:border-violet-900/40',
+    topBar: 'bg-violet-400/60 dark:bg-violet-500/30',
+  },
+  {
+    cardBg: 'bg-fuchsia-50/70 dark:bg-fuchsia-950/20',
+    cardBorder: 'border-fuchsia-200/80 dark:border-fuchsia-900/40',
+    topBar: 'bg-fuchsia-400/60 dark:bg-fuchsia-500/30',
+  },
+];
+
+function themeForDate(date: string): DopamineTheme {
+  let h = 0;
+  for (let i = 0; i < date.length; i++) {
+    h = (h * 31 + date.charCodeAt(i)) | 0;
+  }
+  const idx = Math.abs(h) % DOPAMINE_THEMES.length;
+  return DOPAMINE_THEMES[idx];
+}
+
 export default function Stats() {
   const [dailyEntriesSource, setDailyEntriesSource] = useState<DailyEntry[]>(() => dailyLog);
   const [dailyLogsApiOk, setDailyLogsApiOk] = useState<boolean>(false);
@@ -1570,7 +1618,11 @@ export default function Stats() {
           <div className="space-y-3">
               {displayedCells.length > 0 ? (
                 displayedCells.map((cell) => (
-                  <div key={cell.date} className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 animate-fade-in">
+                  <div
+                    key={cell.date}
+                    className={`border rounded-lg p-4 animate-fade-in ${themeForDate(cell.date).cardBg} ${themeForDate(cell.date).cardBorder}`}
+                  >
+                    <div className={`h-1.5 w-full rounded-full mb-3 ${themeForDate(cell.date).topBar}`} />
                     <div className="flex items-center justify-between mb-2">
                       <div className="font-semibold">{cell.date}</div>
                       <span className={`text-xs px-2 py-1 rounded-full ${bucketClass(cell.count)} bg-opacity-80`}>
@@ -1674,8 +1726,8 @@ export default function Stats() {
                       )}
                     </div>
                     {cell.entries?.some((e) => e.note) && (
-                      <div className="mt-2 text-xs text-slate-500 border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
-                        {cell.entries?.map((e) => e.note).filter(Boolean).join(' / ')}
+                      <div className="mt-2 text-sm italic text-sky-800 dark:text-sky-200 border-t border-slate-200/60 dark:border-slate-800/80 pt-2">
+                        总结：{cell.entries?.map((e) => e.note).filter(Boolean).join(' / ')}
                       </div>
                     )}
                   </div>
