@@ -381,6 +381,54 @@ function ItemList({ items }: { items: DailyItem[] }) {
   );
 }
 
+type DopamineTheme = {
+  cardBg: string;
+  cardBorder: string;
+  topBar: string;
+};
+
+const DOPAMINE_THEMES: DopamineTheme[] = [
+  {
+    cardBg: 'bg-rose-50/70 dark:bg-rose-950/20',
+    cardBorder: 'border-rose-200/80 dark:border-rose-900/40',
+    topBar: 'bg-rose-400/60 dark:bg-rose-500/30',
+  },
+  {
+    cardBg: 'bg-amber-50/70 dark:bg-amber-950/20',
+    cardBorder: 'border-amber-200/80 dark:border-amber-900/40',
+    topBar: 'bg-amber-400/60 dark:bg-amber-500/30',
+  },
+  {
+    cardBg: 'bg-lime-50/70 dark:bg-lime-950/20',
+    cardBorder: 'border-lime-200/80 dark:border-lime-900/40',
+    topBar: 'bg-lime-400/60 dark:bg-lime-500/30',
+  },
+  {
+    cardBg: 'bg-sky-50/70 dark:bg-sky-950/20',
+    cardBorder: 'border-sky-200/80 dark:border-sky-900/40',
+    topBar: 'bg-sky-400/60 dark:bg-sky-500/30',
+  },
+  {
+    cardBg: 'bg-violet-50/70 dark:bg-violet-950/20',
+    cardBorder: 'border-violet-200/80 dark:border-violet-900/40',
+    topBar: 'bg-violet-400/60 dark:bg-violet-500/30',
+  },
+  {
+    cardBg: 'bg-fuchsia-50/70 dark:bg-fuchsia-950/20',
+    cardBorder: 'border-fuchsia-200/80 dark:border-fuchsia-900/40',
+    topBar: 'bg-fuchsia-400/60 dark:bg-fuchsia-500/30',
+  },
+];
+
+function themeForDate(date: string): DopamineTheme {
+  let h = 0;
+  for (let i = 0; i < date.length; i++) {
+    h = (h * 31 + date.charCodeAt(i)) | 0;
+  }
+  const idx = Math.abs(h) % DOPAMINE_THEMES.length;
+  return DOPAMINE_THEMES[idx];
+}
+
 export default function Stats() {
   const [dailyEntriesSource, setDailyEntriesSource] = useState<DailyEntry[]>(() => dailyLog);
   const [dailyLogsApiOk, setDailyLogsApiOk] = useState<boolean>(false);
@@ -1425,26 +1473,38 @@ export default function Stats() {
 
                 <div className="space-y-2 min-w-0">
                   <div className="text-xs text-slate-500">发送指令到 Kiki</div>
-                  <div className="flex items-start gap-2">
-                    <div className="w-[120px] shrink-0">
-                      <Input
-                        value={kikiChannel}
-                        onChange={(e) => setKikiChannel(e.target.value)}
-                        placeholder="通道"
-                        className="h-8 text-xs"
-                        list="kiki-channel-options"
-                      />
-                      <datalist id="kiki-channel-options">
-                        <option value="jiji" />
-                        <option value="xun" />
-                      </datalist>
+                  <div className="rounded-lg border border-slate-200/70 dark:border-slate-800/70 bg-white/40 dark:bg-slate-900/40 p-3 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="w-[140px] shrink-0">
+                        <select
+                          value={kikiChannel}
+                          onChange={(e) => setKikiChannel(e.target.value)}
+                          className="h-9 w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-2 text-sm"
+                        >
+                          <option value="jiji">jiji</option>
+                          <option value="xun">xun</option>
+                        </select>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        onClick={sendKikiCmd}
+                        disabled={!kikiCmd.trim() || isSendingKikiCmd}
+                        className="h-9"
+                      >
+                        {isSendingKikiCmd ? '发送中…' : '发送'}
+                      </Button>
+                      <div className="text-[11px] text-slate-500 flex-1 min-w-[120px] truncate">
+                        通道选择后直接发送，输入支持换行
+                      </div>
                     </div>
                     <Textarea
                       value={kikiCmd}
                       onChange={(e) => setKikiCmd(e.target.value)}
                       placeholder="例如：下午好"
                       rows={4}
-                      className="min-h-[120px] max-h-[360px] resize-y flex-1 min-w-0"
+                      className="min-h-[120px] max-h-[320px] resize-y w-full"
                       onKeyDownCapture={(e) => {
                         if (e.key === 'Enter') {
                           e.stopPropagation();
@@ -1458,22 +1518,12 @@ export default function Stats() {
                         }
                       }}
                     />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      onClick={sendKikiCmd}
-                      disabled={!kikiCmd.trim() || isSendingKikiCmd}
-                      className="mt-1"
-                    >
-                      {isSendingKikiCmd ? '发送中…' : '发送'}
-                    </Button>
+                    {kikiCmdResult ? (
+                      <div className="text-xs text-slate-500 whitespace-pre-wrap break-all max-w-full max-h-[140px] overflow-auto rounded-md border border-slate-200/70 dark:border-slate-800/70 bg-white/60 dark:bg-slate-900/60 p-2">
+                        {kikiCmdResult}
+                      </div>
+                    ) : null}
                   </div>
-                  {kikiCmdResult ? (
-                    <div className="text-xs text-slate-500 whitespace-pre-wrap break-all max-w-full max-h-[220px] overflow-auto rounded-md border border-slate-200/70 dark:border-slate-800/70 bg-white/40 dark:bg-slate-900/40 p-2">
-                      {kikiCmdResult}
-                    </div>
-                  ) : null}
                 </div>
               </div>
             </div>
@@ -1568,7 +1618,11 @@ export default function Stats() {
           <div className="space-y-3">
               {displayedCells.length > 0 ? (
                 displayedCells.map((cell) => (
-                  <div key={cell.date} className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 animate-fade-in">
+                  <div
+                    key={cell.date}
+                    className={`border rounded-lg p-4 animate-fade-in ${themeForDate(cell.date).cardBg} ${themeForDate(cell.date).cardBorder}`}
+                  >
+                    <div className={`h-1.5 w-full rounded-full mb-3 ${themeForDate(cell.date).topBar}`} />
                     <div className="flex items-center justify-between mb-2">
                       <div className="font-semibold">{cell.date}</div>
                       <span className={`text-xs px-2 py-1 rounded-full ${bucketClass(cell.count)} bg-opacity-80`}>
@@ -1672,8 +1726,8 @@ export default function Stats() {
                       )}
                     </div>
                     {cell.entries?.some((e) => e.note) && (
-                      <div className="mt-2 text-xs text-slate-500 border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
-                        {cell.entries?.map((e) => e.note).filter(Boolean).join(' / ')}
+                      <div className="mt-2 text-sm italic text-sky-800 dark:text-sky-200 border-t border-slate-200/60 dark:border-slate-800/80 pt-2">
+                        总结：{cell.entries?.map((e) => e.note).filter(Boolean).join(' / ')}
                       </div>
                     )}
                   </div>
