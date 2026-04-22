@@ -323,15 +323,23 @@ const Admin = () => {
             </h1>
             <p className="text-muted-foreground">
               <a href="/Cloudflarer2management" target="_blank" rel="noopener noreferrer">
-                Resource(https://r2-manager-api.g29tony.workers.dev)
+                R2 Files
               </a>
               {'｜'}
               <a href="/stats" target="_blank" rel="noopener noreferrer">
-                Stats
+                Stats & Logs
+              </a>
+              {'｜'}
+              <a href="https://auto.aimmar.ink/" target="_blank" rel="noopener noreferrer">
+                Team Dashboard
               </a>
               {'｜'}
               <a href="https://app.aimmar.ink/" target="_blank" rel="noopener noreferrer">
-                Interior
+                Interior App
+              </a>
+              {'｜'}
+              <a href="https://dash.cloudflare.com/390ce3a993dc5bffb7d21b6021ac1f14/billing/subscriptions" target="_blank" rel="noopener noreferrer">
+                Bill
               </a>
             </p>
             {/* <p className="text-muted-foreground">
